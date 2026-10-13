@@ -111,3 +111,110 @@ def test_a_real_thread_runs_jobs_one_at_a_time_and_stops(qapp):
     assert worker.wait(3000)
     QApplication.processEvents()
     assert [e[0] for e in events["patch"]] == ["temporary", "user:3"]
+
+
+# -- writing, backing up, restoring --------------------------------------------------------------------------------------------
+
+
+def extra_events(worker):
+    events = {"backup": [], "restore": [], "written": [], "cancelled": []}
+    worker.backup_done.connect(lambda path, size: events["backup"].append((path, size)))
+    worker.restore_done.connect(events["restore"].append)
+    worker.write_done.connect(lambda *a: events["written"].append(a))
+    worker.cancelled.connect(lambda *a: events["cancelled"].append(a))
+    return events
+
+
+def test_send_temporary_writes_and_verifies(qapp):
+    worker, fake, events = rig()
+    more = extra_events(worker)
+    new = patch.Patch.minimum()
+    new.name = "Sent"
+    worker.submit("send_temporary", new)
+    worker.process_pending()
+    assert more["written"] == [("temporary", "Sent", "")] and fake.temporary.name == "Sent" and not events["failed"]
+
+
+def test_a_unit_that_stores_nothing_fails_the_send(qapp):
+    worker, fake, events = rig(FakeJV1010(ignore_writes=True))
+    new = patch.Patch.minimum()
+    new.name = "Lost"
+    worker.submit("send_temporary", new)
+    worker.process_pending()
+    assert events["failed"] and "read-back" in events["failed"][0][1]
+
+
+def test_write_user_saves_the_old_patch_first(qapp, tmp_path, monkeypatch):
+    from jv1010editor.core import app_config
+
+    monkeypatch.setattr(app_config, "CONFIG_PATH", tmp_path / "config.json")
+    worker, fake, events = rig()
+    more = extra_events(worker)
+    new = patch.Patch.minimum()
+    new.name = "Replacement"
+    worker.submit("write_user", 6, new)
+    worker.process_pending()
+    ((label, name, path),) = more["written"]
+    assert label == "user:6" and name == "Replacement" and fake.user[6].name == "Replacement"
+    old = patch.parse_syx(open(path, "rb").read())[patch.user_base(6)]
+    assert old.name == "User 007"  # the backup holds what was there before
+    assert path.startswith(str(tmp_path / "backups"))
+
+
+def test_write_user_writes_nothing_if_the_backup_cannot_be_saved(qapp, tmp_path, monkeypatch):
+    from jv1010editor.core import app_config, backup
+
+    monkeypatch.setattr(app_config, "CONFIG_PATH", tmp_path / "config.json")
+    monkeypatch.setattr(backup, "write_file", lambda *a: (_ for _ in ()).throw(OSError("disk full")))
+    worker, fake, events = rig()
+    worker.submit("write_user", 6, patch.Patch.minimum())
+    worker.process_pending()
+    assert events["failed"] and "nothing was written" in events["failed"][0][1] and fake.writes == []
+
+
+def test_write_user_writes_nothing_if_the_old_patch_cannot_be_read(qapp, tmp_path, monkeypatch):
+    from jv1010editor.core import app_config
+
+    monkeypatch.setattr(app_config, "CONFIG_PATH", tmp_path / "config.json")
+    worker, fake, events = rig(FakeJV1010(gm_mode=True))
+    worker.submit("write_user", 6, patch.Patch.minimum())
+    worker.process_pending()
+    assert events["failed"] and fake.writes == []
+
+
+def test_backup_then_restore_roundtrip_through_a_file(qapp, tmp_path):
+    from jv1010editor.core import backup, memory
+
+    worker, fake, events = rig()
+    more = extra_events(worker)
+    path = tmp_path / "unit.syx"
+    worker.submit("backup", path, [memory.RHYTHM])
+    worker.process_pending()
+    assert more["backup"] == [(str(path), path.stat().st_size)]
+    key = memory.plan([memory.RHYTHM])[3].start
+    original = bytes(fake.other[key])
+    fake.other[key][0] ^= 1
+    worker.submit("restore", backup.parse_backup(path.read_bytes()), [memory.RHYTHM])
+    worker.process_pending()
+    assert more["restore"] == [130] and bytes(fake.other[key]) == original
+
+
+def test_cancelling_a_backup_saves_nothing_and_is_not_an_error(qapp, tmp_path):
+    from jv1010editor.core import memory
+
+    worker, _, events = rig()
+    more = extra_events(worker)
+    worker.progress.connect(lambda d, t: worker.cancel() if d == 3 else None)
+    path = tmp_path / "unit.syx"
+    worker.submit("backup", path, [memory.PATCHES])
+    worker.process_pending()
+    assert more["cancelled"] and not path.exists() and not events["failed"] and not more["backup"]
+
+
+def test_restoring_an_incomplete_backup_fails_before_writing(qapp, tmp_path):
+    from jv1010editor.core import backup, memory
+
+    worker, fake, events = rig()
+    worker.submit("restore", backup.Backup(), [memory.PATCHES])
+    worker.process_pending()
+    assert events["failed"] and "missing" in events["failed"][0][1] and fake.writes == []

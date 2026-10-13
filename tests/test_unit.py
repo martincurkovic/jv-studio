@@ -225,3 +225,11 @@ def test_a_value_past_the_named_choices_is_flagged():
     p = patch.Patch.minimum()
     p.common[0x49] = 100  # patch category has 39 named values (0-38) of a 0-127 range
     assert [x.key for x in validate.out_of_range(p)] == ["patch_category"]
+
+
+def test_summaries_carry_name_and_key_assign():
+    fake = FakeJV1010()
+    fake.user[1].set(patch.COMMON, "key_assign_mode", 1)
+    u, _, _ = connect(fake)
+    got = u.read_user_patch_summaries()
+    assert len(got) == 128 and got[0] == unit.PatchSummary("User 001", "POLY") and got[1].key_assign == "SOLO"

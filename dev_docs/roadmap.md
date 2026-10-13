@@ -26,11 +26,14 @@ record what they find in `AGENTS.md` (measured vs. guessed, dated).
 
 - [x] Read the temporary patch (5 x RQ1) and show every parameter, flagging values outside the manual's ranges (read-only viewer; **try it on the unit**).
 - [x] Read the 128 USER patch names and any one USER patch (a persistent worker thread, one request outstanding at a time).
-- [x] Core: write a patch (DT1, tones split 128 + 1, >= 20 ms apart) with a read-back that must match (`JV1010Unit.write_patch`, tested against a fake). **Not wired to any button yet.**
+- [x] Core: write a patch (DT1, tones split 128 + 1, >= 20 ms apart) with a read-back that must match (`JV1010Unit.write_patch`, tested against a fake). Wired to *Write to USER...* and *Send to Temporary Patch*.
 - [x] Core: single-parameter DT1 for live edits (`JV1010Unit.write_param`). The manual's own example does this for a performance parameter: **confirm for patch parameters on the unit.**
-- [ ] Wire writing into the UI: "Send to Temporary Patch" with the read-back, then a confirmed "Write to USER:nnn" with a `.syx` backup.
+- [x] Wire writing into the UI: "Send to Temporary Patch" with the read-back, then a confirmed "Write to USER:nnn" with a `.syx` backup of the slot (aborts if the backup fails).
+- [x] Whole-unit Back Up / Restore (`core/memory.py`, `core/backup.py`): one `.syx`, selectable sections on restore, system settings last and off by default, read-back per block.
+- [x] Stock check: the USER patch names/key assign against the manual's factory list (a hint, not proof).
+- [ ] **Hardware, in this order:** (1) Back Up Unit and keep the file; (2) read the names, look at the stock check; (3) Send to Temporary Patch; (4) Write to USER on a slot you can spare, power-cycle, read it back; (5) Restore of USER patches only; (6) only then, System settings. Record each result in AGENTS.md.
 - [ ] Verify on hardware: the 129-byte tone as 128 + 1; the 20 ms gap; what happens in GM mode (the unit ignores RQ1/DT1 there); the identity reply's revision bytes.
-- [ ] Backup before the first write of a session (`~/.jv1010editor/backups/`).
+- [x] Backup before every USER write (`~/.jv1010editor/backups/`), and an offer of a whole-unit backup before the first change of a session.
 
 ## Phase 3 - Patch editor
 

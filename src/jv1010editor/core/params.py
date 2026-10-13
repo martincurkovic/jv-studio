@@ -78,11 +78,20 @@ class MemoryEntry:
 
 
 @dataclass(frozen=True)
+class FactoryPatch:
+    number: int  # 1-128
+    name: str
+    voices: int  # tones in use, as the manual's Patch List gives it
+    key_assign: str  # "POLY" or "SOLO"
+
+
+@dataclass(frozen=True)
 class ParameterTable:
     model_id: int
     device_id: int
     blocks: dict
     memory_map: tuple[MemoryEntry, ...]
+    factory_user_patches: tuple[FactoryPatch, ...] = ()
 
     def block(self, key):
         return self.blocks[key]
@@ -117,7 +126,8 @@ def load_table():
         for key, b in raw["blocks"].items()
     }
     memory = tuple(MemoryEntry(tuple(int(x, 16) for x in e["address"].split()), e["name"], e["section"]) for e in raw["memory_map"])
-    return ParameterTable(int(raw["model_id"], 16), int(raw["device_id"], 16), blocks, memory)
+    factory = tuple(FactoryPatch(f["number"], f["name"], f["voices"], f["key_assign"]) for f in raw.get("factory_user_patches", ()))
+    return ParameterTable(int(raw["model_id"], 16), int(raw["device_id"], 16), blocks, memory, factory)
 
 
 # -- reading and writing values ------------------------------------------------------------------------------------------

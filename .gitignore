@@ -25,3 +25,6 @@ build/
 # SysEx captured from a unit or saved while testing is the owner's own data: keep it out unless it is a deliberate test fixture
 *.syx
 !tests/fixtures/**/*.syx
+
+# half-written backups (the app writes name.syx.part, then renames it)
+*.part

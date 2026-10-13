@@ -10,8 +10,8 @@ Built with PySide6 (Qt) and python-rtmidi. GPL-3.0-or-later.
 ## Goals
 
 - Edit the JV-1010's patches visually: knobs, draggable envelope graphs, every parameter in the manual's MIDI Implementation.
-- Read and write the 128 user patches, load and save `.syx` files.
-- Be careful with the hardware: edits go to the temporary patch first, and nothing is written without a read-back.
+- Read and write the 128 user patches, load and save `.syx` files, and back up / restore the whole unit.
+- Be careful with the hardware: edits go to the temporary patch first, every USER write saves the old patch to a file first, and nothing is written without a read-back.
 
 ## Running it
 

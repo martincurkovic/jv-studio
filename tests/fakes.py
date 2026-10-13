@@ -1,6 +1,6 @@
 """Pretend MIDI ports and a pretend JV-1010, so MIDI code is tested without a backend or hardware."""
 
-from jv1010editor.core import patch, sysex
+from jv1010editor.core import memory, patch, sysex
 
 
 class FakePorts:
@@ -88,6 +88,10 @@ class FakeJV1010:
         self.identity = identity
         self.ignore_writes = ignore_writes
         self.drop_first_replies = drop_first_replies
+        # everything that is not a patch (system, performances, rhythm setups): block start -> bytes, filled with a recognisable 7-bit pattern
+        self.other = {}
+        for block in memory.plan([memory.SYSTEM, memory.PERFORMANCES, memory.RHYTHM]):
+            self.other[block.start] = bytearray((block.start + i) % 100 for i in range(block.size))
         self.requests = []  # (address, size) of every RQ1
         self.writes = []  # every DT1 received, parsed
 
@@ -114,6 +118,9 @@ class FakeJV1010:
             if self.drop_first_replies > 0:
                 self.drop_first_replies -= 1
                 return []
+            raw = self.other.get(sysex.address_to_int(parsed.address))
+            if raw is not None:
+                return [sysex.dt1(parsed.address, raw)] if len(raw) == parsed.size else []
             found = self._locate(parsed.address)
             if found is None:
                 return []
@@ -125,6 +132,11 @@ class FakeJV1010:
         if parsed.command == sysex.CMD_DT1:
             self.writes.append(parsed)
             if not self.ignore_writes:
+                start = sysex.address_to_int(parsed.address)
+                for block_start, raw in self.other.items():
+                    if block_start <= start and start + len(parsed.data) <= block_start + len(raw):
+                        raw[start - block_start : start - block_start + len(parsed.data)] = parsed.data
+                        return []
                 found = self._locate(parsed.address)
                 if found is not None:
                     found[0].apply(parsed, found[1])

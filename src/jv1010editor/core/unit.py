@@ -8,11 +8,18 @@ Rules that come from the manual and from AKAISDS's hardware lessons:
 """
 
 import time
+from dataclasses import dataclass
 
 from . import params, patch, sysex
 
 DEFAULT_TIMEOUT = 1.0  # seconds to wait for one reply
 DEFAULT_RETRIES = 1  # extra attempts after a timeout (so two requests at most per block)
+
+
+@dataclass(frozen=True)
+class PatchSummary:
+    name: str
+    key_assign: str  # "POLY" or "SOLO"
 
 
 class UnitError(RuntimeError):
@@ -80,20 +87,23 @@ class JV1010Unit:
     def read_user_patch(self, number):
         return self.read_patch(patch.user_base(number))
 
-    def read_user_patch_names(self, progress=None, cancelled=None):
-        """The 128 USER patch names, one request each (the common block: its first 12 bytes are the name). `progress(done, total)` after each;
-        `cancelled()` is polled before each request and stops early, returning the names read so far."""
+    def read_user_patch_summaries(self, progress=None, cancelled=None):
+        """The 128 USER patches as `PatchSummary(name, key_assign)`, one request each (the common block holds both). `progress(done, total)` after
+        each; `cancelled()` is polled before each request and stops early, returning the summaries read so far."""
         common = params.load_table().block(patch.COMMON)
-        name = common.param("patch_name")
-        names = []
+        name, assign = common.param("patch_name"), common.param("key_assign_mode")
+        summaries = []
         for number in range(patch.USER_PATCH_COUNT):
             if cancelled is not None and cancelled():
                 break
             data = self.read_block(patch.user_base(number), common.size)
-            names.append(params.read(data, name))
+            summaries.append(PatchSummary(params.read(data, name), params.format_value(assign, params.read(data, assign))))
             if progress is not None:
                 progress(number + 1, patch.USER_PATCH_COUNT)
-        return names
+        return summaries
+
+    def read_user_patch_names(self, progress=None, cancelled=None):
+        return [s.name for s in self.read_user_patch_summaries(progress, cancelled)]
 
     def write_patch(self, base, new, verify=True):
         """Write `new` to the patch at `base` (DT1 packets, >= 20 ms apart) and, with `verify`, read it back: it must be identical."""
@@ -104,6 +114,15 @@ class JV1010Unit:
             back = self.read_patch(base)
             if back != new:
                 raise UnitError("the unit does not hold what was written (the read-back differs)")
+
+    def write_block(self, address, data, verify=True):
+        """Write ONE block (a block's own start address and whole contents) as packets of <= 128 bytes at least 20 ms apart; with `verify`, read it back and compare."""
+        for message in sysex.dt1_packets(address, data):
+            self._send_dt1(message)
+        if verify:
+            self._wait(sysex.PACKET_GAP_MS / 1000)
+            if self.read_block(address, len(data)) != bytes(data):
+                raise UnitError(f"the unit does not hold what was written at {' '.join(f'{b:02X}' for b in address)} (the read-back differs)")
 
     def write_param(self, base, block, key, value, tone=None):
         """Set ONE parameter (a DT1 of just its bytes) in the patch at `base`. Returns the value actually sent (clamped to the range).

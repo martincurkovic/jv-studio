@@ -205,6 +205,24 @@ def memory_map(lines):
     return entries
 
 
+def factory_user_patches(lines):
+    """The factory USER bank from the manual's Patch List: [{number, name, voices, key_assign}] for USER 001-128. The list is printed in columns
+    (USER 001-064, USER 065-128, then the preset groups beside them): only the first two matches on a row are USER. Fails loudly unless all 128 are found."""
+    start = next(i for i, l in enumerate(lines) if l.startswith("USER (User Group)"))
+    row = re.compile(r"(\d{3}) {2,3}(.{12}) (\d) +(POLY|SOLO)")
+    found = {}
+    for line in lines[start + 1 : start + 80]:
+        for m in list(row.finditer(line))[:2]:
+            number = int(m[1])
+            if 1 <= number <= 128 and number not in found:
+                name = m[2].rstrip().replace("\u2019", "'").replace("\u2018", "'")  # the manual prints typographic quotes; the unit's ASCII has '
+                found[number] = {"number": number, "name": name, "voices": int(m[3]), "key_assign": m[4]}
+    missing = [n for n in range(1, 129) if n not in found]
+    if missing:
+        sys.exit(f"factory USER patch list: missing {missing[:10]}")
+    return [found[n] for n in range(1, 129)]
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     pdf = Path(args[0]) if args else DEFAULT_PDF
@@ -222,6 +240,7 @@ def main():
             "'jv1080_only' marks values the manual puts in angle brackets: for the JV-1080/2080/XP, ignored by the JV-1010.",
         ],
         "memory_map": memory_map(lines),
+        "factory_user_patches": factory_user_patches(lines),
         "blocks": {},
     }
     problems = 0

@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
+    QInputDialog,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -20,18 +21,20 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jv1010editor.core import app_config, debug_log, midi, midi_diagnostics, params, patch
+from jv1010editor.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, stock, sysex, validate
 from jv1010editor.ui import theme
 from jv1010editor.ui.about_dialog import AboutDialog
 from jv1010editor.ui.diagnostics_ui import add_open_log_folder_action
 from jv1010editor.ui.midi_session import MidiSession
 from jv1010editor.ui.qt_helpers import build_scroll_area, build_section_card, set_enabled_without_scrolling
 from jv1010editor.ui.settings_dialog import SettingsDialog
+from jv1010editor.ui.unit_dialogs import RestoreDialog, WriteUserDialog
 from jv1010editor.ui.unit_worker import UnitWorker
 
 
 class MainWindow(QMainWindow):
-    """The application window. For now: the connection, a hardware check, and a READ-ONLY look at the unit's patches (nothing here writes to the unit).
+    """The application window: the connection, a hardware check, a look at the unit's patches, whole-unit backup and restore, and the only two places
+    that write to the unit: Send to Temporary Patch and Write to USER (both read back; the second saves the slot's old patch first).
     The editor itself arrives in phase 3 (dev_docs/roadmap.md)."""
 
     def __init__(self, session=None, worker=None, start_worker=True):
@@ -44,11 +47,17 @@ class MainWindow(QMainWindow):
         self.session.changed.connect(self._refresh_connection)
         self.worker.patch_read.connect(self._on_patch_read)
         self.worker.names_read.connect(self._on_names_read)
+        self.worker.backup_done.connect(self._on_backup_done)
+        self.worker.restore_done.connect(self._on_restore_done)
+        self.worker.write_done.connect(self._on_write_done)
+        self.worker.cancelled.connect(self._on_cancelled)
         self.worker.progress.connect(self._on_progress)
         self.worker.failed.connect(self._on_failed)
         self.worker.busy_changed.connect(self._refresh_connection)
-        self._shown = None  # (label, Patch) in the viewer
-        self._reading_names = False
+        self._shown = None  # (label, Patch, base address) in the viewer; label is "temporary", "user:N" or "file"
+        self._long_job = False  # a job with a progress bar is running (names, backup, restore)
+        self._summaries = []  # unit.PatchSummary of the USER patches read so far
+        self._backed_up = False  # a whole-unit backup was saved in this session
 
         self._build_menus()
         self._build_central()
@@ -62,10 +71,21 @@ class MainWindow(QMainWindow):
 
     def _build_menus(self):
         file_menu = self.menuBar().addMenu("&File")
+        self.open_action = QAction("Open Patch .syx...", self)
+        self.open_action.setShortcut(QKeySequence.StandardKey.Open)
+        self.open_action.triggered.connect(self.open_syx)
+        file_menu.addAction(self.open_action)
         self.save_action = QAction("Save Patch as .syx...", self)
         self.save_action.setShortcut(QKeySequence.StandardKey.Save)
         self.save_action.triggered.connect(self.save_shown_patch)
         file_menu.addAction(self.save_action)
+        file_menu.addSeparator()
+        self.backup_action = QAction("Back Up Unit...", self)
+        self.backup_action.triggered.connect(self.back_up_unit)
+        file_menu.addAction(self.backup_action)
+        self.restore_action = QAction("Restore Unit...", self)
+        self.restore_action.triggered.connect(self.restore_unit)
+        file_menu.addAction(self.restore_action)
         file_menu.addSeparator()
         self.settings_action = QAction("Settings...", self)
         self.settings_action.setMenuRole(QAction.MenuRole.PreferencesRole)
@@ -88,6 +108,14 @@ class MainWindow(QMainWindow):
         self.read_action.setShortcut("Ctrl+R")
         self.read_action.triggered.connect(self.read_temporary)
         hardware_menu.addAction(self.read_action)
+        hardware_menu.addSeparator()
+        self.send_action = QAction("Send to Temporary Patch", self)
+        self.send_action.setShortcut("Ctrl+Return")
+        self.send_action.triggered.connect(self.send_temporary)
+        hardware_menu.addAction(self.send_action)
+        self.write_action = QAction("Write to USER...", self)
+        self.write_action.triggered.connect(self.write_user)
+        hardware_menu.addAction(self.write_action)
 
         help_menu = self.menuBar().addMenu("&Help")
         add_open_log_folder_action(help_menu, self)
@@ -120,12 +148,26 @@ class MainWindow(QMainWindow):
         self.btn_read_temporary = QPushButton("Read Temporary Patch")
         self.btn_read_temporary.setToolTip("Reads the patch the unit is playing now (read-only: nothing is written).")
         self.btn_read_temporary.clicked.connect(self.read_temporary)
+        self.btn_open = QPushButton("Open .syx...")
+        self.btn_open.clicked.connect(self.open_syx)
         self.btn_save = QPushButton("Save as .syx...")
         self.btn_save.clicked.connect(self.save_shown_patch)
         row.addWidget(self.btn_read_temporary)
+        row.addWidget(self.btn_open)
         row.addWidget(self.btn_save)
         row.addStretch()
         viewer.addLayout(row)
+        write_row = QHBoxLayout()
+        self.btn_send = QPushButton("Send to Temporary Patch")
+        self.btn_send.setToolTip("Plays the shown patch on the unit without storing it, then reads it back to check.")
+        self.btn_send.clicked.connect(self.send_temporary)
+        self.btn_write = QPushButton("Write to USER...")
+        self.btn_write.setToolTip("Stores the shown patch in a USER slot. The slot's current patch is saved to a file first.")
+        self.btn_write.clicked.connect(self.write_user)
+        write_row.addWidget(self.btn_send)
+        write_row.addWidget(self.btn_write)
+        write_row.addStretch()
+        viewer.addLayout(write_row)
         self.patch_label = QLabel("Nothing read yet.")
         self.patch_label.setWordWrap(True)
         viewer.addWidget(self.patch_label)
@@ -141,7 +183,7 @@ class MainWindow(QMainWindow):
         library = QVBoxLayout()
         lib_row = QHBoxLayout()
         self.btn_read_names = QPushButton("Read USER Patch Names")
-        self.btn_read_names.setToolTip("Reads the 128 USER patch names, one request each (read-only). Double-click a name to read that patch.")
+        self.btn_read_names.setToolTip("Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a name to read that patch.")
         self.btn_read_names.clicked.connect(self.read_names)
         self.btn_cancel = QPushButton("Cancel")
         self.btn_cancel.clicked.connect(self.worker.cancel)
@@ -151,14 +193,32 @@ class MainWindow(QMainWindow):
         lib_row.addWidget(self.btn_cancel)
         lib_row.addWidget(self.names_progress, 1)
         library.addLayout(lib_row)
+        self.stock_label = QLabel()
+        self.stock_label.setWordWrap(True)
+        self.stock_label.setObjectName("mutedLabel")
+        library.addWidget(self.stock_label)
         self.names_list = QListWidget()
         self.names_list.setMinimumHeight(180)
         self.names_list.itemDoubleClicked.connect(self._read_user_from_item)
         library.addWidget(self.names_list)
 
+        whole = QVBoxLayout()
+        whole_row = QHBoxLayout()
+        self.btn_backup = QPushButton("Back Up Unit...")
+        self.btn_backup.setToolTip("Saves all USER patches, performances, rhythm sets and the system settings to one .syx file (read-only on the unit).")
+        self.btn_backup.clicked.connect(self.back_up_unit)
+        self.btn_restore = QPushButton("Restore Unit...")
+        self.btn_restore.setToolTip("Writes a backup file back to the unit.")
+        self.btn_restore.clicked.connect(self.restore_unit)
+        whole_row.addWidget(self.btn_backup)
+        whole_row.addWidget(self.btn_restore)
+        whole_row.addStretch()
+        whole.addLayout(whole_row)
+
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.addWidget(build_section_card("Connection", connection))
+        layout.addWidget(build_section_card("Whole Unit", whole))
         layout.addWidget(build_section_card("Temporary Patch", viewer))
         layout.addWidget(build_section_card("USER Patches", library))
         layout.addStretch()
@@ -190,10 +250,16 @@ class MainWindow(QMainWindow):
         ready = self.session.is_open and idle
         for control in (self.btn_detect, self.detect_action, self.btn_read_temporary, self.read_action, self.btn_read_names):
             control.setEnabled(ready)
+        for control in (self.btn_backup, self.backup_action, self.btn_restore, self.restore_action):
+            control.setEnabled(ready)
+        for control in (self.btn_send, self.send_action, self.btn_write, self.write_action):
+            control.setEnabled(ready and self._shown is not None)
+        for control in (self.btn_open, self.open_action):
+            control.setEnabled(idle)
         for control in (self.btn_settings, self.settings_action):
             control.setEnabled(idle)  # Settings closes and reopens the connection: never under a running job
-        self.btn_cancel.setVisible(self._reading_names and not idle)
-        self.names_progress.setVisible(self._reading_names)
+        self.btn_cancel.setVisible(self._long_job and not idle)
+        self.names_progress.setVisible(self._long_job)
         self.btn_save.setEnabled(self._shown is not None)
         self.save_action.setEnabled(self._shown is not None)
 
@@ -234,11 +300,15 @@ class MainWindow(QMainWindow):
 
     def read_names(self):
         self.names_list.clear()
-        self._reading_names = True
-        self.names_progress.setRange(0, patch.USER_PATCH_COUNT)
-        self.names_progress.setValue(0)
-        self.statusBar().showMessage("Reading the USER patch names...")
+        self.stock_label.clear()
+        self._start_progress("Reading the USER patch names...")
         self.worker.submit("names")
+
+    def _start_progress(self, message):
+        self._long_job = True
+        self.names_progress.setRange(0, 100)
+        self.names_progress.setValue(0)
+        self.statusBar().showMessage(message)
 
     def _read_user_from_item(self, item):
         number = item.data(Qt.ItemDataRole.UserRole)
@@ -250,25 +320,39 @@ class MainWindow(QMainWindow):
         self.names_progress.setRange(0, total)
         self.names_progress.setValue(done)
 
-    def _on_names_read(self, names):
-        self._reading_names = False
+    def _on_names_read(self, summaries):
+        self._long_job = False
+        self._summaries = list(summaries)
         self.names_list.clear()
-        for number, name in enumerate(names):
-            item = QListWidgetItem(f"{number + 1:03d}  {name}")
+        warning = QBrush(QColor(theme.current_palette()["warning"]))
+        for number, ((status, factory), summary) in enumerate(zip(stock.compare(summaries), summaries)):
+            item = QListWidgetItem(f"{number + 1:03d}  {summary.name}")
             item.setData(Qt.ItemDataRole.UserRole, number)
+            if status == stock.DIFFERENT:
+                item.setForeground(warning)
+                item.setToolTip(f'The factory patch here is "{factory.name}" ({factory.key_assign}).')
             self.names_list.addItem(item)
-        self.statusBar().showMessage(f"Read {len(names)} USER patch names", 5000)
+        same = stock.count_same(summaries)
+        self.stock_label.setText(
+            f"{same} of {len(summaries)} match the factory patch list by name and key assign mode; the others are highlighted. "
+            "A matching name does not prove the patch is unchanged."
+        )
+        self.statusBar().showMessage(f"Read {len(summaries)} USER patch names", 5000)
         self._refresh_connection()
 
     def _on_failed(self, label, message):
-        self._reading_names = False
+        self._long_job = False
         self.statusBar().showMessage(message)
         QMessageBox.warning(self, "JV-1010", message)
         self._refresh_connection()
 
     def _on_patch_read(self, label, read, problems):
-        self._shown = (label, read)
+        base = patch.TEMPORARY_BASE if label == "temporary" else patch.user_base(int(label.split(":")[1]))
         where = "the temporary patch" if label == "temporary" else f"USER:{int(label.split(':')[1]) + 1:03d}"
+        self._show_patch(label, read, base, problems, where)
+
+    def _show_patch(self, label, read, base, problems, where):
+        self._shown = (label, read, base)
         self.patch_label.setText(f'{where}: "{read.name}"')
         if problems:
             shown = "; ".join(str(p) for p in problems[:3])
@@ -302,8 +386,7 @@ class MainWindow(QMainWindow):
     def save_shown_patch(self):
         if self._shown is None:
             return
-        label, read = self._shown
-        base = patch.TEMPORARY_BASE if label == "temporary" else patch.user_base(int(label.split(":")[1]))
+        label, read, base = self._shown
         suggested = "".join(c if c.isalnum() or c in " -_." else "_" for c in read.name).strip() or "patch"
         path, _ = QFileDialog.getSaveFileName(self, "Save patch as .syx", str(Path.home() / f"{suggested}.syx"), "SysEx files (*.syx)")
         if not path:
@@ -316,6 +399,143 @@ class MainWindow(QMainWindow):
             return
         debug_log.get_logger().info(f"saved {read.name!r} ({label}) to {path}")
         self.statusBar().showMessage(f"Saved {Path(path).name}", 5000)
+
+    # -- opening a file ----------------------------------------------------------------------------------------------------
+
+    def open_syx(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Open patch .syx", str(Path.home()), "SysEx files (*.syx);;All files (*)")
+        if not path:
+            return
+        try:
+            found = patch.parse_syx(Path(path).read_bytes())
+        except (OSError, sysex.SysexError) as e:
+            debug_log.get_logger().error(f"couldn't open {path}", exc_info=True)
+            QMessageBox.critical(self, "Open", f"Couldn't read the file: {e}")
+            return
+        if not found:
+            QMessageBox.information(self, "Open", "That file holds no JV-1010 patch.")
+            return
+        bases = list(found)
+        if len(bases) > 1:
+            names = [f"{self._base_title(b)}  {found[b].name}" for b in bases]
+            choice, ok = QInputDialog.getItem(self, "Open", f"The file holds {len(bases)} patches. Show:", names, 0, False)
+            if not ok:
+                return
+            base = bases[names.index(choice)]
+        else:
+            base = bases[0]
+        chosen = found[base]
+        problems = validate.out_of_range(chosen)
+        self._show_patch("file", chosen, base, problems, f"{Path(path).name} ({self._base_title(base)})")
+        debug_log.get_logger().info(f"opened {path}: {len(bases)} patch(es), showing {chosen.name!r}")
+
+    @staticmethod
+    def _base_title(base):
+        return "temporary patch" if base == patch.TEMPORARY_BASE else f"USER:{base[1] + 1:03d}"
+
+    # -- writing to the unit -----------------------------------------------------------------------------------------------
+
+    def _offer_backup_first(self, what):
+        """Before the first change to the unit this session, offer a whole-unit backup. Returns True to carry on with `what`."""
+        if self._backed_up:
+            return True
+        answer = QMessageBox.question(
+            self,
+            "Back up the unit first?",
+            f"You haven't backed up the unit in this session. Back it up now, before {what}?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Yes,
+        )
+        if answer == QMessageBox.StandardButton.Cancel:
+            return False
+        if answer == QMessageBox.StandardButton.Yes:
+            self.back_up_unit()
+            self.statusBar().showMessage("Backing up first: run it again when the backup is done")
+            return False
+        return True
+
+    def send_temporary(self):
+        if self._shown is None or not self.session.is_open or not self.worker.is_idle():
+            return
+        _, shown, _ = self._shown
+        self.statusBar().showMessage(f'Sending "{shown.name}" to the temporary patch...')
+        self.worker.submit("send_temporary", shown.copy())
+
+    def write_user(self):
+        if self._shown is None or not self.session.is_open or not self.worker.is_idle():
+            return
+        label, shown, base = self._shown
+        default = base[1] if base[0] == 0x11 else 0
+        names = [s.name for s in self._summaries]
+        dialog = WriteUserDialog(shown.name, names, default, app_config.backups_dir(), self)
+        if dialog.exec() != WriteUserDialog.DialogCode.Accepted:
+            return
+        number = dialog.slot()
+        if not self._offer_backup_first(f"overwriting USER:{number + 1:03d}"):
+            return
+        self.statusBar().showMessage(f'Writing "{shown.name}" to USER:{number + 1:03d}...')
+        self.worker.submit("write_user", number, shown.copy())
+
+    def back_up_unit(self):
+        if not self.session.is_open or not self.worker.is_idle():
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "Back up the unit", str(Path.home() / backup.default_backup_name()), "SysEx files (*.syx)")
+        if not path:
+            return
+        self._start_progress("Backing up the unit...")
+        self.worker.submit("backup", path)
+
+    def restore_unit(self):
+        if not self.session.is_open or not self.worker.is_idle():
+            return
+        path, _ = QFileDialog.getOpenFileName(self, "Restore the unit from a backup", str(Path.home()), "SysEx files (*.syx);;All files (*)")
+        if not path:
+            return
+        try:
+            saved = backup.parse_backup(Path(path).read_bytes())
+        except (OSError, sysex.SysexError) as e:
+            debug_log.get_logger().error(f"couldn't read backup {path}", exc_info=True)
+            QMessageBox.critical(self, "Restore", f"Couldn't read the file: {e}")
+            return
+        summary = saved.summary()
+        if not any(have for have, _ in summary.values()):
+            QMessageBox.information(self, "Restore", "That file holds no JV-1010 backup.")
+            return
+        dialog = RestoreDialog(summary, self)
+        if dialog.exec() != RestoreDialog.DialogCode.Accepted:
+            return
+        sections = dialog.sections()
+        if not self._offer_backup_first("restoring"):
+            return
+        self._start_progress("Restoring the unit...")
+        self.worker.submit("restore", saved, sections)
+
+    def _on_backup_done(self, path, size):
+        self._long_job = False
+        self._backed_up = True
+        self.statusBar().showMessage(f"Backup saved: {Path(path).name} ({size // 1024} KB)", 8000)
+        self._refresh_connection()
+
+    def _on_restore_done(self, count):
+        self._long_job = False
+        self.statusBar().showMessage(f"Restored {count} blocks, each read back", 8000)
+        self._refresh_connection()
+
+    def _on_write_done(self, label, name, backup_path):
+        if label == "temporary":
+            self.statusBar().showMessage(f'"{name}" sent to the temporary patch and read back', 5000)
+        else:
+            number = int(label.split(":")[1])
+            self.statusBar().showMessage(f'"{name}" written to USER:{number + 1:03d} and read back; the old patch is in {Path(backup_path).name}', 10000)
+            if number < self.names_list.count():
+                item = self.names_list.item(number)
+                item.setText(f"{number + 1:03d}  {name}")
+        self._refresh_connection()
+
+    def _on_cancelled(self, label, message):
+        self._long_job = False
+        self.statusBar().showMessage(message, 8000)
+        self._refresh_connection()
 
     def closeEvent(self, event):
         self.worker.cancel()

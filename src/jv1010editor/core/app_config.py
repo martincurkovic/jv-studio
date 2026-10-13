@@ -89,3 +89,11 @@ def save_collapsed_cards(keys):
     config = load_config()
     config["collapsed_cards"] = sorted(set(keys))
     save_config(config)
+
+
+# -- backups ----------------------------------------------------------------------------------------------------------------
+
+
+def backups_dir():
+    """Where the app puts the automatic `.syx` backup of a USER patch before overwriting it (next to the config; read at call time so tests can redirect it)."""
+    return CONFIG_PATH.parent / "backups"

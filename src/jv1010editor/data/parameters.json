@@ -94,6 +94,776 @@
    "section": null
   }
  ],
+ "factory_user_patches": [
+  {
+   "number": 1,
+   "name": "Tremendously",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 2,
+   "name": "St.Concert",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 3,
+   "name": "CyberTrance2",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 4,
+   "name": "SessionNyln2",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 5,
+   "name": "ViennaStrgs3",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 6,
+   "name": "R&R Brass",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 7,
+   "name": "Velo Power",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 8,
+   "name": "Super Tenor",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 9,
+   "name": "Breathy Humz",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 10,
+   "name": "Ow Bass",
+   "voices": 1,
+   "key_assign": "SOLO"
+  },
+  {
+   "number": 11,
+   "name": "Dunes",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 12,
+   "name": "Celestial 2",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 13,
+   "name": "Tone Wh.Solo",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 14,
+   "name": "Poly Brs",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 15,
+   "name": "Combing Slow",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 16,
+   "name": " SA Rhodes 5",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 17,
+   "name": "Adrenaline",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 18,
+   "name": "DanceStack 1",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 19,
+   "name": "Flying Waltz",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 20,
+   "name": "East Europe",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 21,
+   "name": "Silky Way",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 22,
+   "name": "Techno Dream",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 23,
+   "name": "Raverborg",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 24,
+   "name": "Pan Pipes",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 25,
+   "name": "Pretty Bells",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 26,
+   "name": "Glistening",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 27,
+   "name": "Metal Solo",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 28,
+   "name": "StateXLChrd2",
+   "voices": 4,
+   "key_assign": "SOLO"
+  },
+  {
+   "number": 29,
+   "name": "Raggatronic",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 30,
+   "name": "ChristmasFlt",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 31,
+   "name": "Acc.de Paris",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 32,
+   "name": "DreamVoices2",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 33,
+   "name": "VintageCall2",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 34,
+   "name": "Trancing Pad",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 35,
+   "name": "OldiesOrgan2",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 36,
+   "name": "X..? Whistle",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 37,
+   "name": "Analog Drama",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 38,
+   "name": "BPF Lead",
+   "voices": 1,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 39,
+   "name": "Clean Tele",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 40,
+   "name": "Earth Blow",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 41,
+   "name": "Pulsatronic",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 42,
+   "name": "Funky Slap",
+   "voices": 1,
+   "key_assign": "SOLO"
+  },
+  {
+   "number": 43,
+   "name": " Echo Rhodes",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 44,
+   "name": "pp Harmonium",
+   "voices": 1,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 45,
+   "name": "Blue Notes",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 46,
+   "name": "Aurora",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 47,
+   "name": "Breathy Brs",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 48,
+   "name": "Enlighten",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 49,
+   "name": "Tube Smoke",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 50,
+   "name": "Perelandra",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 51,
+   "name": "SquareLead 2",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 52,
+   "name": "Shadows",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 53,
+   "name": "Organizer",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 54,
+   "name": "Full Orchest",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 55,
+   "name": "B'on d'moov!",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 56,
+   "name": "Sugar Bell 2",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 57,
+   "name": "Player's EP",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 58,
+   "name": "4pole Bass",
+   "voices": 2,
+   "key_assign": "SOLO"
+  },
+  {
+   "number": 59,
+   "name": "Octapad",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 60,
+   "name": "Tria Bells",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 61,
+   "name": "Wire Pad",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 62,
+   "name": "Singing'Mini",
+   "voices": 1,
+   "key_assign": "SOLO"
+  },
+  {
+   "number": 63,
+   "name": "Heirborne",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 64,
+   "name": "Trumpet",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 65,
+   "name": "Steel Away",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 66,
+   "name": "D-50 Stack",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 67,
+   "name": "Solo Strat",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 68,
+   "name": "Soap Opera",
+   "voices": 1,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 69,
+   "name": "Sop.Sax mf",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 70,
+   "name": "Dimensional",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 71,
+   "name": "Blusey OD",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 72,
+   "name": "Stacc.Heaven",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 73,
+   "name": "PhaseBlipper",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 74,
+   "name": "Pure Tibet",
+   "voices": 1,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 75,
+   "name": "Afterlife",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 76,
+   "name": "Perky B",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 77,
+   "name": " JUNO Power!",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 78,
+   "name": "SessionBrass",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 79,
+   "name": "JX SqrCarpet",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 80,
+   "name": "Phaser MC",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 81,
+   "name": "Sweep Clav 2",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 82,
+   "name": "BluesHarp",
+   "voices": 1,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 83,
+   "name": "Scat Flute",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 84,
+   "name": "5thPad 2",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 85,
+   "name": "Belfry Chime",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 86,
+   "name": "Atmos Harp",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 87,
+   "name": "DesertCrystl",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 88,
+   "name": "December Sky",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 89,
+   "name": "Upright Pno",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 90,
+   "name": "Darkshine",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 91,
+   "name": "Exotic Velo",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 92,
+   "name": "Atlantis 2",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 93,
+   "name": "Creamy",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 94,
+   "name": "Morning Lite",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 95,
+   "name": "DanceStack 5",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 96,
+   "name": "D50FantaPerc",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 97,
+   "name": "Resojuice",
+   "voices": 2,
+   "key_assign": "SOLO"
+  },
+  {
+   "number": 98,
+   "name": "Silicon Str",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 99,
+   "name": "Keep :-)",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 100,
+   "name": "Sm.Brass Grp",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 101,
+   "name": "Echo Piano",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 102,
+   "name": " HeavenlyPad",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 103,
+   "name": "Sequalog",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 104,
+   "name": "Solo Steel",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 105,
+   "name": "Spectrum Mod",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 106,
+   "name": "Delicate EP",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 107,
+   "name": "Triumph Brs",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 108,
+   "name": "Flute",
+   "voices": 1,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 109,
+   "name": "2.2 Bell Pad",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 110,
+   "name": "JustLovely 2",
+   "voices": 1,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 111,
+   "name": "GR500 TmpDly",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 112,
+   "name": " Dawn 2 Dusk",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 113,
+   "name": "Gluey Pad",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 114,
+   "name": "SquareKeys 3",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 115,
+   "name": "Arasian Morn",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 116,
+   "name": "D'light",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 117,
+   "name": "Perky Noize",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 118,
+   "name": "Mod DirtyWav",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 119,
+   "name": "Moving Glass",
+   "voices": 1,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 120,
+   "name": "Sci-Fi Str",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 121,
+   "name": "OD 5ths",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 122,
+   "name": "Far East",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 123,
+   "name": "Phobos",
+   "voices": 2,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 124,
+   "name": "Cyber Dreams",
+   "voices": 3,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 125,
+   "name": "Cave 2",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 126,
+   "name": "Helium Queen",
+   "voices": 4,
+   "key_assign": "SOLO"
+  },
+  {
+   "number": 127,
+   "name": "Rain Forest",
+   "voices": 4,
+   "key_assign": "POLY"
+  },
+  {
+   "number": 128,
+   "name": "Crowds",
+   "voices": 4,
+   "key_assign": "POLY"
+  }
+ ],
  "blocks": {
   "system_common": {
    "section": "1-1-1",

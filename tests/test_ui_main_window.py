@@ -196,3 +196,149 @@ def test_settings_and_reads_are_off_while_the_worker_is_busy(env, monkeypatch):
     monkeypatch.setattr("jv1010editor.ui.main_window.SettingsDialog", lambda *a: opened.append(a))
     w.open_settings()
     assert opened == [] and "Wait" in w.statusBar().currentMessage()
+
+
+# -- writing, backup and restore ---------------------------------------------------------------------------------------------
+
+
+@pytest.fixture
+def writable(env, monkeypatch, tmp_path):
+    """A connected window whose backups go to tmp_path, with every dialog answered for us."""
+    from PySide6.QtWidgets import QFileDialog
+
+    monkeypatch.setattr(app_config, "CONFIG_PATH", tmp_path / "config.json")
+    w, ports = connected(env)
+    answers = {"backup_first": QMessageBox.StandardButton.No}
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: answers["backup_first"])
+    return w, ports, answers, tmp_path, QFileDialog
+
+
+def test_write_and_send_are_off_until_a_patch_is_shown(env):
+    w, _ = connected(env)
+    assert not w.btn_send.isEnabled() and not w.btn_write.isEnabled() and not w.write_action.isEnabled()
+    w.read_temporary()
+    w.worker.process_pending()
+    assert w.btn_send.isEnabled() and w.btn_write.isEnabled()
+
+
+def test_send_to_temporary_patch_writes_and_reads_back(writable):
+    w, ports, *_ = writable
+    ports.respond.user[3].name = "From Slot"
+    w._read_user_from_item(type("I", (), {"data": lambda self, role: 3})())
+    w.worker.process_pending()
+    w.send_temporary()
+    w.worker.process_pending()
+    assert ports.respond.temporary.name == "From Slot" and "read back" in w.statusBar().currentMessage()
+
+
+def test_write_to_user_confirms_backs_up_and_updates_the_list(writable, monkeypatch):
+    from jv1010editor.ui import main_window as mw
+
+    w, ports, answers, tmp_path, _ = writable
+    w.read_temporary()
+    w.read_names()
+    w.worker.process_pending()
+    monkeypatch.setattr(mw.WriteUserDialog, "exec", lambda self: self.DialogCode.Accepted)
+    monkeypatch.setattr(mw.WriteUserDialog, "slot", lambda self: 9)
+    w.write_user()
+    w.worker.process_pending()
+    assert ports.respond.user[9].name == "Init Patch" and w.names_list.item(9).text() == "010  Init Patch"
+    assert len(list((tmp_path / "backups").glob("USER-010-*.syx"))) == 1
+
+
+def test_cancelling_the_slot_dialog_writes_nothing(writable, monkeypatch):
+    from jv1010editor.ui import main_window as mw
+
+    w, ports, *_ = writable
+    w.read_temporary()
+    w.worker.process_pending()
+    monkeypatch.setattr(mw.WriteUserDialog, "exec", lambda self: self.DialogCode.Rejected)
+    w.write_user()
+    w.worker.process_pending()
+    assert ports.respond.writes == []
+
+
+def test_the_first_write_offers_a_whole_unit_backup_and_cancel_stops_it(writable, monkeypatch):
+    from jv1010editor.ui import main_window as mw
+
+    w, ports, answers, *_ = writable
+    answers["backup_first"] = QMessageBox.StandardButton.Cancel
+    w.read_temporary()
+    w.worker.process_pending()
+    monkeypatch.setattr(mw.WriteUserDialog, "exec", lambda self: self.DialogCode.Accepted)
+    w.write_user()
+    w.worker.process_pending()
+    assert ports.respond.writes == []
+
+
+def test_back_up_then_restore_through_the_window(writable, monkeypatch):
+    w, ports, answers, tmp_path, QFileDialog = writable
+    target = tmp_path / "unit.syx"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: (str(target), ""))
+    w.back_up_unit()
+    w.worker.process_pending()
+    assert target.exists() and w._backed_up and "Backup saved" in w.statusBar().currentMessage()
+    ports.respond.user[0].name = "Changed"
+    from jv1010editor.core import memory
+    from jv1010editor.ui import main_window as mw
+
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(target), ""))
+    monkeypatch.setattr(mw.RestoreDialog, "exec", lambda self: self.DialogCode.Accepted)
+    monkeypatch.setattr(mw.RestoreDialog, "sections", lambda self: [memory.RHYTHM])
+    w.restore_unit()
+    w.worker.process_pending()
+    assert "Restored 130 blocks" in w.statusBar().currentMessage()
+
+
+def test_restore_dialog_leaves_system_unchecked_and_disables_missing_sections(qapp):
+    from jv1010editor.core import memory
+    from jv1010editor.ui.unit_dialogs import RestoreDialog
+
+    summary = {memory.SYSTEM: (18, 18), memory.PERFORMANCES: (0, 544), memory.RHYTHM: (130, 130), memory.PATCHES: (640, 640)}
+    d = RestoreDialog(summary)
+    assert d.sections() == [memory.RHYTHM, memory.PATCHES]
+    assert not d.checks[memory.PERFORMANCES].isEnabled() and not d.checks[memory.SYSTEM].isChecked()
+
+
+def test_the_stock_check_counts_factory_matches_and_flags_the_rest(env):
+    from jv1010editor.core import params
+
+    w, ports = connected(env)
+    factory = params.load_table().factory_user_patches
+    for i, f in enumerate(factory):
+        ports.respond.user[i].name = f.name
+        ports.respond.user[i].set("patch_common", "key_assign_mode", 0 if f.key_assign == "POLY" else 1)
+    ports.respond.user[4].name = "Not Stock"
+    w.read_names()
+    w.worker.process_pending()
+    assert w.stock_label.text().startswith("127 of 128 match")
+    assert "factory patch here" in w.names_list.item(4).toolTip() and w.names_list.item(5).toolTip() == ""
+
+
+def test_opening_a_syx_shows_the_patch_and_a_write_needs_no_unit_read(writable, monkeypatch, tmp_path):
+    from PySide6.QtWidgets import QFileDialog
+
+    from jv1010editor.core import patch
+
+    w, ports, *_ = writable
+    p = patch.Patch.minimum()
+    p.name = "From File"
+    path = tmp_path / "one.syx"
+    path.write_bytes(p.to_syx(patch.user_base(20)))
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(path), ""))
+    w.open_syx()
+    assert "From File" in w.patch_label.text() and "USER:021" in w.patch_label.text() and w.btn_write.isEnabled()
+    assert ports.respond.writes == []
+
+
+def test_a_file_that_is_not_a_patch_is_refused_politely(writable, monkeypatch, tmp_path):
+    from PySide6.QtWidgets import QFileDialog
+
+    w, *_ = writable
+    path = tmp_path / "junk.syx"
+    path.write_bytes(b"\xf0\x7e\x10\x06\x01\xf7")
+    shown = []
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(path), ""))
+    monkeypatch.setattr(QMessageBox, "information", lambda parent, title, text: shown.append(text) or QMessageBox.StandardButton.Ok)
+    w.open_syx()
+    assert shown == ["That file holds no JV-1010 patch."] and w._shown is None
