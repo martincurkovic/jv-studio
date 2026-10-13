@@ -1,0 +1,8738 @@
+{
+ "model_id": "6A",
+ "device_id": "10",
+ "source": "Roland JV-1010 Owner's Manual (2002), MIDI Implementation > Parameter Address Map, JV-1010 (Model ID=6AH)",
+ "notes": [
+  "Offsets are DATA indexes (the 7-bit address bytes folded: 01 00 = 128), sizes in bytes.",
+  "'nibbled' values are split over two bytes, high nibble first (ABH is sent as 0AH 0BH).",
+  "'jv1080_only' marks values the manual puts in angle brackets: for the JV-1080/2080/XP, ignored by the JV-1010."
+ ],
+ "memory_map": [
+  {
+   "address": "00 00 00 00",
+   "name": "System",
+   "section": "1-1"
+  },
+  {
+   "address": "01 00 00 00",
+   "name": "Temporary Performance",
+   "section": "1-2"
+  },
+  {
+   "address": "02 00 00 00",
+   "name": "Performance Mode Temporary Patch(part 1)",
+   "section": "1-3"
+  },
+  {
+   "address": "02 01 00 00",
+   "name": "Performance Mode Temporary Patch(part 2)",
+   "section": null
+  },
+  {
+   "address": "02 08 00 00",
+   "name": "Performance Mode Temporary Patch(part 9)",
+   "section": null
+  },
+  {
+   "address": "02 09 00 00",
+   "name": "Temporary Rhythm Setup",
+   "section": "1-4"
+  },
+  {
+   "address": "02 0A 00 00",
+   "name": "Performance Mode Temporary Patch(part 11)",
+   "section": "1-3"
+  },
+  {
+   "address": "02 0F 00 00",
+   "name": "Performance Mode Temporary Patch(part 16)",
+   "section": null
+  },
+  {
+   "address": "03 00 00 00",
+   "name": "Patch Mode Temporary Patch",
+   "section": "1-3"
+  },
+  {
+   "address": "10 00 00 00",
+   "name": "User Performance USER:01",
+   "section": "1-2"
+  },
+  {
+   "address": "10 01 00 00",
+   "name": "User Performance USER:02",
+   "section": null
+  },
+  {
+   "address": "10 1F 00 00",
+   "name": "User Performance USER:32",
+   "section": null
+  },
+  {
+   "address": "10 40 00 00",
+   "name": "User Rhythm Setup USER:1",
+   "section": "1-4"
+  },
+  {
+   "address": "10 41 00 00",
+   "name": "User Rhythm Setup USER:2",
+   "section": null
+  },
+  {
+   "address": "11 00 00 00",
+   "name": "User Patch USER:001",
+   "section": "1-3"
+  },
+  {
+   "address": "11 01 00 00",
+   "name": "User Patch USER:002",
+   "section": null
+  },
+  {
+   "address": "11 7F 00 00",
+   "name": "User Patch USER:128",
+   "section": null
+  }
+ ],
+ "blocks": {
+  "system_common": {
+   "section": "1-1-1",
+   "size": 102,
+   "footnotes": {
+    "1": "PERFORMANCE, PATCH, GM",
+    "2": "USER:01-USER:32, <CARD:01-CARD:32>, PR-A:01-PR-A:32, PR-B:01-PR-B:32",
+    "3": "USER&PRESET, <PCM>, EXP",
+    "4": "427.4-452.6",
+    "5": "OFF, HOLD-1, SOSTENUTO, SOFT, HOLD-2",
+    "6": "VOLUME, VOLUME&EXPRESSION",
+    "7": "CHANNEL, POLY, CH&POLY",
+    "8": "CC01-CC05, CC07-CC31, CC64-CC95, PITCH BEND, AFTERTOUCH",
+    "9": "<PANEL, PANEL&MIDI>",
+    "10": "SINGLE, CHORD, PHRASE",
+    "11": "OFF, 1-127",
+    "12": "<1-16, RX-CH, OFF>",
+    "13": "<REAL, 1-127>",
+    "14": "<LIGHT, MEDIUM, HEAVY>",
+    "15": "<CC01-CC05, CC07-CC31, CC64-CC95, PITCH BEND, AFTERTOUCH, PROG-UP, PROG-DOWN, START/STOP, PUNCH-IN/OUT, TAP-TEMPO, OCTAVE-UP, OCTAVE-DOWN>",
+    "16": "<OFF, INT, MIDI, INT&MIDI>",
+    "17": "<STANDARD, REVERSE>",
+    "18": "<CC01-CC05, CC07-CC31, CC64-CC95, PITCH BEND, AFTERTOUCH>",
+    "19": "<PART1-PART16>"
+   },
+   "params": [
+    {
+     "name": "Sound Mode",
+     "offset": 0,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 1,
+     "choices": [
+      {
+       "label": "PERFORMANCE",
+       "jv1010": true
+      },
+      {
+       "label": "PATCH",
+       "jv1010": true
+      },
+      {
+       "label": "GM",
+       "jv1010": true
+      }
+     ],
+     "key": "sound_mode"
+    },
+    {
+     "name": "Performance Number",
+     "offset": 1,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 2,
+     "key": "performance_number"
+    },
+    {
+     "name": "Patch Group Type",
+     "offset": 2,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 3,
+     "choices": [
+      {
+       "label": "USER&PRESET",
+       "jv1010": true
+      },
+      {
+       "label": "PCM",
+       "jv1010": false
+      },
+      {
+       "label": "EXP",
+       "jv1010": true
+      }
+     ],
+     "side_table": true,
+     "key": "patch_group_type"
+    },
+    {
+     "name": "Patch Group ID",
+     "offset": 3,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "side_table": true,
+     "key": "patch_group_id"
+    },
+    {
+     "name": "Patch Number",
+     "offset": 4,
+     "bytes": 2,
+     "min": 0,
+     "max": 255,
+     "bits": "0000 aaaa",
+     "nibbled": true,
+     "side_table": true,
+     "key": "patch_number"
+    },
+    {
+     "name": "Master Tune",
+     "offset": 6,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "footnote": 4,
+     "key": "master_tune"
+    },
+    {
+     "name": "Scale Tune Switch",
+     "offset": 7,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "scale_tune_switch"
+    },
+    {
+     "name": "EFX Switch",
+     "offset": 8,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "efx_switch"
+    },
+    {
+     "name": "Chorus Switch",
+     "offset": 9,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "chorus_switch"
+    },
+    {
+     "name": "Reverb Switch",
+     "offset": 10,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "reverb_switch"
+    },
+    {
+     "name": "Patch Remain",
+     "offset": 11,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "patch_remain"
+    },
+    {
+     "name": "Clock Source",
+     "offset": 12,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "INT,MIDI",
+     "labels": [
+      "INT",
+      "MIDI"
+     ],
+     "key": "clock_source"
+    },
+    {
+     "name": "TAP Control Source",
+     "offset": 13,
+     "bytes": 1,
+     "min": 0,
+     "max": 4,
+     "bits": "0000 0aaa",
+     "footnote": 5,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD-1",
+       "jv1010": true
+      },
+      {
+       "label": "SOSTENUTO",
+       "jv1010": true
+      },
+      {
+       "label": "SOFT",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD-2",
+       "jv1010": true
+      }
+     ],
+     "key": "tap_control_source"
+    },
+    {
+     "name": "Hold Control Source",
+     "offset": 14,
+     "bytes": 1,
+     "min": 0,
+     "max": 4,
+     "bits": "0000 0aaa",
+     "footnote": 5,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD-1",
+       "jv1010": true
+      },
+      {
+       "label": "SOSTENUTO",
+       "jv1010": true
+      },
+      {
+       "label": "SOFT",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD-2",
+       "jv1010": true
+      }
+     ],
+     "key": "hold_control_source"
+    },
+    {
+     "name": "Peak Control Source",
+     "offset": 15,
+     "bytes": 1,
+     "min": 0,
+     "max": 4,
+     "bits": "0000 0aaa",
+     "footnote": 5,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD-1",
+       "jv1010": true
+      },
+      {
+       "label": "SOSTENUTO",
+       "jv1010": true
+      },
+      {
+       "label": "SOFT",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD-2",
+       "jv1010": true
+      }
+     ],
+     "key": "peak_control_source"
+    },
+    {
+     "name": "Volume Control Source",
+     "offset": 16,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 6,
+     "choices": [
+      {
+       "label": "VOLUME",
+       "jv1010": true
+      },
+      {
+       "label": "VOLUME&EXPRESSION",
+       "jv1010": true
+      }
+     ],
+     "key": "volume_control_source"
+    },
+    {
+     "name": "Aftertouch Source",
+     "offset": 17,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 7,
+     "choices": [
+      {
+       "label": "CHANNEL",
+       "jv1010": true
+      },
+      {
+       "label": "POLY",
+       "jv1010": true
+      },
+      {
+       "label": "CH&POLY",
+       "jv1010": true
+      }
+     ],
+     "key": "aftertouch_source"
+    },
+    {
+     "name": "System Control Source 1",
+     "offset": 18,
+     "bytes": 1,
+     "min": 1,
+     "max": 97,
+     "bits": "0aaa aaaa",
+     "footnote": 8,
+     "key": "system_control_source_1"
+    },
+    {
+     "name": "System Control Source 2",
+     "offset": 19,
+     "bytes": 1,
+     "min": 1,
+     "max": 97,
+     "bits": "0aaa aaaa",
+     "footnote": 8,
+     "key": "system_control_source_2"
+    },
+    {
+     "name": "Receive Program Change",
+     "offset": 20,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_program_change"
+    },
+    {
+     "name": "Receive Bank Select",
+     "offset": 21,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_bank_select"
+    },
+    {
+     "name": "Receive Control Change",
+     "offset": 22,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_control_change"
+    },
+    {
+     "name": "Receive Modulation",
+     "offset": 23,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_modulation"
+    },
+    {
+     "name": "Receive Volume",
+     "offset": 24,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_volume"
+    },
+    {
+     "name": "Receive Hold-1",
+     "offset": 25,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_hold_1"
+    },
+    {
+     "name": "Receive Pitch Bend",
+     "offset": 26,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_pitch_bend"
+    },
+    {
+     "name": "Receive Aftertouch",
+     "offset": 27,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_aftertouch"
+    },
+    {
+     "name": "Control Channel",
+     "offset": 28,
+     "bytes": 1,
+     "min": 0,
+     "max": 16,
+     "bits": "000a aaaa",
+     "display_text": "1 - 16,OFF",
+     "key": "control_channel"
+    },
+    {
+     "name": "Patch Receive Channel",
+     "offset": 29,
+     "bytes": 1,
+     "min": 0,
+     "max": 15,
+     "bits": "0000 aaaa",
+     "display_text": "1 - 16",
+     "display_min": 1,
+     "display_max": 16,
+     "key": "patch_receive_channel"
+    },
+    {
+     "name": "Rhythm Edit Source",
+     "offset": 30,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "PANEL",
+       "jv1010": false
+      },
+      {
+       "label": "PANEL&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "rhythm_edit_source"
+    },
+    {
+     "name": "Preview Sound Mode",
+     "offset": 31,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 10,
+     "choices": [
+      {
+       "label": "SINGLE",
+       "jv1010": true
+      },
+      {
+       "label": "CHORD",
+       "jv1010": true
+      },
+      {
+       "label": "PHRASE",
+       "jv1010": true
+      }
+     ],
+     "key": "preview_sound_mode"
+    },
+    {
+     "name": "Preview Note Set 1",
+     "offset": 32,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "C-1 - G9",
+     "key": "preview_note_set_1"
+    },
+    {
+     "name": "Preview Velocity Set 1",
+     "offset": 33,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 11,
+     "key": "preview_velocity_set_1"
+    },
+    {
+     "name": "Preview Note Set 2",
+     "offset": 34,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "C-1 - G9",
+     "key": "preview_note_set_2"
+    },
+    {
+     "name": "Preview Velocity Set 2",
+     "offset": 35,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 11,
+     "key": "preview_velocity_set_2"
+    },
+    {
+     "name": "Preview Note Set 3",
+     "offset": 36,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "C-1 - G9",
+     "key": "preview_note_set_3"
+    },
+    {
+     "name": "Preview Velocity Set 3",
+     "offset": 37,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 11,
+     "key": "preview_velocity_set_3"
+    },
+    {
+     "name": "Preview Note Set 4",
+     "offset": 38,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "C-1 - G9",
+     "key": "preview_note_set_4"
+    },
+    {
+     "name": "Preview Velocity Set 4",
+     "offset": 39,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 11,
+     "key": "preview_velocity_set_4"
+    },
+    {
+     "name": "Transmit Program Change",
+     "offset": 40,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "transmit_program_change"
+    },
+    {
+     "name": "Transmit Bank Select",
+     "offset": 41,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "transmit_bank_select"
+    },
+    {
+     "name": "Patch Transmit Channel",
+     "offset": 42,
+     "bytes": 1,
+     "min": 0,
+     "max": 17,
+     "bits": "000a aaaa",
+     "footnote": 12,
+     "key": "patch_transmit_channel"
+    },
+    {
+     "name": "Transpose Switch",
+     "offset": 43,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "transpose_switch"
+    },
+    {
+     "name": "Transpose Value",
+     "offset": 44,
+     "bytes": 1,
+     "min": 0,
+     "max": 11,
+     "bits": "0000 aaaa",
+     "display_text": "<-5 - +6>",
+     "jv1080_only": true,
+     "display_min": -5,
+     "display_max": 6,
+     "key": "transpose_value"
+    },
+    {
+     "name": "Octave Shift",
+     "offset": 45,
+     "bytes": 1,
+     "min": 0,
+     "max": 6,
+     "bits": "0000 0aaa",
+     "display_text": "<-3 - +3>",
+     "jv1080_only": true,
+     "display_min": -3,
+     "display_max": 3,
+     "key": "octave_shift"
+    },
+    {
+     "name": "Keyboard Velocity",
+     "offset": 46,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 13,
+     "key": "keyboard_velocity"
+    },
+    {
+     "name": "Keyboard Sens",
+     "offset": 47,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 14,
+     "choices": [
+      {
+       "label": "LIGHT",
+       "jv1010": false
+      },
+      {
+       "label": "MEDIUM",
+       "jv1010": true
+      },
+      {
+       "label": "HEAVY",
+       "jv1010": true
+      }
+     ],
+     "key": "keyboard_sens"
+    },
+    {
+     "name": "Aftertouch Sens",
+     "offset": 48,
+     "bytes": 1,
+     "min": 0,
+     "max": 100,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 100>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 100,
+     "key": "aftertouch_sens"
+    },
+    {
+     "name": "Pedal(1) Assign",
+     "offset": 49,
+     "bytes": 1,
+     "min": 1,
+     "max": 104,
+     "bits": "0aaa aaaa",
+     "footnote": 15,
+     "key": "pedal_1_assign"
+    },
+    {
+     "name": "Pedal(1) Output Mode",
+     "offset": 50,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 16,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": false
+      },
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "MIDI",
+       "jv1010": true
+      },
+      {
+       "label": "INT&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "pedal_1_output_mode"
+    },
+    {
+     "name": "Pedal(1) Polarity",
+     "offset": 51,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "STANDARD",
+       "jv1010": false
+      },
+      {
+       "label": "REVERSE",
+       "jv1010": true
+      }
+     ],
+     "key": "pedal_1_polarity"
+    },
+    {
+     "name": "Pedal2 Assign",
+     "offset": 52,
+     "bytes": 1,
+     "min": 1,
+     "max": 104,
+     "bits": "0aaa aaaa",
+     "footnote": 15,
+     "key": "pedal2_assign"
+    },
+    {
+     "name": "Pedal2 Output Mode",
+     "offset": 53,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 16,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": false
+      },
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "MIDI",
+       "jv1010": true
+      },
+      {
+       "label": "INT&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "pedal2_output_mode"
+    },
+    {
+     "name": "Pedal2 Polarity",
+     "offset": 54,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "STANDARD",
+       "jv1010": false
+      },
+      {
+       "label": "REVERSE",
+       "jv1010": true
+      }
+     ],
+     "key": "pedal2_polarity"
+    },
+    {
+     "name": "C1 Assign",
+     "offset": 55,
+     "bytes": 1,
+     "min": 1,
+     "max": 97,
+     "bits": "0aaa aaaa",
+     "footnote": 18,
+     "key": "c1_assign"
+    },
+    {
+     "name": "C1 Output Mode",
+     "offset": 56,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 16,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": false
+      },
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "MIDI",
+       "jv1010": true
+      },
+      {
+       "label": "INT&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "c1_output_mode"
+    },
+    {
+     "name": "C2 Assign",
+     "offset": 57,
+     "bytes": 1,
+     "min": 1,
+     "max": 97,
+     "bits": "0aaa aaaa",
+     "footnote": 18,
+     "key": "c2_assign"
+    },
+    {
+     "name": "C2 Output Mode",
+     "offset": 58,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 16,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": false
+      },
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "MIDI",
+       "jv1010": true
+      },
+      {
+       "label": "INT&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "c2_output_mode"
+    },
+    {
+     "name": "Hold Pedal Output Mode",
+     "offset": 59,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 16,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": false
+      },
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "MIDI",
+       "jv1010": true
+      },
+      {
+       "label": "INT&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "hold_pedal_output_mode"
+    },
+    {
+     "name": "Hold Pedal Polarity",
+     "offset": 60,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "STANDARD",
+       "jv1010": false
+      },
+      {
+       "label": "REVERSE",
+       "jv1010": true
+      }
+     ],
+     "key": "hold_pedal_polarity"
+    },
+    {
+     "name": "Bank Select Group1 Switch",
+     "offset": 61,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "bank_select_group1_switch"
+    },
+    {
+     "name": "Bank Select Group1 MSB",
+     "offset": 62,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group1_msb"
+    },
+    {
+     "name": "Bank Select Group1 LSB",
+     "offset": 63,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group1_lsb"
+    },
+    {
+     "name": "Bank Select Group2 Switch",
+     "offset": 64,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "bank_select_group2_switch"
+    },
+    {
+     "name": "Bank Select Group2 MSB",
+     "offset": 65,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group2_msb"
+    },
+    {
+     "name": "Bank Select Group2 LSB",
+     "offset": 66,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group2_lsb"
+    },
+    {
+     "name": "Bank Select Group3 Switch",
+     "offset": 67,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "bank_select_group3_switch"
+    },
+    {
+     "name": "Bank Select Group3 MSB",
+     "offset": 68,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group3_msb"
+    },
+    {
+     "name": "Bank Select Group3 LSB",
+     "offset": 69,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group3_lsb"
+    },
+    {
+     "name": "Bank Select Group4 Switch",
+     "offset": 70,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "bank_select_group4_switch"
+    },
+    {
+     "name": "Bank Select Group4 MSB",
+     "offset": 71,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group4_msb"
+    },
+    {
+     "name": "Bank Select Group4 LSB",
+     "offset": 72,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group4_lsb"
+    },
+    {
+     "name": "Bank Select Group5 Switch",
+     "offset": 73,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "bank_select_group5_switch"
+    },
+    {
+     "name": "Bank Select Group5 MSB",
+     "offset": 74,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group5_msb"
+    },
+    {
+     "name": "Bank Select Group5 LSB",
+     "offset": 75,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group5_lsb"
+    },
+    {
+     "name": "Bank Select Group6 Switch",
+     "offset": 76,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "bank_select_group6_switch"
+    },
+    {
+     "name": "Bank Select Group6 MSB",
+     "offset": 77,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group6_msb"
+    },
+    {
+     "name": "Bank Select Group6 LSB",
+     "offset": 78,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group6_lsb"
+    },
+    {
+     "name": "Bank Select Group7 Switch",
+     "offset": 79,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "bank_select_group7_switch"
+    },
+    {
+     "name": "Bank Select Group7 MSB",
+     "offset": 80,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group7_msb"
+    },
+    {
+     "name": "Bank Select Group7 LSB",
+     "offset": 81,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 127>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 127,
+     "key": "bank_select_group7_lsb"
+    },
+    {
+     "name": "Pedal3 Assign",
+     "offset": 82,
+     "bytes": 1,
+     "min": 1,
+     "max": 104,
+     "bits": "0aaa aaaa",
+     "footnote": 15,
+     "key": "pedal3_assign"
+    },
+    {
+     "name": "Pedal3 Output Mode",
+     "offset": 83,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 16,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": false
+      },
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "MIDI",
+       "jv1010": true
+      },
+      {
+       "label": "INT&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "pedal3_output_mode"
+    },
+    {
+     "name": "Pedal3 Polarity",
+     "offset": 84,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "STANDARD",
+       "jv1010": false
+      },
+      {
+       "label": "REVERSE",
+       "jv1010": true
+      }
+     ],
+     "key": "pedal3_polarity"
+    },
+    {
+     "name": "Pedal4 Assign",
+     "offset": 85,
+     "bytes": 1,
+     "min": 1,
+     "max": 104,
+     "bits": "0aaa aaaa",
+     "footnote": 15,
+     "key": "pedal4_assign"
+    },
+    {
+     "name": "Pedal4 Output Mode",
+     "offset": 86,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 16,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": false
+      },
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "MIDI",
+       "jv1010": true
+      },
+      {
+       "label": "INT&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "pedal4_output_mode"
+    },
+    {
+     "name": "Pedal4 Polarity",
+     "offset": 87,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "STANDARD",
+       "jv1010": false
+      },
+      {
+       "label": "REVERSE",
+       "jv1010": true
+      }
+     ],
+     "key": "pedal4_polarity"
+    },
+    {
+     "name": "Arpeggio Style",
+     "offset": 88,
+     "bytes": 1,
+     "min": 0,
+     "max": 42,
+     "bits": "00aa aaaa",
+     "display_text": "<1 - 43>",
+     "jv1080_only": true,
+     "display_min": 1,
+     "display_max": 43,
+     "key": "arpeggio_style"
+    },
+    {
+     "name": "Arpeggio Motif",
+     "offset": 89,
+     "bytes": 1,
+     "min": 0,
+     "max": 37,
+     "bits": "00aa aaaa",
+     "display_text": "<1 - 38>",
+     "jv1080_only": true,
+     "display_min": 1,
+     "display_max": 38,
+     "key": "arpeggio_motif"
+    },
+    {
+     "name": "Arpeggio Beat Pattern",
+     "offset": 90,
+     "bytes": 1,
+     "min": 0,
+     "max": 114,
+     "bits": "0aaa aaaa",
+     "display_text": "<1 - 115>",
+     "jv1080_only": true,
+     "display_min": 1,
+     "display_max": 115,
+     "key": "arpeggio_beat_pattern"
+    },
+    {
+     "name": "Arpeggio Accent Rate",
+     "offset": 91,
+     "bytes": 1,
+     "min": 0,
+     "max": 100,
+     "bits": "0aaa aaaa",
+     "display_text": "<0 - 100>",
+     "jv1080_only": true,
+     "display_min": 0,
+     "display_max": 100,
+     "key": "arpeggio_accent_rate"
+    },
+    {
+     "name": "Arpeggio Shuffle Rate",
+     "offset": 92,
+     "bytes": 1,
+     "min": 50,
+     "max": 90,
+     "bits": "0aaa aaaa",
+     "display_text": "<50 - 90>",
+     "jv1080_only": true,
+     "display_min": 50,
+     "display_max": 90,
+     "key": "arpeggio_shuffle_rate"
+    },
+    {
+     "name": "Arpeggio Keyboard Velocity",
+     "offset": 93,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 13,
+     "key": "arpeggio_keyboard_velocity"
+    },
+    {
+     "name": "Arpeggio Octave Range",
+     "offset": 94,
+     "bytes": 1,
+     "min": 0,
+     "max": 6,
+     "bits": "0000 0aaa",
+     "display_text": "-3 - +3",
+     "display_min": -3,
+     "display_max": 3,
+     "key": "arpeggio_octave_range"
+    },
+    {
+     "name": "Arpeggio Part Number",
+     "offset": 95,
+     "bytes": 1,
+     "min": 0,
+     "max": 15,
+     "bits": "0000 aaaa",
+     "footnote": 19,
+     "key": "arpeggio_part_number"
+    },
+    {
+     "name": "System Tempo",
+     "offset": 96,
+     "bytes": 2,
+     "min": 20,
+     "max": 250,
+     "bits": "0000 aaaa",
+     "nibbled": true,
+     "key": "system_tempo"
+    },
+    {
+     "name": "C3 Assign",
+     "offset": 98,
+     "bytes": 1,
+     "min": 1,
+     "max": 97,
+     "bits": "0aaa aaaa",
+     "footnote": 18,
+     "key": "c3_assign"
+    },
+    {
+     "name": "C3 Output Mode",
+     "offset": 99,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 16,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": false
+      },
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "MIDI",
+       "jv1010": true
+      },
+      {
+       "label": "INT&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "c3_output_mode"
+    },
+    {
+     "name": "C4 Assign",
+     "offset": 100,
+     "bytes": 1,
+     "min": 1,
+     "max": 97,
+     "bits": "0aaa aaaa",
+     "footnote": 18,
+     "key": "c4_assign"
+    },
+    {
+     "name": "C4 Output Mode",
+     "offset": 101,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 16,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": false
+      },
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "MIDI",
+       "jv1010": true
+      },
+      {
+       "label": "INT&MIDI",
+       "jv1010": true
+      }
+     ],
+     "key": "c4_output_mode"
+    }
+   ]
+  },
+  "scale_tune": {
+   "section": "1-1-2",
+   "size": 12,
+   "footnotes": {},
+   "params": [
+    {
+     "name": "Scale Tune for C",
+     "offset": 0,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_c"
+    },
+    {
+     "name": "Scale Tune for C#",
+     "offset": 1,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_c_2"
+    },
+    {
+     "name": "Scale Tune for D",
+     "offset": 2,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_d"
+    },
+    {
+     "name": "Scale Tune for D#",
+     "offset": 3,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_d_2"
+    },
+    {
+     "name": "Scale Tune for E",
+     "offset": 4,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_e"
+    },
+    {
+     "name": "Scale Tune for F",
+     "offset": 5,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_f"
+    },
+    {
+     "name": "Scale Tune for F#",
+     "offset": 6,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_f_2"
+    },
+    {
+     "name": "Scale Tune for G",
+     "offset": 7,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_g"
+    },
+    {
+     "name": "Scale Tune for G#",
+     "offset": 8,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_g_2"
+    },
+    {
+     "name": "Scale Tune for A",
+     "offset": 9,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_a"
+    },
+    {
+     "name": "Scale Tune for A#",
+     "offset": 10,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_a_2"
+    },
+    {
+     "name": "Scale Tune for B",
+     "offset": 11,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "-64 - +63",
+     "display_min": -64,
+     "display_max": 63,
+     "key": "scale_tune_for_b"
+    }
+   ]
+  },
+  "performance_common": {
+   "section": "1-2-1",
+   "size": 66,
+   "footnotes": {
+    "1": "PERFORM, 1-9, 11-16",
+    "2": "MIX, <DIRECT-1>, <DIRECT-2>",
+    "3": "OFF, SYS-CTRL1, SYS-CTRL2, MODULATION, BREATH, FOOT, VOLUME, PAN, EXPRESSION, PITCH BEND, AFTERTOUCH",
+    "4": "MIX, REV, MIX+REV",
+    "5": "ROOM1, ROOM2, STAGE1, STAGE2, HALL1, HALL2, DELAY, PAN-DLY",
+    "6": "200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, BYPASS",
+    "7": "<LAYER, SINGLE>",
+    "8": "PERFORMANCE, SYSTEM"
+   },
+   "params": [
+    {
+     "key": "performance_name",
+     "name": "Performance Name",
+     "offset": 0,
+     "bytes": 12,
+     "min": 32,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "string": true
+    },
+    {
+     "name": "EFX Source",
+     "offset": 12,
+     "bytes": 1,
+     "min": 0,
+     "max": 15,
+     "bits": "0000 aaaa",
+     "footnote": 1,
+     "key": "efx_source"
+    },
+    {
+     "name": "EFX Type",
+     "offset": 13,
+     "bytes": 1,
+     "min": 0,
+     "max": 39,
+     "bits": "00aa aaaa",
+     "display_text": "1 - 40",
+     "display_min": 1,
+     "display_max": 40,
+     "key": "efx_type"
+    },
+    {
+     "name": "EFX Parameter 1",
+     "offset": 14,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_1"
+    },
+    {
+     "name": "EFX Parameter 2",
+     "offset": 15,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_2"
+    },
+    {
+     "name": "EFX Parameter 3",
+     "offset": 16,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_3"
+    },
+    {
+     "name": "EFX Parameter 4",
+     "offset": 17,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_4"
+    },
+    {
+     "name": "EFX Parameter 5",
+     "offset": 18,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_5"
+    },
+    {
+     "name": "EFX Parameter 6",
+     "offset": 19,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_6"
+    },
+    {
+     "name": "EFX Parameter 7",
+     "offset": 20,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_7"
+    },
+    {
+     "name": "EFX Parameter 8",
+     "offset": 21,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_8"
+    },
+    {
+     "name": "EFX Parameter 9",
+     "offset": 22,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_9"
+    },
+    {
+     "name": "EFX Parameter 10",
+     "offset": 23,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_10"
+    },
+    {
+     "name": "EFX Parameter 11",
+     "offset": 24,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_11"
+    },
+    {
+     "name": "EFX Parameter 12",
+     "offset": 25,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_12"
+    },
+    {
+     "name": "EFX Output Assign",
+     "offset": 26,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 2,
+     "choices": [
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "DIRECT-1",
+       "jv1010": false
+      },
+      {
+       "label": "DIRECT-2",
+       "jv1010": false
+      }
+     ],
+     "key": "efx_output_assign"
+    },
+    {
+     "name": "EFX Mix Out Send Level",
+     "offset": 27,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_mix_out_send_level"
+    },
+    {
+     "name": "EFX Chorus Send Level",
+     "offset": 28,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_chorus_send_level"
+    },
+    {
+     "name": "EFX Reverb Send Level",
+     "offset": 29,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_reverb_send_level"
+    },
+    {
+     "name": "EFX Control Source 1",
+     "offset": 30,
+     "bytes": 1,
+     "min": 0,
+     "max": 10,
+     "bits": "0000 aaaa",
+     "footnote": 3,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL1",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL2",
+       "jv1010": true
+      },
+      {
+       "label": "MODULATION",
+       "jv1010": true
+      },
+      {
+       "label": "BREATH",
+       "jv1010": true
+      },
+      {
+       "label": "FOOT",
+       "jv1010": true
+      },
+      {
+       "label": "VOLUME",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "EXPRESSION",
+       "jv1010": true
+      },
+      {
+       "label": "PITCH BEND",
+       "jv1010": true
+      },
+      {
+       "label": "AFTERTOUCH",
+       "jv1010": true
+      }
+     ],
+     "key": "efx_control_source_1"
+    },
+    {
+     "name": "EFX Control Depth 1",
+     "offset": 31,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "efx_control_depth_1"
+    },
+    {
+     "name": "EFX Control Source 2",
+     "offset": 32,
+     "bytes": 1,
+     "min": 0,
+     "max": 10,
+     "bits": "0000 aaaa",
+     "footnote": 3,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL1",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL2",
+       "jv1010": true
+      },
+      {
+       "label": "MODULATION",
+       "jv1010": true
+      },
+      {
+       "label": "BREATH",
+       "jv1010": true
+      },
+      {
+       "label": "FOOT",
+       "jv1010": true
+      },
+      {
+       "label": "VOLUME",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "EXPRESSION",
+       "jv1010": true
+      },
+      {
+       "label": "PITCH BEND",
+       "jv1010": true
+      },
+      {
+       "label": "AFTERTOUCH",
+       "jv1010": true
+      }
+     ],
+     "key": "efx_control_source_2"
+    },
+    {
+     "name": "EFX Control Depth 2",
+     "offset": 33,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "efx_control_depth_2"
+    },
+    {
+     "name": "Chorus Level",
+     "offset": 34,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_level"
+    },
+    {
+     "name": "Chorus Rate",
+     "offset": 35,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_rate"
+    },
+    {
+     "name": "Chorus Depth",
+     "offset": 36,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_depth"
+    },
+    {
+     "name": "Chorus Pre-Delay",
+     "offset": 37,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_pre_delay"
+    },
+    {
+     "name": "Chorus Feedback",
+     "offset": 38,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_feedback"
+    },
+    {
+     "name": "Chorus Output",
+     "offset": 39,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 4,
+     "choices": [
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "MIX+REV",
+       "jv1010": true
+      }
+     ],
+     "key": "chorus_output"
+    },
+    {
+     "name": "Reverb Type",
+     "offset": 40,
+     "bytes": 1,
+     "min": 0,
+     "max": 7,
+     "bits": "0000 0aaa",
+     "footnote": 5,
+     "choices": [
+      {
+       "label": "ROOM1",
+       "jv1010": true
+      },
+      {
+       "label": "ROOM2",
+       "jv1010": true
+      },
+      {
+       "label": "STAGE1",
+       "jv1010": true
+      },
+      {
+       "label": "STAGE2",
+       "jv1010": true
+      },
+      {
+       "label": "HALL1",
+       "jv1010": true
+      },
+      {
+       "label": "HALL2",
+       "jv1010": true
+      },
+      {
+       "label": "DELAY",
+       "jv1010": true
+      },
+      {
+       "label": "PAN-DLY",
+       "jv1010": true
+      }
+     ],
+     "key": "reverb_type"
+    },
+    {
+     "name": "Reverb Level",
+     "offset": 41,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "reverb_level"
+    },
+    {
+     "name": "Reverb Time",
+     "offset": 42,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "reverb_time"
+    },
+    {
+     "name": "Reverb HF Damp",
+     "offset": 43,
+     "bytes": 1,
+     "min": 0,
+     "max": 17,
+     "bits": "000a aaaa",
+     "footnote": 6,
+     "choices": [
+      {
+       "label": "200",
+       "jv1010": true
+      },
+      {
+       "label": "250",
+       "jv1010": true
+      },
+      {
+       "label": "315",
+       "jv1010": true
+      },
+      {
+       "label": "400",
+       "jv1010": true
+      },
+      {
+       "label": "500",
+       "jv1010": true
+      },
+      {
+       "label": "630",
+       "jv1010": true
+      },
+      {
+       "label": "800",
+       "jv1010": true
+      },
+      {
+       "label": "1000",
+       "jv1010": true
+      },
+      {
+       "label": "1250",
+       "jv1010": true
+      },
+      {
+       "label": "1600",
+       "jv1010": true
+      },
+      {
+       "label": "2000",
+       "jv1010": true
+      },
+      {
+       "label": "2500",
+       "jv1010": true
+      },
+      {
+       "label": "3150",
+       "jv1010": true
+      },
+      {
+       "label": "4000",
+       "jv1010": true
+      },
+      {
+       "label": "5000",
+       "jv1010": true
+      },
+      {
+       "label": "6300",
+       "jv1010": true
+      },
+      {
+       "label": "8000",
+       "jv1010": true
+      },
+      {
+       "label": "BYPASS",
+       "jv1010": true
+      }
+     ],
+     "key": "reverb_hf_damp"
+    },
+    {
+     "name": "Delay Feedback",
+     "offset": 44,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "delay_feedback"
+    },
+    {
+     "name": "Performance Tempo",
+     "offset": 45,
+     "bytes": 2,
+     "min": 20,
+     "max": 250,
+     "bits": "0000 aaaa",
+     "nibbled": true,
+     "key": "performance_tempo"
+    },
+    {
+     "name": "Keyboard Range Switch",
+     "offset": 47,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "keyboard_range_switch"
+    },
+    {
+     "name": "Voice Reserve 1",
+     "offset": 48,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_1"
+    },
+    {
+     "name": "Voice Reserve 2",
+     "offset": 49,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_2"
+    },
+    {
+     "name": "Voice Reserve 3",
+     "offset": 50,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_3"
+    },
+    {
+     "name": "Voice Reserve 4",
+     "offset": 51,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_4"
+    },
+    {
+     "name": "Voice Reserve 5",
+     "offset": 52,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_5"
+    },
+    {
+     "name": "Voice Reserve 6",
+     "offset": 53,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_6"
+    },
+    {
+     "name": "Voice Reserve 7",
+     "offset": 54,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_7"
+    },
+    {
+     "name": "Voice Reserve 8",
+     "offset": 55,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_8"
+    },
+    {
+     "name": "Voice Reserve 9",
+     "offset": 56,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_9"
+    },
+    {
+     "name": "Voice Reserve 10",
+     "offset": 57,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_10"
+    },
+    {
+     "name": "Voice Reserve 11",
+     "offset": 58,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_11"
+    },
+    {
+     "name": "Voice Reserve 12",
+     "offset": 59,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_12"
+    },
+    {
+     "name": "Voice Reserve 13",
+     "offset": 60,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_13"
+    },
+    {
+     "name": "Voice Reserve 14",
+     "offset": 61,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_14"
+    },
+    {
+     "name": "Voice Reserve 15",
+     "offset": 62,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_15"
+    },
+    {
+     "name": "Voice Reserve 16",
+     "offset": 63,
+     "bytes": 1,
+     "min": 0,
+     "max": 64,
+     "bits": "0aaa aaaa",
+     "key": "voice_reserve_16"
+    },
+    {
+     "name": "Keyboard Mode",
+     "offset": 64,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 7,
+     "choices": [
+      {
+       "label": "LAYER",
+       "jv1010": false
+      },
+      {
+       "label": "SINGLE",
+       "jv1010": true
+      }
+     ],
+     "key": "keyboard_mode"
+    },
+    {
+     "name": "Clock Source",
+     "offset": 65,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 8,
+     "choices": [
+      {
+       "label": "PERFORMANCE",
+       "jv1010": true
+      },
+      {
+       "label": "SYSTEM",
+       "jv1010": true
+      }
+     ],
+     "key": "clock_source"
+    }
+   ]
+  },
+  "performance_part": {
+   "section": "1-2-2",
+   "size": 25,
+   "footnotes": {
+    "1": "USER&PRESET, <PCM>, EXP",
+    "2": "MIX, EFX, <DIRECT-1>, <DIRECT-2>, PATCH",
+    "3": "C-1-Upper",
+    "4": "Lower-G9",
+    "5": "<PATCH, GROUP1-GROUP7>"
+   },
+   "params": [
+    {
+     "name": "Receive Switch",
+     "offset": 0,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_switch"
+    },
+    {
+     "name": "MIDI Channel",
+     "offset": 1,
+     "bytes": 1,
+     "min": 0,
+     "max": 15,
+     "bits": "0000 aaaa",
+     "display_text": "1 - 16",
+     "display_min": 1,
+     "display_max": 16,
+     "key": "midi_channel"
+    },
+    {
+     "name": "Patch Group Type",
+     "offset": 2,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 1,
+     "choices": [
+      {
+       "label": "USER&PRESET",
+       "jv1010": true
+      },
+      {
+       "label": "PCM",
+       "jv1010": false
+      },
+      {
+       "label": "EXP",
+       "jv1010": true
+      }
+     ],
+     "side_table": true,
+     "key": "patch_group_type"
+    },
+    {
+     "name": "Patch Group ID",
+     "offset": 3,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "side_table": true,
+     "key": "patch_group_id"
+    },
+    {
+     "name": "Patch Number",
+     "offset": 4,
+     "bytes": 2,
+     "min": 0,
+     "max": 255,
+     "bits": "0000 aaaa",
+     "nibbled": true,
+     "side_table": true,
+     "key": "patch_number"
+    },
+    {
+     "name": "Part Level",
+     "offset": 6,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "part_level"
+    },
+    {
+     "name": "Part Pan",
+     "offset": 7,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "L64 - 63R",
+     "key": "part_pan"
+    },
+    {
+     "name": "Part Coarse Tune",
+     "offset": 8,
+     "bytes": 1,
+     "min": 0,
+     "max": 96,
+     "bits": "0aaa aaaa",
+     "display_text": "-48 - +48",
+     "display_min": -48,
+     "display_max": 48,
+     "key": "part_coarse_tune"
+    },
+    {
+     "name": "Part Fine Tune",
+     "offset": 9,
+     "bytes": 1,
+     "min": 0,
+     "max": 100,
+     "bits": "0aaa aaaa",
+     "display_text": "-50 - +50",
+     "display_min": -50,
+     "display_max": 50,
+     "key": "part_fine_tune"
+    },
+    {
+     "name": "Output Assign",
+     "offset": 10,
+     "bytes": 1,
+     "min": 0,
+     "max": 4,
+     "bits": "0000 0aaa",
+     "footnote": 2,
+     "choices": [
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "EFX",
+       "jv1010": true
+      },
+      {
+       "label": "DIRECT-1",
+       "jv1010": false
+      },
+      {
+       "label": "DIRECT-2",
+       "jv1010": false
+      },
+      {
+       "label": "PATCH",
+       "jv1010": true
+      }
+     ],
+     "key": "output_assign"
+    },
+    {
+     "name": "Mix/EFX Send Level",
+     "offset": 11,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "mix_efx_send_level"
+    },
+    {
+     "name": "Chorus Send Level",
+     "offset": 12,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_send_level"
+    },
+    {
+     "name": "Reverb Send Level",
+     "offset": 13,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "reverb_send_level"
+    },
+    {
+     "name": "Receive Program Change Switch",
+     "offset": 14,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_program_change_switch"
+    },
+    {
+     "name": "Receive Volume Switch",
+     "offset": 15,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_volume_switch"
+    },
+    {
+     "name": "Receive Hold-1 Switch",
+     "offset": 16,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "receive_hold_1_switch"
+    },
+    {
+     "name": "Keyboard Range Lower",
+     "offset": 17,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 3,
+     "key": "keyboard_range_lower"
+    },
+    {
+     "name": "Keyboard Range Upper",
+     "offset": 18,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 4,
+     "key": "keyboard_range_upper"
+    },
+    {
+     "name": "Octave Shift",
+     "offset": 19,
+     "bytes": 1,
+     "min": 0,
+     "max": 6,
+     "bits": "0000 0aaa",
+     "display_text": "<-3 - +3>",
+     "jv1080_only": true,
+     "display_min": -3,
+     "display_max": 3,
+     "key": "octave_shift"
+    },
+    {
+     "name": "Local Switch",
+     "offset": 20,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "local_switch"
+    },
+    {
+     "name": "Transmit Switch",
+     "offset": 21,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "<OFF,ON>",
+     "jv1080_only": true,
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "transmit_switch"
+    },
+    {
+     "name": "Transmit Bank Select Group",
+     "offset": 22,
+     "bytes": 1,
+     "min": 0,
+     "max": 7,
+     "bits": "0000 0aaa",
+     "footnote": 5,
+     "key": "transmit_bank_select_group"
+    },
+    {
+     "name": "Transmit Volume",
+     "offset": 23,
+     "bytes": 2,
+     "min": 0,
+     "max": 128,
+     "bits": "0000 aaaa",
+     "nibbled": true,
+     "key": "transmit_volume"
+    }
+   ]
+  },
+  "patch_common": {
+   "section": "1-3-1",
+   "size": 74,
+   "footnotes": {
+    "1": "MIX, <DIRECT-1>, <DIRECT-2>",
+    "2": "OFF, SYS-CTRL1, SYS-CTRL2, MODULATION, BREATH, FOOT, VOLUME, PAN, EXPRESSION, PITCH BEND, AFTERTOUCH",
+    "3": "MIX, REV, MIX+REV",
+    "4": "ROOM1, ROOM2, STAGE1, STAGE2, HALL1, HALL2, DELAY, PAN-DLY",
+    "5": "200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, BYPASS",
+    "6": "NORMAL, LEGATO",
+    "7": "PITCH, NOTE",
+    "8": "OFF, SYS-CTRL1, SYS-CTRL2, MODULATION, BREATH, FOOT, VOLUME, PAN, EXPRESSION, PITCH BEND, AFTERTOUCH, LFO1, LFO2, VELOCITY, KEYFOLLOW, PLAYMATE",
+    "9": "OFF, HOLD, PEAK",
+    "10": "LAST, LOUDEST",
+    "11": "0, +6, +12, +18",
+    "12": "PATCH, SYSTEM",
+    "13": "NO ASSIGN, AC.PIANO, EL.PIANO, KEYBOARDS, BELL, MALLET, ORGAN, ACCORDION, HARMONICA, AC.GUITAR, EL.GUITAR, DIST.GUITAR, BASS, SYNTH BASS, STRINGS, ORCHESTRA, HIT&STAB, WIND, FLUTE, AC.BRASS, SYNTH BRASS, SAX, HARD LEAD, SOFT LEAD, TECHNO SYNTH, PULSATING, SYNTH FX, OTHER SYNTH, BRIGHT PAD, SOFT PAD, VOX, PLUCKED, ETHNIC, FRETTED, PERCUSSION, SOUND FX, BEAT&GROOVE, DRUMS, COMBINATION (0-38)"
+   },
+   "params": [
+    {
+     "key": "patch_name",
+     "name": "Patch Name",
+     "offset": 0,
+     "bytes": 12,
+     "min": 32,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "string": true
+    },
+    {
+     "name": "EFX Type",
+     "offset": 12,
+     "bytes": 1,
+     "min": 0,
+     "max": 39,
+     "bits": "00aa aaaa",
+     "display_text": "1 - 40",
+     "display_min": 1,
+     "display_max": 40,
+     "key": "efx_type"
+    },
+    {
+     "name": "EFX Parameter 1",
+     "offset": 13,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_1"
+    },
+    {
+     "name": "EFX Parameter 2",
+     "offset": 14,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_2"
+    },
+    {
+     "name": "EFX Parameter 3",
+     "offset": 15,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_3"
+    },
+    {
+     "name": "EFX Parameter 4",
+     "offset": 16,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_4"
+    },
+    {
+     "name": "EFX Parameter 5",
+     "offset": 17,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_5"
+    },
+    {
+     "name": "EFX Parameter 6",
+     "offset": 18,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_6"
+    },
+    {
+     "name": "EFX Parameter 7",
+     "offset": 19,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_7"
+    },
+    {
+     "name": "EFX Parameter 8",
+     "offset": 20,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_8"
+    },
+    {
+     "name": "EFX Parameter 9",
+     "offset": 21,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_9"
+    },
+    {
+     "name": "EFX Parameter 10",
+     "offset": 22,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_10"
+    },
+    {
+     "name": "EFX Parameter 11",
+     "offset": 23,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_11"
+    },
+    {
+     "name": "EFX Parameter 12",
+     "offset": 24,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_parameter_12"
+    },
+    {
+     "name": "EFX Output Assign",
+     "offset": 25,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 1,
+     "choices": [
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "DIRECT-1",
+       "jv1010": false
+      },
+      {
+       "label": "DIRECT-2",
+       "jv1010": false
+      }
+     ],
+     "key": "efx_output_assign"
+    },
+    {
+     "name": "EFX Mix Out Send Level",
+     "offset": 26,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_mix_out_send_level"
+    },
+    {
+     "name": "EFX Chorus Send Level",
+     "offset": 27,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_chorus_send_level"
+    },
+    {
+     "name": "EFX Reverb Send Level",
+     "offset": 28,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "efx_reverb_send_level"
+    },
+    {
+     "name": "EFX Control Source 1",
+     "offset": 29,
+     "bytes": 1,
+     "min": 0,
+     "max": 10,
+     "bits": "0000 aaaa",
+     "footnote": 2,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL1",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL2",
+       "jv1010": true
+      },
+      {
+       "label": "MODULATION",
+       "jv1010": true
+      },
+      {
+       "label": "BREATH",
+       "jv1010": true
+      },
+      {
+       "label": "FOOT",
+       "jv1010": true
+      },
+      {
+       "label": "VOLUME",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "EXPRESSION",
+       "jv1010": true
+      },
+      {
+       "label": "PITCH BEND",
+       "jv1010": true
+      },
+      {
+       "label": "AFTERTOUCH",
+       "jv1010": true
+      }
+     ],
+     "key": "efx_control_source_1"
+    },
+    {
+     "name": "EFX Control Depth 1",
+     "offset": 30,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "efx_control_depth_1"
+    },
+    {
+     "name": "EFX Control Source 2",
+     "offset": 31,
+     "bytes": 1,
+     "min": 0,
+     "max": 10,
+     "bits": "0000 aaaa",
+     "key": "efx_control_source_2"
+    },
+    {
+     "name": "EFX Control Depth 2",
+     "offset": 32,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "efx_control_depth_2"
+    },
+    {
+     "name": "Chorus Level",
+     "offset": 33,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_level"
+    },
+    {
+     "name": "Chorus Rate",
+     "offset": 34,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_rate"
+    },
+    {
+     "name": "Chorus Depth",
+     "offset": 35,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_depth"
+    },
+    {
+     "name": "Chorus Pre-Delay",
+     "offset": 36,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_pre_delay"
+    },
+    {
+     "name": "Chorus Feedback",
+     "offset": 37,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_feedback"
+    },
+    {
+     "name": "Chorus Output",
+     "offset": 38,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 3,
+     "choices": [
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "MIX+REV",
+       "jv1010": true
+      }
+     ],
+     "key": "chorus_output"
+    },
+    {
+     "name": "Reverb Type",
+     "offset": 39,
+     "bytes": 1,
+     "min": 0,
+     "max": 7,
+     "bits": "0000 0aaa",
+     "footnote": 4,
+     "choices": [
+      {
+       "label": "ROOM1",
+       "jv1010": true
+      },
+      {
+       "label": "ROOM2",
+       "jv1010": true
+      },
+      {
+       "label": "STAGE1",
+       "jv1010": true
+      },
+      {
+       "label": "STAGE2",
+       "jv1010": true
+      },
+      {
+       "label": "HALL1",
+       "jv1010": true
+      },
+      {
+       "label": "HALL2",
+       "jv1010": true
+      },
+      {
+       "label": "DELAY",
+       "jv1010": true
+      },
+      {
+       "label": "PAN-DLY",
+       "jv1010": true
+      }
+     ],
+     "key": "reverb_type"
+    },
+    {
+     "name": "Reverb Level",
+     "offset": 40,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "reverb_level"
+    },
+    {
+     "name": "Reverb Time",
+     "offset": 41,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "reverb_time"
+    },
+    {
+     "name": "Reverb HF Damp",
+     "offset": 42,
+     "bytes": 1,
+     "min": 0,
+     "max": 17,
+     "bits": "000a aaaa",
+     "footnote": 5,
+     "choices": [
+      {
+       "label": "200",
+       "jv1010": true
+      },
+      {
+       "label": "250",
+       "jv1010": true
+      },
+      {
+       "label": "315",
+       "jv1010": true
+      },
+      {
+       "label": "400",
+       "jv1010": true
+      },
+      {
+       "label": "500",
+       "jv1010": true
+      },
+      {
+       "label": "630",
+       "jv1010": true
+      },
+      {
+       "label": "800",
+       "jv1010": true
+      },
+      {
+       "label": "1000",
+       "jv1010": true
+      },
+      {
+       "label": "1250",
+       "jv1010": true
+      },
+      {
+       "label": "1600",
+       "jv1010": true
+      },
+      {
+       "label": "2000",
+       "jv1010": true
+      },
+      {
+       "label": "2500",
+       "jv1010": true
+      },
+      {
+       "label": "3150",
+       "jv1010": true
+      },
+      {
+       "label": "4000",
+       "jv1010": true
+      },
+      {
+       "label": "5000",
+       "jv1010": true
+      },
+      {
+       "label": "6300",
+       "jv1010": true
+      },
+      {
+       "label": "8000",
+       "jv1010": true
+      },
+      {
+       "label": "BYPASS",
+       "jv1010": true
+      }
+     ],
+     "key": "reverb_hf_damp"
+    },
+    {
+     "name": "Delay Feedback",
+     "offset": 43,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "delay_feedback"
+    },
+    {
+     "name": "Patch Tempo",
+     "offset": 44,
+     "bytes": 2,
+     "min": 20,
+     "max": 250,
+     "bits": "0000 aaaa",
+     "nibbled": true,
+     "key": "patch_tempo"
+    },
+    {
+     "name": "Patch Level",
+     "offset": 46,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "patch_level"
+    },
+    {
+     "name": "Patch Pan",
+     "offset": 47,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "L64 - 63R",
+     "key": "patch_pan"
+    },
+    {
+     "name": "Analog Feel",
+     "offset": 48,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "analog_feel"
+    },
+    {
+     "name": "Bend Range Up",
+     "offset": 49,
+     "bytes": 1,
+     "min": 0,
+     "max": 12,
+     "bits": "0000 aaaa",
+     "key": "bend_range_up"
+    },
+    {
+     "name": "Bend Range Down",
+     "offset": 50,
+     "bytes": 1,
+     "min": 0,
+     "max": 48,
+     "bits": "00aa aaaa",
+     "display_text": "0 - -48",
+     "display_min": 0,
+     "display_max": -48,
+     "key": "bend_range_down"
+    },
+    {
+     "name": "Key Assign Mode",
+     "offset": 51,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "POLY,SOLO",
+     "labels": [
+      "POLY",
+      "SOLO"
+     ],
+     "key": "key_assign_mode"
+    },
+    {
+     "name": "Solo Legato",
+     "offset": 52,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "solo_legato"
+    },
+    {
+     "name": "Portamento Switch",
+     "offset": 53,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "portamento_switch"
+    },
+    {
+     "name": "Portamento Mode",
+     "offset": 54,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 6,
+     "choices": [
+      {
+       "label": "NORMAL",
+       "jv1010": true
+      },
+      {
+       "label": "LEGATO",
+       "jv1010": true
+      }
+     ],
+     "key": "portamento_mode"
+    },
+    {
+     "name": "Portamento Type",
+     "offset": 55,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "RATE,TIME",
+     "labels": [
+      "RATE",
+      "TIME"
+     ],
+     "key": "portamento_type"
+    },
+    {
+     "name": "Portamento Start",
+     "offset": 56,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 7,
+     "choices": [
+      {
+       "label": "PITCH",
+       "jv1010": true
+      },
+      {
+       "label": "NOTE",
+       "jv1010": true
+      }
+     ],
+     "key": "portamento_start"
+    },
+    {
+     "name": "Portamento Time",
+     "offset": 57,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "portamento_time"
+    },
+    {
+     "name": "Patch Control Source 2",
+     "offset": 58,
+     "bytes": 1,
+     "min": 0,
+     "max": 15,
+     "bits": "0000 aaaa",
+     "footnote": 8,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL1",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL2",
+       "jv1010": true
+      },
+      {
+       "label": "MODULATION",
+       "jv1010": true
+      },
+      {
+       "label": "BREATH",
+       "jv1010": true
+      },
+      {
+       "label": "FOOT",
+       "jv1010": true
+      },
+      {
+       "label": "VOLUME",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "EXPRESSION",
+       "jv1010": true
+      },
+      {
+       "label": "PITCH BEND",
+       "jv1010": true
+      },
+      {
+       "label": "AFTERTOUCH",
+       "jv1010": true
+      },
+      {
+       "label": "LFO1",
+       "jv1010": true
+      },
+      {
+       "label": "LFO2",
+       "jv1010": true
+      },
+      {
+       "label": "VELOCITY",
+       "jv1010": true
+      },
+      {
+       "label": "KEYFOLLOW",
+       "jv1010": true
+      },
+      {
+       "label": "PLAYMATE",
+       "jv1010": true
+      }
+     ],
+     "key": "patch_control_source_2"
+    },
+    {
+     "name": "Patch Control Source 3",
+     "offset": 59,
+     "bytes": 1,
+     "min": 0,
+     "max": 15,
+     "bits": "0000 aaaa",
+     "footnote": 8,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL1",
+       "jv1010": true
+      },
+      {
+       "label": "SYS-CTRL2",
+       "jv1010": true
+      },
+      {
+       "label": "MODULATION",
+       "jv1010": true
+      },
+      {
+       "label": "BREATH",
+       "jv1010": true
+      },
+      {
+       "label": "FOOT",
+       "jv1010": true
+      },
+      {
+       "label": "VOLUME",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "EXPRESSION",
+       "jv1010": true
+      },
+      {
+       "label": "PITCH BEND",
+       "jv1010": true
+      },
+      {
+       "label": "AFTERTOUCH",
+       "jv1010": true
+      },
+      {
+       "label": "LFO1",
+       "jv1010": true
+      },
+      {
+       "label": "LFO2",
+       "jv1010": true
+      },
+      {
+       "label": "VELOCITY",
+       "jv1010": true
+      },
+      {
+       "label": "KEYFOLLOW",
+       "jv1010": true
+      },
+      {
+       "label": "PLAYMATE",
+       "jv1010": true
+      }
+     ],
+     "key": "patch_control_source_3"
+    },
+    {
+     "name": "EFX Control Hold/Peak",
+     "offset": 60,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD",
+       "jv1010": true
+      },
+      {
+       "label": "PEAK",
+       "jv1010": true
+      }
+     ],
+     "key": "efx_control_hold_peak"
+    },
+    {
+     "name": "Control 1 Hold/Peak",
+     "offset": 61,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD",
+       "jv1010": true
+      },
+      {
+       "label": "PEAK",
+       "jv1010": true
+      }
+     ],
+     "key": "control_1_hold_peak"
+    },
+    {
+     "name": "Control 2 Hold/Peak",
+     "offset": 62,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD",
+       "jv1010": true
+      },
+      {
+       "label": "PEAK",
+       "jv1010": true
+      }
+     ],
+     "key": "control_2_hold_peak"
+    },
+    {
+     "name": "Control 3 Hold/Peak",
+     "offset": 63,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD",
+       "jv1010": true
+      },
+      {
+       "label": "PEAK",
+       "jv1010": true
+      }
+     ],
+     "key": "control_3_hold_peak"
+    },
+    {
+     "name": "Velocity Range Switch",
+     "offset": 64,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "velocity_range_switch"
+    },
+    {
+     "name": "Octave Shift",
+     "offset": 65,
+     "bytes": 1,
+     "min": 0,
+     "max": 6,
+     "bits": "0000 0aaa",
+     "display_text": "-3 - +3",
+     "display_min": -3,
+     "display_max": 3,
+     "key": "octave_shift"
+    },
+    {
+     "name": "Stretch Tune Depth",
+     "offset": 66,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "display_text": "OFF,1 - 3",
+     "key": "stretch_tune_depth"
+    },
+    {
+     "name": "Voice Priority",
+     "offset": 67,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 10,
+     "choices": [
+      {
+       "label": "LAST",
+       "jv1010": true
+      },
+      {
+       "label": "LOUDEST",
+       "jv1010": true
+      }
+     ],
+     "key": "voice_priority"
+    },
+    {
+     "name": "Structure Type 1&2",
+     "offset": 68,
+     "bytes": 1,
+     "min": 0,
+     "max": 9,
+     "bits": "0000 aaaa",
+     "display_text": "1 - 10",
+     "display_min": 1,
+     "display_max": 10,
+     "key": "structure_type_1and2"
+    },
+    {
+     "name": "Booster 1&2",
+     "offset": 69,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 11,
+     "choices": [
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+6",
+       "jv1010": true
+      },
+      {
+       "label": "+12",
+       "jv1010": true
+      },
+      {
+       "label": "+18",
+       "jv1010": true
+      }
+     ],
+     "key": "booster_1and2"
+    },
+    {
+     "name": "Structure Type 3&4",
+     "offset": 70,
+     "bytes": 1,
+     "min": 0,
+     "max": 9,
+     "bits": "0000 aaaa",
+     "display_text": "1 - 10",
+     "display_min": 1,
+     "display_max": 10,
+     "key": "structure_type_3and4"
+    },
+    {
+     "name": "Booster 3&4",
+     "offset": 71,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 11,
+     "choices": [
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+6",
+       "jv1010": true
+      },
+      {
+       "label": "+12",
+       "jv1010": true
+      },
+      {
+       "label": "+18",
+       "jv1010": true
+      }
+     ],
+     "key": "booster_3and4"
+    },
+    {
+     "name": "Clock Source",
+     "offset": 72,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 12,
+     "choices": [
+      {
+       "label": "PATCH",
+       "jv1010": true
+      },
+      {
+       "label": "SYSTEM",
+       "jv1010": true
+      }
+     ],
+     "key": "clock_source"
+    },
+    {
+     "name": "Patch Category",
+     "offset": 73,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 13,
+     "choices": [
+      {
+       "label": "NO ASSIGN",
+       "jv1010": true
+      },
+      {
+       "label": "AC.PIANO",
+       "jv1010": true
+      },
+      {
+       "label": "EL.PIANO",
+       "jv1010": true
+      },
+      {
+       "label": "KEYBOARDS",
+       "jv1010": true
+      },
+      {
+       "label": "BELL",
+       "jv1010": true
+      },
+      {
+       "label": "MALLET",
+       "jv1010": true
+      },
+      {
+       "label": "ORGAN",
+       "jv1010": true
+      },
+      {
+       "label": "ACCORDION",
+       "jv1010": true
+      },
+      {
+       "label": "HARMONICA",
+       "jv1010": true
+      },
+      {
+       "label": "AC.GUITAR",
+       "jv1010": true
+      },
+      {
+       "label": "EL.GUITAR",
+       "jv1010": true
+      },
+      {
+       "label": "DIST.GUITAR",
+       "jv1010": true
+      },
+      {
+       "label": "BASS",
+       "jv1010": true
+      },
+      {
+       "label": "SYNTH BASS",
+       "jv1010": true
+      },
+      {
+       "label": "STRINGS",
+       "jv1010": true
+      },
+      {
+       "label": "ORCHESTRA",
+       "jv1010": true
+      },
+      {
+       "label": "HIT&STAB",
+       "jv1010": true
+      },
+      {
+       "label": "WIND",
+       "jv1010": true
+      },
+      {
+       "label": "FLUTE",
+       "jv1010": true
+      },
+      {
+       "label": "AC.BRASS",
+       "jv1010": true
+      },
+      {
+       "label": "SYNTH BRASS",
+       "jv1010": true
+      },
+      {
+       "label": "SAX",
+       "jv1010": true
+      },
+      {
+       "label": "HARD LEAD",
+       "jv1010": true
+      },
+      {
+       "label": "SOFT LEAD",
+       "jv1010": true
+      },
+      {
+       "label": "TECHNO SYNTH",
+       "jv1010": true
+      },
+      {
+       "label": "PULSATING",
+       "jv1010": true
+      },
+      {
+       "label": "SYNTH FX",
+       "jv1010": true
+      },
+      {
+       "label": "OTHER SYNTH",
+       "jv1010": true
+      },
+      {
+       "label": "BRIGHT PAD",
+       "jv1010": true
+      },
+      {
+       "label": "SOFT PAD",
+       "jv1010": true
+      },
+      {
+       "label": "VOX",
+       "jv1010": true
+      },
+      {
+       "label": "PLUCKED",
+       "jv1010": true
+      },
+      {
+       "label": "ETHNIC",
+       "jv1010": true
+      },
+      {
+       "label": "FRETTED",
+       "jv1010": true
+      },
+      {
+       "label": "PERCUSSION",
+       "jv1010": true
+      },
+      {
+       "label": "SOUND FX",
+       "jv1010": true
+      },
+      {
+       "label": "BEAT&GROOVE",
+       "jv1010": true
+      },
+      {
+       "label": "DRUMS",
+       "jv1010": true
+      },
+      {
+       "label": "COMBINATION",
+       "jv1010": true
+      }
+     ],
+     "key": "patch_category"
+    }
+   ]
+  },
+  "patch_tone": {
+   "section": "1-3-2",
+   "size": 129,
+   "footnotes": {
+    "1": "INT, <PCM>, EXP",
+    "2": "-6, 0, +6, +12",
+    "3": "NORMAL, HOLD, PLAYMATE, CLOCK-SYNC, <TAP-SYNC>, KEY-OFF-N, KEY-OFF-D, TEMPO-SYNC",
+    "4": "1-Upper",
+    "5": "Lower-127",
+    "6": "C-1-Upper",
+    "7": "Lower-G9",
+    "8": "OFF, CONTINUOUS, KEY-ON",
+    "9": "OFF, PCH, CUT, RES, LEV, PAN, MIX, CHO, REV, PL1, PL2, FL1, FL2, AL1, AL2, pL1, pL2, L1R, L2R",
+    "10": "TRI, SIN, SAW, SQR, TRP, S&H, RND, CHS",
+    "11": "-100, -50, 0, +50, +100",
+    "12": "KEY-ON-IN, KEY-ON-OUT, KEY-OFF-IN, KEY-OFF-OUT",
+    "13": "OFF, CLOCK, <TAP>",
+    "14": "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200",
+    "15": "-100, -70, -50, -30, -10, 0, +10, +20, +30, +40, +50, +70, +100, +120, +150, +200",
+    "16": "-100-+150",
+    "17": "-100, -70, -50, -40, -30, -20, -10, 0, +10, +20, +30, +40, +50, +70, +100",
+    "18": "OFF, LPF, BPF, HPF, PKG",
+    "19": "LOWER, UPPER, LOWER&UPPER, ALL",
+    "20": "MIX, EFX, <DIRECT-1>, <DIRECT-2>"
+   },
+   "params": [
+    {
+     "name": "Tone Switch",
+     "offset": 0,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "tone_switch"
+    },
+    {
+     "name": "Wave Group Type",
+     "offset": 1,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 1,
+     "choices": [
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "PCM",
+       "jv1010": false
+      },
+      {
+       "label": "EXP",
+       "jv1010": true
+      }
+     ],
+     "side_table": true,
+     "key": "wave_group_type"
+    },
+    {
+     "name": "Wave Group ID",
+     "offset": 2,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "side_table": true,
+     "key": "wave_group_id"
+    },
+    {
+     "name": "Wave Number",
+     "offset": 3,
+     "bytes": 2,
+     "min": 0,
+     "max": 254,
+     "bits": "0000 aaaa",
+     "nibbled": true,
+     "side_table": true,
+     "key": "wave_number"
+    },
+    {
+     "name": "Wave Gain",
+     "offset": 5,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 2,
+     "choices": [
+      {
+       "label": "-6",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+6",
+       "jv1010": true
+      },
+      {
+       "label": "+12",
+       "jv1010": true
+      }
+     ],
+     "key": "wave_gain"
+    },
+    {
+     "name": "FXM Switch",
+     "offset": 6,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "fxm_switch"
+    },
+    {
+     "name": "FXM Color",
+     "offset": 7,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "display_text": "1 - 4",
+     "display_min": 1,
+     "display_max": 4,
+     "key": "fxm_color"
+    },
+    {
+     "name": "FXM Depth",
+     "offset": 8,
+     "bytes": 1,
+     "min": 0,
+     "max": 15,
+     "bits": "0000 aaaa",
+     "display_text": "1 - 16",
+     "display_min": 1,
+     "display_max": 16,
+     "key": "fxm_depth"
+    },
+    {
+     "name": "Tone Delay Mode",
+     "offset": 9,
+     "bytes": 1,
+     "min": 0,
+     "max": 7,
+     "bits": "0000 0aaa",
+     "footnote": 3,
+     "choices": [
+      {
+       "label": "NORMAL",
+       "jv1010": true
+      },
+      {
+       "label": "HOLD",
+       "jv1010": true
+      },
+      {
+       "label": "PLAYMATE",
+       "jv1010": true
+      },
+      {
+       "label": "CLOCK-SYNC",
+       "jv1010": true
+      },
+      {
+       "label": "TAP-SYNC",
+       "jv1010": false
+      },
+      {
+       "label": "KEY-OFF-N",
+       "jv1010": true
+      },
+      {
+       "label": "KEY-OFF-D",
+       "jv1010": true
+      },
+      {
+       "label": "TEMPO-SYNC",
+       "jv1010": true
+      }
+     ],
+     "key": "tone_delay_mode"
+    },
+    {
+     "name": "Tone Delay Time",
+     "offset": 10,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "tone_delay_time"
+    },
+    {
+     "name": "Velocity Cross Fade",
+     "offset": 11,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "velocity_cross_fade"
+    },
+    {
+     "name": "Velocity Range Lower",
+     "offset": 12,
+     "bytes": 1,
+     "min": 1,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 4,
+     "key": "velocity_range_lower"
+    },
+    {
+     "name": "Velocity Range Upper",
+     "offset": 13,
+     "bytes": 1,
+     "min": 1,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 5,
+     "key": "velocity_range_upper"
+    },
+    {
+     "name": "Keyboard Range Lower",
+     "offset": 14,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 6,
+     "key": "keyboard_range_lower"
+    },
+    {
+     "name": "Keyboard Range Upper",
+     "offset": 15,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "footnote": 7,
+     "key": "keyboard_range_upper"
+    },
+    {
+     "name": "Redamper Control Switch",
+     "offset": 16,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "redamper_control_switch"
+    },
+    {
+     "name": "Volume Control Switch",
+     "offset": 17,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "volume_control_switch"
+    },
+    {
+     "name": "Hold-1 Control Switch",
+     "offset": 18,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "hold_1_control_switch"
+    },
+    {
+     "name": "Pitch Bend Control Switch",
+     "offset": 19,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "pitch_bend_control_switch"
+    },
+    {
+     "name": "Pan Control Switch",
+     "offset": 20,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 8,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "CONTINUOUS",
+       "jv1010": true
+      },
+      {
+       "label": "KEY-ON",
+       "jv1010": true
+      }
+     ],
+     "key": "pan_control_switch"
+    },
+    {
+     "name": "Controller 1 Destination 1",
+     "offset": 21,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_1_destination_1"
+    },
+    {
+     "name": "Controller 1 Depth 1",
+     "offset": 22,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_1_depth_1"
+    },
+    {
+     "name": "Controller 1 Destination 2",
+     "offset": 23,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_1_destination_2"
+    },
+    {
+     "name": "Controller 1 Depth 2",
+     "offset": 24,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_1_depth_2"
+    },
+    {
+     "name": "Controller 1 Destination 3",
+     "offset": 25,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_1_destination_3"
+    },
+    {
+     "name": "Controller 1 Depth 3",
+     "offset": 26,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_1_depth_3"
+    },
+    {
+     "name": "Controller 1 Destination 4",
+     "offset": 27,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_1_destination_4"
+    },
+    {
+     "name": "Controller 1 Depth 4",
+     "offset": 28,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_1_depth_4"
+    },
+    {
+     "name": "Controller 2 Destination 1",
+     "offset": 29,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_2_destination_1"
+    },
+    {
+     "name": "Controller 2 Depth 1",
+     "offset": 30,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_2_depth_1"
+    },
+    {
+     "name": "Controller 2 Destination 2",
+     "offset": 31,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_2_destination_2"
+    },
+    {
+     "name": "Controller 2 Depth 2",
+     "offset": 32,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_2_depth_2"
+    },
+    {
+     "name": "Controller 2 Destination 3",
+     "offset": 33,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_2_destination_3"
+    },
+    {
+     "name": "Controller 2 Depth 3",
+     "offset": 34,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_2_depth_3"
+    },
+    {
+     "name": "Controller 2 Destination 4",
+     "offset": 35,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_2_destination_4"
+    },
+    {
+     "name": "Controller 2 Depth 4",
+     "offset": 36,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_2_depth_4"
+    },
+    {
+     "name": "Controller 3 Destination 1",
+     "offset": 37,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_3_destination_1"
+    },
+    {
+     "name": "Controller 3 Depth 1",
+     "offset": 38,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_3_depth_1"
+    },
+    {
+     "name": "Controller 3 Destination 2",
+     "offset": 39,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_3_destination_2"
+    },
+    {
+     "name": "Controller 3 Depth 2",
+     "offset": 40,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_3_depth_2"
+    },
+    {
+     "name": "Controller 3 Destination 3",
+     "offset": 41,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_3_destination_3"
+    },
+    {
+     "name": "Controller 3 Depth 3",
+     "offset": 42,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_3_depth_3"
+    },
+    {
+     "name": "Controller 3 Destination 4",
+     "offset": 43,
+     "bytes": 1,
+     "min": 0,
+     "max": 18,
+     "bits": "000a aaaa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "PCH",
+       "jv1010": true
+      },
+      {
+       "label": "CUT",
+       "jv1010": true
+      },
+      {
+       "label": "RES",
+       "jv1010": true
+      },
+      {
+       "label": "LEV",
+       "jv1010": true
+      },
+      {
+       "label": "PAN",
+       "jv1010": true
+      },
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "CHO",
+       "jv1010": true
+      },
+      {
+       "label": "REV",
+       "jv1010": true
+      },
+      {
+       "label": "PL1",
+       "jv1010": true
+      },
+      {
+       "label": "PL2",
+       "jv1010": true
+      },
+      {
+       "label": "FL1",
+       "jv1010": true
+      },
+      {
+       "label": "FL2",
+       "jv1010": true
+      },
+      {
+       "label": "AL1",
+       "jv1010": true
+      },
+      {
+       "label": "AL2",
+       "jv1010": true
+      },
+      {
+       "label": "pL1",
+       "jv1010": true
+      },
+      {
+       "label": "pL2",
+       "jv1010": true
+      },
+      {
+       "label": "L1R",
+       "jv1010": true
+      },
+      {
+       "label": "L2R",
+       "jv1010": true
+      }
+     ],
+     "key": "controller_3_destination_4"
+    },
+    {
+     "name": "Controller 3 Depth 4",
+     "offset": 44,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "controller_3_depth_4"
+    },
+    {
+     "name": "LFO1 Waveform",
+     "offset": 45,
+     "bytes": 1,
+     "min": 0,
+     "max": 7,
+     "bits": "0000 0aaa",
+     "footnote": 10,
+     "choices": [
+      {
+       "label": "TRI",
+       "jv1010": true
+      },
+      {
+       "label": "SIN",
+       "jv1010": true
+      },
+      {
+       "label": "SAW",
+       "jv1010": true
+      },
+      {
+       "label": "SQR",
+       "jv1010": true
+      },
+      {
+       "label": "TRP",
+       "jv1010": true
+      },
+      {
+       "label": "S&H",
+       "jv1010": true
+      },
+      {
+       "label": "RND",
+       "jv1010": true
+      },
+      {
+       "label": "CHS",
+       "jv1010": true
+      }
+     ],
+     "key": "lfo1_waveform"
+    },
+    {
+     "name": "LFO1 Key Sync",
+     "offset": 46,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "lfo1_key_sync"
+    },
+    {
+     "name": "LFO1 Rate",
+     "offset": 47,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "lfo1_rate"
+    },
+    {
+     "name": "LFO1 Offset",
+     "offset": 48,
+     "bytes": 1,
+     "min": 0,
+     "max": 4,
+     "bits": "0000 0aaa",
+     "footnote": 11,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "lfo1_offset"
+    },
+    {
+     "name": "LFO1 Delay Time",
+     "offset": 49,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "lfo1_delay_time"
+    },
+    {
+     "name": "LFO1 Fade Mode",
+     "offset": 50,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 12,
+     "choices": [
+      {
+       "label": "KEY-ON-IN",
+       "jv1010": true
+      },
+      {
+       "label": "KEY-ON-OUT",
+       "jv1010": true
+      },
+      {
+       "label": "KEY-OFF-IN",
+       "jv1010": true
+      },
+      {
+       "label": "KEY-OFF-OUT",
+       "jv1010": true
+      }
+     ],
+     "key": "lfo1_fade_mode"
+    },
+    {
+     "name": "LFO1 Fade Time",
+     "offset": 51,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "lfo1_fade_time"
+    },
+    {
+     "name": "LFO1 External Sync",
+     "offset": 52,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 13,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "CLOCK",
+       "jv1010": true
+      },
+      {
+       "label": "TAP",
+       "jv1010": false
+      }
+     ],
+     "key": "lfo1_external_sync"
+    },
+    {
+     "name": "LFO2 Waveform",
+     "offset": 53,
+     "bytes": 1,
+     "min": 0,
+     "max": 7,
+     "bits": "0000 0aaa",
+     "footnote": 10,
+     "choices": [
+      {
+       "label": "TRI",
+       "jv1010": true
+      },
+      {
+       "label": "SIN",
+       "jv1010": true
+      },
+      {
+       "label": "SAW",
+       "jv1010": true
+      },
+      {
+       "label": "SQR",
+       "jv1010": true
+      },
+      {
+       "label": "TRP",
+       "jv1010": true
+      },
+      {
+       "label": "S&H",
+       "jv1010": true
+      },
+      {
+       "label": "RND",
+       "jv1010": true
+      },
+      {
+       "label": "CHS",
+       "jv1010": true
+      }
+     ],
+     "key": "lfo2_waveform"
+    },
+    {
+     "name": "LFO2 Key Sync",
+     "offset": 54,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "lfo2_key_sync"
+    },
+    {
+     "name": "LFO2 Rate",
+     "offset": 55,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "lfo2_rate"
+    },
+    {
+     "name": "LFO2 Offset",
+     "offset": 56,
+     "bytes": 1,
+     "min": 0,
+     "max": 4,
+     "bits": "0000 0aaa",
+     "footnote": 11,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "lfo2_offset"
+    },
+    {
+     "name": "LFO2 Delay Time",
+     "offset": 57,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "lfo2_delay_time"
+    },
+    {
+     "name": "LFO2 Fade Mode",
+     "offset": 58,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 12,
+     "choices": [
+      {
+       "label": "KEY-ON-IN",
+       "jv1010": true
+      },
+      {
+       "label": "KEY-ON-OUT",
+       "jv1010": true
+      },
+      {
+       "label": "KEY-OFF-IN",
+       "jv1010": true
+      },
+      {
+       "label": "KEY-OFF-OUT",
+       "jv1010": true
+      }
+     ],
+     "key": "lfo2_fade_mode"
+    },
+    {
+     "name": "LFO2 Fade Time",
+     "offset": 59,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "lfo2_fade_time"
+    },
+    {
+     "name": "LFO2 External Sync",
+     "offset": 60,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 13,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "CLOCK",
+       "jv1010": true
+      },
+      {
+       "label": "TAP",
+       "jv1010": false
+      }
+     ],
+     "key": "lfo2_external_sync"
+    },
+    {
+     "name": "Coarse Tune",
+     "offset": 61,
+     "bytes": 1,
+     "min": 0,
+     "max": 96,
+     "bits": "0aaa aaaa",
+     "display_text": "-48 - +48",
+     "display_min": -48,
+     "display_max": 48,
+     "key": "coarse_tune"
+    },
+    {
+     "name": "Fine Tune",
+     "offset": 62,
+     "bytes": 1,
+     "min": 0,
+     "max": 100,
+     "bits": "0aaa aaaa",
+     "display_text": "-50 - +50",
+     "display_min": -50,
+     "display_max": 50,
+     "key": "fine_tune"
+    },
+    {
+     "name": "Random Pitch Depth",
+     "offset": 63,
+     "bytes": 1,
+     "min": 0,
+     "max": 30,
+     "bits": "000a aaaa",
+     "footnote": 14,
+     "choices": [
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "1",
+       "jv1010": true
+      },
+      {
+       "label": "2",
+       "jv1010": true
+      },
+      {
+       "label": "3",
+       "jv1010": true
+      },
+      {
+       "label": "4",
+       "jv1010": true
+      },
+      {
+       "label": "5",
+       "jv1010": true
+      },
+      {
+       "label": "6",
+       "jv1010": true
+      },
+      {
+       "label": "7",
+       "jv1010": true
+      },
+      {
+       "label": "8",
+       "jv1010": true
+      },
+      {
+       "label": "9",
+       "jv1010": true
+      },
+      {
+       "label": "10",
+       "jv1010": true
+      },
+      {
+       "label": "20",
+       "jv1010": true
+      },
+      {
+       "label": "30",
+       "jv1010": true
+      },
+      {
+       "label": "40",
+       "jv1010": true
+      },
+      {
+       "label": "50",
+       "jv1010": true
+      },
+      {
+       "label": "60",
+       "jv1010": true
+      },
+      {
+       "label": "70",
+       "jv1010": true
+      },
+      {
+       "label": "80",
+       "jv1010": true
+      },
+      {
+       "label": "90",
+       "jv1010": true
+      },
+      {
+       "label": "100",
+       "jv1010": true
+      },
+      {
+       "label": "200",
+       "jv1010": true
+      },
+      {
+       "label": "300",
+       "jv1010": true
+      },
+      {
+       "label": "400",
+       "jv1010": true
+      },
+      {
+       "label": "500",
+       "jv1010": true
+      },
+      {
+       "label": "600",
+       "jv1010": true
+      },
+      {
+       "label": "700",
+       "jv1010": true
+      },
+      {
+       "label": "800",
+       "jv1010": true
+      },
+      {
+       "label": "900",
+       "jv1010": true
+      },
+      {
+       "label": "1000",
+       "jv1010": true
+      },
+      {
+       "label": "1100",
+       "jv1010": true
+      },
+      {
+       "label": "1200",
+       "jv1010": true
+      }
+     ],
+     "key": "random_pitch_depth"
+    },
+    {
+     "name": "Pitch Keyfollow",
+     "offset": 64,
+     "bytes": 1,
+     "min": 0,
+     "max": 15,
+     "bits": "0000 aaaa",
+     "footnote": 15,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      },
+      {
+       "label": "+120",
+       "jv1010": true
+      },
+      {
+       "label": "+150",
+       "jv1010": true
+      },
+      {
+       "label": "+200",
+       "jv1010": true
+      }
+     ],
+     "key": "pitch_keyfollow"
+    },
+    {
+     "name": "Pitch Envelope Depth",
+     "offset": 65,
+     "bytes": 1,
+     "min": 0,
+     "max": 24,
+     "bits": "000a aaaa",
+     "display_text": "-12 - +12",
+     "display_min": -12,
+     "display_max": 12,
+     "key": "pitch_envelope_depth"
+    },
+    {
+     "name": "Pitch Envelope Velocity Sens",
+     "offset": 66,
+     "bytes": 1,
+     "min": 0,
+     "max": 125,
+     "bits": "0aaa aaaa",
+     "footnote": 16,
+     "key": "pitch_envelope_velocity_sens"
+    },
+    {
+     "name": "Pitch Envelope Velocity Time1",
+     "offset": 67,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "pitch_envelope_velocity_time1"
+    },
+    {
+     "name": "Pitch Envelope Velocity Time4",
+     "offset": 68,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "pitch_envelope_velocity_time4"
+    },
+    {
+     "name": "Pitch Envelope Time Keyfollow",
+     "offset": 69,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "pitch_envelope_time_keyfollow"
+    },
+    {
+     "name": "Pitch Envelope Time 1",
+     "offset": 70,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "pitch_envelope_time_1"
+    },
+    {
+     "name": "Pitch Envelope Time 2",
+     "offset": 71,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "pitch_envelope_time_2"
+    },
+    {
+     "name": "Pitch Envelope Time 3",
+     "offset": 72,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "pitch_envelope_time_3"
+    },
+    {
+     "name": "Pitch Envelope Time 4",
+     "offset": 73,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "pitch_envelope_time_4"
+    },
+    {
+     "name": "Pitch Envelope Level 1",
+     "offset": 74,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_envelope_level_1"
+    },
+    {
+     "name": "Pitch Envelope Level 2",
+     "offset": 75,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_envelope_level_2"
+    },
+    {
+     "name": "Pitch Envelope Level 3",
+     "offset": 76,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_envelope_level_3"
+    },
+    {
+     "name": "Pitch Envelope Level 4",
+     "offset": 77,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_envelope_level_4"
+    },
+    {
+     "name": "Pitch LFO1 Depth",
+     "offset": 78,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_lfo1_depth"
+    },
+    {
+     "name": "Pitch LFO2 Depth",
+     "offset": 79,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_lfo2_depth"
+    },
+    {
+     "name": "Filter Type",
+     "offset": 80,
+     "bytes": 1,
+     "min": 0,
+     "max": 4,
+     "bits": "0000 0aaa",
+     "footnote": 18,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "LPF",
+       "jv1010": true
+      },
+      {
+       "label": "BPF",
+       "jv1010": true
+      },
+      {
+       "label": "HPF",
+       "jv1010": true
+      },
+      {
+       "label": "PKG",
+       "jv1010": true
+      }
+     ],
+     "key": "filter_type"
+    },
+    {
+     "name": "Cutoff Frequency",
+     "offset": 81,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "cutoff_frequency"
+    },
+    {
+     "name": "Cutoff Keyfollow",
+     "offset": 82,
+     "bytes": 1,
+     "min": 0,
+     "max": 15,
+     "bits": "0000 aaaa",
+     "footnote": 15,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      },
+      {
+       "label": "+120",
+       "jv1010": true
+      },
+      {
+       "label": "+150",
+       "jv1010": true
+      },
+      {
+       "label": "+200",
+       "jv1010": true
+      }
+     ],
+     "key": "cutoff_keyfollow"
+    },
+    {
+     "name": "Resonance",
+     "offset": 83,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "resonance"
+    },
+    {
+     "name": "Resonance Velocity Sens",
+     "offset": 84,
+     "bytes": 1,
+     "min": 0,
+     "max": 125,
+     "bits": "0aaa aaaa",
+     "footnote": 16,
+     "key": "resonance_velocity_sens"
+    },
+    {
+     "name": "Filter Envelope Depth",
+     "offset": 85,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "filter_envelope_depth"
+    },
+    {
+     "name": "Filter Envelope Velocity Curve",
+     "offset": 86,
+     "bytes": 1,
+     "min": 0,
+     "max": 6,
+     "bits": "0000 0aaa",
+     "display_text": "1 - 7",
+     "display_min": 1,
+     "display_max": 7,
+     "key": "filter_envelope_velocity_curve"
+    },
+    {
+     "name": "Filter Envelope Velocity Sens",
+     "offset": 87,
+     "bytes": 1,
+     "min": 0,
+     "max": 125,
+     "bits": "0aaa aaaa",
+     "footnote": 16,
+     "key": "filter_envelope_velocity_sens"
+    },
+    {
+     "name": "Filter Envelope Velocity Time1",
+     "offset": 88,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "filter_envelope_velocity_time1"
+    },
+    {
+     "name": "Filter Envelope Velocity Time4",
+     "offset": 89,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "filter_envelope_velocity_time4"
+    },
+    {
+     "name": "Filter Envelope Time Keyfollow",
+     "offset": 90,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "filter_envelope_time_keyfollow"
+    },
+    {
+     "name": "Filter Envelope Time 1",
+     "offset": 91,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_time_1"
+    },
+    {
+     "name": "Filter Envelope Time 2",
+     "offset": 92,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_time_2"
+    },
+    {
+     "name": "Filter Envelope Time 3",
+     "offset": 93,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_time_3"
+    },
+    {
+     "name": "Filter Envelope Time 4",
+     "offset": 94,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_time_4"
+    },
+    {
+     "name": "Filter Envelope Level 1",
+     "offset": 95,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_level_1"
+    },
+    {
+     "name": "Filter Envelope Level 2",
+     "offset": 96,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_level_2"
+    },
+    {
+     "name": "Filter Envelope Level 3",
+     "offset": 97,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_level_3"
+    },
+    {
+     "name": "Filter Envelope Level 4",
+     "offset": 98,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_level_4"
+    },
+    {
+     "name": "Filter LFO1 Depth",
+     "offset": 99,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "filter_lfo1_depth"
+    },
+    {
+     "name": "Filter LFO2 Depth",
+     "offset": 100,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "filter_lfo2_depth"
+    },
+    {
+     "name": "Tone Level",
+     "offset": 101,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "tone_level"
+    },
+    {
+     "name": "Bias Direction",
+     "offset": 102,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 19,
+     "choices": [
+      {
+       "label": "LOWER",
+       "jv1010": true
+      },
+      {
+       "label": "UPPER",
+       "jv1010": true
+      },
+      {
+       "label": "LOWER&UPPER",
+       "jv1010": true
+      },
+      {
+       "label": "ALL",
+       "jv1010": true
+      }
+     ],
+     "key": "bias_direction"
+    },
+    {
+     "name": "Bias Position",
+     "offset": 103,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "C-1 - G9",
+     "key": "bias_position"
+    },
+    {
+     "name": "Bias Level",
+     "offset": 104,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "bias_level"
+    },
+    {
+     "name": "Level Envelope Velocity Curve",
+     "offset": 105,
+     "bytes": 1,
+     "min": 0,
+     "max": 6,
+     "bits": "0000 0aaa",
+     "display_text": "1 - 7",
+     "display_min": 1,
+     "display_max": 7,
+     "key": "level_envelope_velocity_curve"
+    },
+    {
+     "name": "Level Envelope Velocity Sens",
+     "offset": 106,
+     "bytes": 1,
+     "min": 0,
+     "max": 125,
+     "bits": "0aaa aaaa",
+     "footnote": 16,
+     "key": "level_envelope_velocity_sens"
+    },
+    {
+     "name": "Level Envelope Velocity Time1",
+     "offset": 107,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "level_envelope_velocity_time1"
+    },
+    {
+     "name": "Level Envelope Velocity Time4",
+     "offset": 108,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "level_envelope_velocity_time4"
+    },
+    {
+     "name": "Level Envelope Time Keyfollow",
+     "offset": 109,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "level_envelope_time_keyfollow"
+    },
+    {
+     "name": "Level Envelope Time 1",
+     "offset": 110,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_time_1"
+    },
+    {
+     "name": "Level Envelope Time 2",
+     "offset": 111,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_time_2"
+    },
+    {
+     "name": "Level Envelope Time 3",
+     "offset": 112,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_time_3"
+    },
+    {
+     "name": "Level Envelope Time 4",
+     "offset": 113,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_time_4"
+    },
+    {
+     "name": "Level Envelope Level 1",
+     "offset": 114,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_level_1"
+    },
+    {
+     "name": "Level Envelope Level 2",
+     "offset": 115,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_level_2"
+    },
+    {
+     "name": "Level Envelope Level 3",
+     "offset": 116,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_level_3"
+    },
+    {
+     "name": "Level LFO1 Depth",
+     "offset": 117,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "level_lfo1_depth"
+    },
+    {
+     "name": "Level LFO2 Depth",
+     "offset": 118,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "level_lfo2_depth"
+    },
+    {
+     "name": "Tone Pan",
+     "offset": 119,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "L64 - 63R",
+     "key": "tone_pan"
+    },
+    {
+     "name": "Pan Keyfollow",
+     "offset": 120,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 17,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "pan_keyfollow"
+    },
+    {
+     "name": "Random Pan Depth",
+     "offset": 121,
+     "bytes": 1,
+     "min": 0,
+     "max": 63,
+     "bits": "00aa aaaa",
+     "key": "random_pan_depth"
+    },
+    {
+     "name": "Alternate Pan Depth",
+     "offset": 122,
+     "bytes": 1,
+     "min": 1,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "L63 - 63R",
+     "key": "alternate_pan_depth"
+    },
+    {
+     "name": "Pan LFO1 Depth",
+     "offset": 123,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "L63 - 63R",
+     "key": "pan_lfo1_depth"
+    },
+    {
+     "name": "Pan LFO2 Depth",
+     "offset": 124,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "L63 - 63R",
+     "key": "pan_lfo2_depth"
+    },
+    {
+     "name": "Output Assign",
+     "offset": 125,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 20,
+     "choices": [
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "EFX",
+       "jv1010": true
+      },
+      {
+       "label": "DIRECT-1",
+       "jv1010": false
+      },
+      {
+       "label": "DIRECT-2",
+       "jv1010": false
+      }
+     ],
+     "key": "output_assign"
+    },
+    {
+     "name": "Mix/EFX Send Level",
+     "offset": 126,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "mix_efx_send_level"
+    },
+    {
+     "name": "Chorus Send Level",
+     "offset": 127,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_send_level"
+    },
+    {
+     "name": "Reverb Send Level",
+     "offset": 128,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "reverb_send_level"
+    }
+   ]
+  },
+  "rhythm_common": {
+   "section": "1-4-1",
+   "size": 12,
+   "footnotes": {},
+   "params": [
+    {
+     "key": "rhythm_name",
+     "name": "Rhythm Name",
+     "offset": 0,
+     "bytes": 12,
+     "min": 32,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "string": true
+    }
+   ]
+  },
+  "rhythm_note": {
+   "section": "1-4-2",
+   "size": 58,
+   "footnotes": {
+    "1": "INT, <PCM>, EXP",
+    "2": "-6, 0, +6, +12",
+    "3": "NO-SUS, SUSTAIN",
+    "4": "OFF, CONTINUOUS, KEY-ON",
+    "5": "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200",
+    "6": "-100-+150",
+    "7": "-100, -70, -50, -40, -30, -20, -10, 0, +10, +20, +30, +40, +50, +70, +100",
+    "8": "OFF, LPF, BPF, HPF, PKG",
+    "9": "MIX, EFX, <DIRECT-1>, <DIRECT-2>"
+   },
+   "params": [
+    {
+     "name": "Tone Switch",
+     "offset": 0,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "tone_switch"
+    },
+    {
+     "name": "Wave Group Type",
+     "offset": 1,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 1,
+     "choices": [
+      {
+       "label": "INT",
+       "jv1010": true
+      },
+      {
+       "label": "PCM",
+       "jv1010": false
+      },
+      {
+       "label": "EXP",
+       "jv1010": true
+      }
+     ],
+     "side_table": true,
+     "key": "wave_group_type"
+    },
+    {
+     "name": "Wave Group ID",
+     "offset": 2,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "side_table": true,
+     "key": "wave_group_id"
+    },
+    {
+     "name": "Wave Number",
+     "offset": 3,
+     "bytes": 2,
+     "min": 0,
+     "max": 254,
+     "bits": "0000 aaaa",
+     "nibbled": true,
+     "side_table": true,
+     "key": "wave_number"
+    },
+    {
+     "name": "Wave Gain",
+     "offset": 5,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 2,
+     "choices": [
+      {
+       "label": "-6",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+6",
+       "jv1010": true
+      },
+      {
+       "label": "+12",
+       "jv1010": true
+      }
+     ],
+     "key": "wave_gain"
+    },
+    {
+     "name": "Bend Range",
+     "offset": 6,
+     "bytes": 1,
+     "min": 0,
+     "max": 12,
+     "bits": "0000 aaaa",
+     "key": "bend_range"
+    },
+    {
+     "name": "Mute Group",
+     "offset": 7,
+     "bytes": 1,
+     "min": 0,
+     "max": 31,
+     "bits": "000a aaaa",
+     "display_text": "OFF,1 - 31",
+     "key": "mute_group"
+    },
+    {
+     "name": "Envelope Mode",
+     "offset": 8,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "footnote": 3,
+     "choices": [
+      {
+       "label": "NO-SUS",
+       "jv1010": true
+      },
+      {
+       "label": "SUSTAIN",
+       "jv1010": true
+      }
+     ],
+     "key": "envelope_mode"
+    },
+    {
+     "name": "Volume Control Switch",
+     "offset": 9,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "volume_control_switch"
+    },
+    {
+     "name": "Hold-1 Control Switch",
+     "offset": 10,
+     "bytes": 1,
+     "min": 0,
+     "max": 1,
+     "bits": "0000 000a",
+     "display_text": "OFF,ON",
+     "labels": [
+      "OFF",
+      "ON"
+     ],
+     "key": "hold_1_control_switch"
+    },
+    {
+     "name": "Pan Control Switch",
+     "offset": 11,
+     "bytes": 1,
+     "min": 0,
+     "max": 2,
+     "bits": "0000 00aa",
+     "footnote": 4,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "CONTINUOUS",
+       "jv1010": true
+      },
+      {
+       "label": "KEY-ON",
+       "jv1010": true
+      }
+     ],
+     "key": "pan_control_switch"
+    },
+    {
+     "name": "Coarse Tune",
+     "offset": 12,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "C-1 - G9",
+     "key": "coarse_tune"
+    },
+    {
+     "name": "Fine Tune",
+     "offset": 13,
+     "bytes": 1,
+     "min": 0,
+     "max": 100,
+     "bits": "0aaa aaaa",
+     "display_text": "-50 - +50",
+     "display_min": -50,
+     "display_max": 50,
+     "key": "fine_tune"
+    },
+    {
+     "name": "Random Pitch Depth",
+     "offset": 14,
+     "bytes": 1,
+     "min": 0,
+     "max": 30,
+     "bits": "000a aaaa",
+     "footnote": 5,
+     "choices": [
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "1",
+       "jv1010": true
+      },
+      {
+       "label": "2",
+       "jv1010": true
+      },
+      {
+       "label": "3",
+       "jv1010": true
+      },
+      {
+       "label": "4",
+       "jv1010": true
+      },
+      {
+       "label": "5",
+       "jv1010": true
+      },
+      {
+       "label": "6",
+       "jv1010": true
+      },
+      {
+       "label": "7",
+       "jv1010": true
+      },
+      {
+       "label": "8",
+       "jv1010": true
+      },
+      {
+       "label": "9",
+       "jv1010": true
+      },
+      {
+       "label": "10",
+       "jv1010": true
+      },
+      {
+       "label": "20",
+       "jv1010": true
+      },
+      {
+       "label": "30",
+       "jv1010": true
+      },
+      {
+       "label": "40",
+       "jv1010": true
+      },
+      {
+       "label": "50",
+       "jv1010": true
+      },
+      {
+       "label": "60",
+       "jv1010": true
+      },
+      {
+       "label": "70",
+       "jv1010": true
+      },
+      {
+       "label": "80",
+       "jv1010": true
+      },
+      {
+       "label": "90",
+       "jv1010": true
+      },
+      {
+       "label": "100",
+       "jv1010": true
+      },
+      {
+       "label": "200",
+       "jv1010": true
+      },
+      {
+       "label": "300",
+       "jv1010": true
+      },
+      {
+       "label": "400",
+       "jv1010": true
+      },
+      {
+       "label": "500",
+       "jv1010": true
+      },
+      {
+       "label": "600",
+       "jv1010": true
+      },
+      {
+       "label": "700",
+       "jv1010": true
+      },
+      {
+       "label": "800",
+       "jv1010": true
+      },
+      {
+       "label": "900",
+       "jv1010": true
+      },
+      {
+       "label": "1000",
+       "jv1010": true
+      },
+      {
+       "label": "1100",
+       "jv1010": true
+      },
+      {
+       "label": "1200",
+       "jv1010": true
+      }
+     ],
+     "key": "random_pitch_depth"
+    },
+    {
+     "name": "Pitch Envelope Depth",
+     "offset": 15,
+     "bytes": 1,
+     "min": 0,
+     "max": 24,
+     "bits": "000a aaaa",
+     "display_text": "-12 - +12",
+     "display_min": -12,
+     "display_max": 12,
+     "key": "pitch_envelope_depth"
+    },
+    {
+     "name": "Pitch Envelope Velocity Sens",
+     "offset": 16,
+     "bytes": 1,
+     "min": 0,
+     "max": 125,
+     "bits": "0aaa aaaa",
+     "footnote": 6,
+     "key": "pitch_envelope_velocity_sens"
+    },
+    {
+     "name": "Pitch Envelope Velocity Time",
+     "offset": 17,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 7,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "pitch_envelope_velocity_time"
+    },
+    {
+     "name": "Pitch Envelope Time 1",
+     "offset": 18,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "pitch_envelope_time_1"
+    },
+    {
+     "name": "Pitch Envelope Time 2",
+     "offset": 19,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "pitch_envelope_time_2"
+    },
+    {
+     "name": "Pitch Envelope Time 3",
+     "offset": 20,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "pitch_envelope_time_3"
+    },
+    {
+     "name": "Pitch Envelope Time 4",
+     "offset": 21,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "pitch_envelope_time_4"
+    },
+    {
+     "name": "Pitch Envelope Level 1",
+     "offset": 22,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_envelope_level_1"
+    },
+    {
+     "name": "Pitch Envelope Level 2",
+     "offset": 23,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_envelope_level_2"
+    },
+    {
+     "name": "Pitch Envelope Level 3",
+     "offset": 24,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_envelope_level_3"
+    },
+    {
+     "name": "Pitch Envelope Level 4",
+     "offset": 25,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "pitch_envelope_level_4"
+    },
+    {
+     "name": "Filter Type",
+     "offset": 26,
+     "bytes": 1,
+     "min": 0,
+     "max": 4,
+     "bits": "0000 0aaa",
+     "footnote": 8,
+     "choices": [
+      {
+       "label": "OFF",
+       "jv1010": true
+      },
+      {
+       "label": "LPF",
+       "jv1010": true
+      },
+      {
+       "label": "BPF",
+       "jv1010": true
+      },
+      {
+       "label": "HPF",
+       "jv1010": true
+      },
+      {
+       "label": "PKG",
+       "jv1010": true
+      }
+     ],
+     "key": "filter_type"
+    },
+    {
+     "name": "Cutoff Frequency",
+     "offset": 27,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "cutoff_frequency"
+    },
+    {
+     "name": "Resonance",
+     "offset": 28,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "resonance"
+    },
+    {
+     "name": "Resonance Velocity Sens",
+     "offset": 29,
+     "bytes": 1,
+     "min": 0,
+     "max": 125,
+     "bits": "0aaa aaaa",
+     "footnote": 6,
+     "key": "resonance_velocity_sens"
+    },
+    {
+     "name": "Filter Envelope Depth",
+     "offset": 30,
+     "bytes": 1,
+     "min": 0,
+     "max": 126,
+     "bits": "0aaa aaaa",
+     "display_text": "-63 - +63",
+     "display_min": -63,
+     "display_max": 63,
+     "key": "filter_envelope_depth"
+    },
+    {
+     "name": "Filter Envelope Velocity Sens",
+     "offset": 31,
+     "bytes": 1,
+     "min": 0,
+     "max": 125,
+     "bits": "0aaa aaaa",
+     "footnote": 6,
+     "key": "filter_envelope_velocity_sens"
+    },
+    {
+     "name": "Filter Envelope Velocity Time",
+     "offset": 32,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 7,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "filter_envelope_velocity_time"
+    },
+    {
+     "name": "Filter Envelope Time 1",
+     "offset": 33,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_time_1"
+    },
+    {
+     "name": "Filter Envelope Time 2",
+     "offset": 34,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_time_2"
+    },
+    {
+     "name": "Filter Envelope Time 3",
+     "offset": 35,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_time_3"
+    },
+    {
+     "name": "Filter Envelope Time 4",
+     "offset": 36,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_time_4"
+    },
+    {
+     "name": "Filter Envelope Level 1",
+     "offset": 37,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_level_1"
+    },
+    {
+     "name": "Filter Envelope Level 2",
+     "offset": 38,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_level_2"
+    },
+    {
+     "name": "Filter Envelope Level 3",
+     "offset": 39,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_level_3"
+    },
+    {
+     "name": "Filter Envelope Level 4",
+     "offset": 40,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "filter_envelope_level_4"
+    },
+    {
+     "name": "Tone Level",
+     "offset": 41,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "tone_level"
+    },
+    {
+     "name": "Level Envelope Velocity Sens",
+     "offset": 42,
+     "bytes": 1,
+     "min": 0,
+     "max": 125,
+     "bits": "0aaa aaaa",
+     "footnote": 6,
+     "key": "level_envelope_velocity_sens"
+    },
+    {
+     "name": "Level Envelope Velocity Time",
+     "offset": 43,
+     "bytes": 1,
+     "min": 0,
+     "max": 14,
+     "bits": "0000 aaaa",
+     "footnote": 7,
+     "choices": [
+      {
+       "label": "-100",
+       "jv1010": true
+      },
+      {
+       "label": "-70",
+       "jv1010": true
+      },
+      {
+       "label": "-50",
+       "jv1010": true
+      },
+      {
+       "label": "-40",
+       "jv1010": true
+      },
+      {
+       "label": "-30",
+       "jv1010": true
+      },
+      {
+       "label": "-20",
+       "jv1010": true
+      },
+      {
+       "label": "-10",
+       "jv1010": true
+      },
+      {
+       "label": "0",
+       "jv1010": true
+      },
+      {
+       "label": "+10",
+       "jv1010": true
+      },
+      {
+       "label": "+20",
+       "jv1010": true
+      },
+      {
+       "label": "+30",
+       "jv1010": true
+      },
+      {
+       "label": "+40",
+       "jv1010": true
+      },
+      {
+       "label": "+50",
+       "jv1010": true
+      },
+      {
+       "label": "+70",
+       "jv1010": true
+      },
+      {
+       "label": "+100",
+       "jv1010": true
+      }
+     ],
+     "key": "level_envelope_velocity_time"
+    },
+    {
+     "name": "Level Envelope Time 1",
+     "offset": 44,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_time_1"
+    },
+    {
+     "name": "Level Envelope Time 2",
+     "offset": 45,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_time_2"
+    },
+    {
+     "name": "Level Envelope Time 3",
+     "offset": 46,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_time_3"
+    },
+    {
+     "name": "Level Envelope Time 4",
+     "offset": 47,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_time_4"
+    },
+    {
+     "name": "Level Envelope Level 1",
+     "offset": 48,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_level_1"
+    },
+    {
+     "name": "Level Envelope Level 2",
+     "offset": 49,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_level_2"
+    },
+    {
+     "name": "Level Envelope Level 3",
+     "offset": 50,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "level_envelope_level_3"
+    },
+    {
+     "name": "Tone Pan",
+     "offset": 51,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "L64 - 63R",
+     "key": "tone_pan"
+    },
+    {
+     "name": "Random Pan Depth",
+     "offset": 52,
+     "bytes": 1,
+     "min": 0,
+     "max": 63,
+     "bits": "00aa aaaa",
+     "key": "random_pan_depth"
+    },
+    {
+     "name": "Alternate Pan Depth",
+     "offset": 53,
+     "bytes": 1,
+     "min": 1,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "display_text": "L63 - 63R",
+     "key": "alternate_pan_depth"
+    },
+    {
+     "name": "Output Assign",
+     "offset": 54,
+     "bytes": 1,
+     "min": 0,
+     "max": 3,
+     "bits": "0000 00aa",
+     "footnote": 9,
+     "choices": [
+      {
+       "label": "MIX",
+       "jv1010": true
+      },
+      {
+       "label": "EFX",
+       "jv1010": true
+      },
+      {
+       "label": "DIRECT-1",
+       "jv1010": false
+      },
+      {
+       "label": "DIRECT-2",
+       "jv1010": false
+      }
+     ],
+     "key": "output_assign"
+    },
+    {
+     "name": "Mix/EFX Send Level",
+     "offset": 55,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "mix_efx_send_level"
+    },
+    {
+     "name": "Chorus Send Level",
+     "offset": 56,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "chorus_send_level"
+    },
+    {
+     "name": "Reverb Send Level",
+     "offset": 57,
+     "bytes": 1,
+     "min": 0,
+     "max": 127,
+     "bits": "0aaa aaaa",
+     "key": "reverb_send_level"
+    }
+   ]
+  }
+ }
+}

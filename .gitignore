@@ -1,0 +1,27 @@
+# Roland's manual stays out of the repo (it is their copyright); the table generated from it is committed
+/manual
+
+# Python / uv / pytest
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# editors and the OS
+.DS_Store
+.idea/
+.vscode/
+.ruff_cache/
+.mypy_cache/
+
+# logs a run might drop next to the code (the app's own logs live in ~/.jv1010editor)
+*.log
+
+# SysEx captured from a unit or saved while testing is the owner's own data: keep it out unless it is a deliberate test fixture
+*.syx
+!tests/fixtures/**/*.syx
