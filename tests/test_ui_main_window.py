@@ -762,7 +762,6 @@ def test_a_unit_that_does_not_take_a_live_performance_edit_switches_it_off_once(
 
 
 def test_writing_a_user_performance_backs_up_the_old_one(writable, monkeypatch):
-    from jv_studio.ui import main_window as mw
 
     w, ports, answers, tmp_path, _ = writable
     w.mode_tabs.setCurrentIndex(1)

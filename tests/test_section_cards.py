@@ -3,7 +3,7 @@
 import json
 
 import pytest
-from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel
 
 from jv_studio.core import app_config
 from jv_studio.ui import section_card

@@ -3,7 +3,7 @@
 import pytest
 
 from fakes import FakeJV1010, FakePorts
-from jv_studio.core import midi, params, patch, sysex, unit, validate
+from jv_studio.core import midi, patch, sysex, unit, validate
 
 
 def connect(fake, **kwargs):
@@ -262,7 +262,6 @@ def test_a_performance_is_read_in_17_requests_one_at_a_time():
 
 
 def test_the_32_user_performance_names():
-    from jv_studio.core import performance
 
     u, _, _ = connect(FakeJV1010())
     seen = []

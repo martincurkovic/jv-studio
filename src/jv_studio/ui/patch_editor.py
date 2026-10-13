@@ -298,9 +298,7 @@ class PatchEditor(QWidget):
             return
         self._loading = True
         try:
-            table = params.load_table()
             for (block_key, tone, key), widget in self._widgets.items():
-                param = table.block(block_key).param(key)
                 value = self._patch.get(block_key, key, tone=tone)
                 if isinstance(widget, QLineEdit):
                     widget.setText(value)

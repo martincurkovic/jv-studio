@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from fakes import FakePorts, loopback, silent
+from fakes import FakePorts, silent
 from jv_studio.core import midi, sysex
 
 

@@ -1,10 +1,9 @@
 # The performance editor: it shows a performance, edits it in place, and emits one signal per user edit (never while showing).
 
 import pytest
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QCheckBox, QLineEdit
 
-from jv_studio.core import params, patch_groups, performance
+from jv_studio.core import performance
 from jv_studio.ui.knob_control import KnobControl
 from jv_studio.ui.patch_editor import ChoiceCombo
 from jv_studio.ui.performance_editor import PerformanceEditor

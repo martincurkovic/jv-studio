@@ -1,7 +1,7 @@
 # The owner's interface (Midiplus MIDI 2x2) drops SysEx messages over 256 bytes. The JV-1010 never needs one: every block is small and the manual
 # makes us send and request fixed blocks. This guards that, so a future change can't quietly add a message the owner's interface can't carry.
 
-from jv_studio.core import params, patch, sysex
+from jv_studio.core import params, patch
 
 INTERFACE_LIMIT = 256
 FRAMING = 11  # F0 41 dev 6A cmd + 4 address bytes + checksum + F7

@@ -591,7 +591,6 @@ class MainWindow(QMainWindow):
         return answer == QMessageBox.StandardButton.Yes
 
     def _on_param_committed(self, block, key, tone, value):
-        working = self._shown[1]
         self._update_patch_label()
         debug_log.get_logger().info(f"edit: {self._where} {block}{'' if tone < 0 else f' tone {tone + 1}'} {key} = {value!r}")
         self._refresh_tree_if_shown()

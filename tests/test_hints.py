@@ -1,4 +1,3 @@
-import re
 
 from jv_studio.core import groups, hints, params, patch
 

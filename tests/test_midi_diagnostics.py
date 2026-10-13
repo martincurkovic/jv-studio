@@ -1,6 +1,5 @@
 # The loopback test and hardware detection, against fake ports.
 
-import pytest
 
 from fakes import FakeJV1010, FakePorts, corrupting_loopback, loopback, silent
 from jv_studio.core import loopback_report, midi, midi_diagnostics as diag, patch

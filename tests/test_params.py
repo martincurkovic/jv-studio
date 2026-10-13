@@ -119,7 +119,7 @@ def test_names_are_padded_trimmed_and_limited_to_the_characters_the_unit_has(tab
 
 
 def test_values_are_shown_the_way_the_panel_shows_them(table):
-    c, t = table.block("patch_common"), table.block("patch_tone")
+    c = table.block("patch_common")
     fmt = params.format_value
     assert fmt(c.param("efx_type"), 0) == "STEREO-EQ" and fmt(c.param("efx_type"), 39) == "CHORUS/FLANGER (parallel)"  # (it is named; the unit shows 1-40)
     assert fmt(c.param("efx_control_depth_1"), 0) == "-63" and fmt(c.param("efx_control_depth_1"), 63) == "0" and fmt(c.param("efx_control_depth_1"), 126) == "+63"

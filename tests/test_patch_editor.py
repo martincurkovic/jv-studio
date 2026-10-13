@@ -2,10 +2,10 @@
 
 import pytest
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QComboBox, QLineEdit, QSizePolicy, QWidget
+from PySide6.QtWidgets import QApplication, QLineEdit, QSizePolicy, QWidget
 
 from jv_studio.core import groups, params, patch
-from jv_studio.ui.knob_control import KnobControl, parse_display_text
+from jv_studio.ui.knob_control import parse_display_text
 from jv_studio.ui.patch_editor import ChoiceCombo, PatchEditor
 
 

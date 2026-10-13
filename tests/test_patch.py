@@ -2,7 +2,7 @@
 
 import pytest
 
-from jv_studio.core import params, patch, sysex
+from jv_studio.core import patch, sysex
 
 
 def sample_patch():

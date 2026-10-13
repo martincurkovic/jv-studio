@@ -290,7 +290,6 @@ def perf_events(worker):
 
 
 def test_reading_performances_and_their_names(qapp):
-    from jv_studio.core import performance
 
     worker, fake, events = rig()
     got = perf_events(worker)
