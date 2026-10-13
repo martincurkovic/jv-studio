@@ -121,7 +121,7 @@ def test_names_are_padded_trimmed_and_limited_to_the_characters_the_unit_has(tab
 def test_values_are_shown_the_way_the_panel_shows_them(table):
     c, t = table.block("patch_common"), table.block("patch_tone")
     fmt = params.format_value
-    assert fmt(c.param("efx_type"), 0) == "1" and fmt(c.param("efx_type"), 39) == "40"
+    assert fmt(c.param("efx_type"), 0) == "STEREO-EQ" and fmt(c.param("efx_type"), 39) == "CHORUS/FLANGER (parallel)"  # (it is named; the unit shows 1-40)
     assert fmt(c.param("efx_control_depth_1"), 0) == "-63" and fmt(c.param("efx_control_depth_1"), 63) == "0" and fmt(c.param("efx_control_depth_1"), 126) == "+63"
     assert fmt(c.param("reverb_type"), 6) == "DELAY"
     assert fmt(c.param("patch_pan"), 0) == "L64" and fmt(c.param("patch_pan"), 64) == "0" and fmt(c.param("patch_pan"), 127) == "63R"
@@ -131,3 +131,22 @@ def test_values_are_shown_the_way_the_panel_shows_them(table):
     assert fmt(c.param("bend_range_down"), 12) == "-12" and fmt(c.param("bend_range_up"), 12) == "12"
     sysc = table.block("system_common")
     assert fmt(sysc.param("preview_note_set_1"), 60) == "C4" and fmt(sysc.param("preview_note_set_1"), 0) == "C-1"
+
+
+def test_the_forty_efx_types_come_with_their_parameter_names():
+    table = params.load_table()
+    assert len(table.efx_types) == 40 and [t.number for t in table.efx_types] == list(range(1, 41))
+    reverb = table.efx_type(23)  # the EFX Type value is number - 1
+    assert reverb.name == "REVERB" and reverb.param(1).name == "Reverb Type" and (reverb.param(1).min, reverb.param(1).max) == (0, 5)
+    assert table.efx_type(25).param(6).name is None  # OVERDRIVE->CHORUS: "(not used)"
+    assert table.efx_type(0).param(12).name is None  # STEREO-EQ has 11 parameters
+    assert table.efx_type(40) is None and table.efx_type(-1) is None
+    assert all(len(t.params) in range(5, 13) for t in table.efx_types)
+
+
+def test_the_efx_type_parameter_is_a_named_list_in_both_blocks():
+    table = params.load_table()
+    for block in ("patch_common", "performance_common"):
+        efx = table.block(block).param("efx_type")
+        assert efx.labels[0] == "STEREO-EQ" and len(efx.labels) == 40
+        assert params.format_value(efx, 23) == "REVERB"

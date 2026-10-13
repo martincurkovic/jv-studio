@@ -1,11 +1,11 @@
 # JV Studio
 
-A free, open-source patch editor for the **Roland JV-1010** sound module, in the spirit of [AKAISDS](https://github.com/martincurkovic/AKAISDS).
+A free, open-source **editor and librarian for the Roland JV-1010** sound module, in the spirit of [AKAISDS](https://github.com/martincurkovic/AKAISDS).
 Built with PySide6 (Qt) and python-rtmidi. GPL-3.0-or-later.
 
-> **Status: early development.** The sysex layer, the parameter table, the patch model and the app shell (theme, Settings, hardware and MIDI-interface
-> tests) exist and are tested against fake ports. The patch editor itself is next. Nothing here has been tried on a real JV-1010 yet.
-> See [`dev_docs/roadmap.md`](dev_docs/roadmap.md).
+> **Status: early development.** You can read the unit's patches, edit any patch parameter on knobs and draggable envelope graphs (heard live on the unit's temporary patch, with undo), write to USER
+> slots, open and save `.syx` files, and back up and restore the whole unit. It has been tried on one JV-1010 (its author's). **Back the unit up before
+> writing to it** (File > Back Up Unit). Performance and rhythm editing and a fuller librarian are still to come: see [`dev_docs/roadmap.md`](dev_docs/roadmap.md).
 
 ## Goals
 
@@ -31,4 +31,6 @@ poppler). The manual is Roland's and is not in this repository; put your copy at
 ## Credits and notes
 
 - Protocol details were cross-checked against Lars Ahlzen's MIT-licensed [jv1010tool](https://github.com/Ahlzen/jv1010tool); no code was copied.
+- Wave names come from the waveform lists on [GumiElectronic](https://gumielectronic.net/?p=2312); the group table they hang on is from Roland's Owner's Manual.
+- The knob and envelope-graph widgets are adapted from [AKAISDS](https://github.com/martincurkovic/AKAISDS) (same author, GPL-3.0).
 - Roland and JV-1010 are trademarks of Roland Corporation. This project is not affiliated with or endorsed by Roland.

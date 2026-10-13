@@ -86,12 +86,36 @@ class FactoryPatch:
 
 
 @dataclass(frozen=True)
+class EfxParam:
+    n: int  # 1-12: which of the patch's EFX Parameter 1-12 it is
+    name: str | None  # None: "(not used)" by this effect type
+    min: int = 0
+    max: int = 127
+
+
+@dataclass(frozen=True)
+class EfxType:
+    number: int  # 1-40, as the unit's display shows it (the EFX Type parameter holds number - 1)
+    name: str
+    params: tuple[EfxParam, ...]
+
+    def param(self, n):
+        """What EFX Parameter `n` (1-12) means for this type: an `EfxParam`, with name None when the type doesn't use it (or has fewer than n parameters)."""
+        return self.params[n - 1] if 1 <= n <= len(self.params) else EfxParam(n, None)
+
+
+@dataclass(frozen=True)
 class ParameterTable:
     model_id: int
     device_id: int
     blocks: dict
     memory_map: tuple[MemoryEntry, ...]
     factory_user_patches: tuple[FactoryPatch, ...] = ()
+    efx_types: tuple[EfxType, ...] = ()
+
+    def efx_type(self, value):
+        """The EfxType for the EFX Type parameter's raw value (0-39), or None outside that."""
+        return self.efx_types[value] if 0 <= value < len(self.efx_types) else None
 
     def block(self, key):
         return self.blocks[key]
@@ -127,7 +151,11 @@ def load_table():
     }
     memory = tuple(MemoryEntry(tuple(int(x, 16) for x in e["address"].split()), e["name"], e["section"]) for e in raw["memory_map"])
     factory = tuple(FactoryPatch(f["number"], f["name"], f["voices"], f["key_assign"]) for f in raw.get("factory_user_patches", ()))
-    return ParameterTable(int(raw["model_id"], 16), int(raw["device_id"], 16), blocks, memory, factory)
+    efx = tuple(
+        EfxType(t["number"], t["name"], tuple(EfxParam(p["n"], p["name"], p.get("min", 0), p.get("max", 127)) for p in t["params"]))
+        for t in raw.get("efx_types", ())
+    )
+    return ParameterTable(int(raw["model_id"], 16), int(raw["device_id"], 16), blocks, memory, factory, efx)
 
 
 # -- reading and writing values ------------------------------------------------------------------------------------------

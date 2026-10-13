@@ -1,7 +1,7 @@
 [project]
 name = "jv-studio"
 version = "0.1.0"
-description = "A free, open-source patch editor for the Roland JV-1010 sound module. Built with PySide6 (Qt) and python-rtmidi."
+description = "A free, open-source editor and librarian for the Roland JV-1010 sound module. Built with PySide6 (Qt) and python-rtmidi."
 readme = "README.md"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]

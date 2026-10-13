@@ -97,7 +97,7 @@ def test_the_menus_exist(env):
     _, session, _ = env
     w = window(session)
     titles = [a.text() for a in w.menuBar().actions()]
-    assert titles == ["&File", "&Hardware", "&Help"]
+    assert titles == ["&File", "&Edit", "&Hardware", "&Help"]
 
 
 # -- the read-only viewer ----------------------------------------------------------------------------------------------------
@@ -112,19 +112,21 @@ def connected(env):
 
 def test_reading_the_temporary_patch_fills_the_viewer(env):
     w, _ = connected(env)
+    w.editor.tabs.setCurrentWidget(w.tree)  # the Raw Values tab is only filled while it shows
     w.read_temporary()
     w.worker.process_pending()
     assert w.patch_label.text() == 'the temporary patch: "Init Patch"' and "Every value is inside" in w.problems_label.text()
     assert [w.tree.topLevelItem(i).text(0) for i in range(w.tree.topLevelItemCount())] == ["Common", "Tone 1", "Tone 2", "Tone 3", "Tone 4"]
-    assert w.tree.topLevelItem(0).childCount() == 62 and w.tree.topLevelItem(1).childCount() == 128 and w.btn_save.isEnabled()
+    assert w.tree.topLevelItem(0).childCount() == 62 and w.tree.topLevelItem(1).childCount() == 128 and w.save_action.isEnabled()
 
 
 def test_values_are_shown_the_way_the_panel_shows_them(env):
     w, ports = connected(env)
+    w.editor.tabs.setCurrentWidget(w.tree)
     w.read_temporary()
     w.worker.process_pending()
     rows = {w.tree.topLevelItem(0).child(i).text(0): w.tree.topLevelItem(0).child(i).text(1) for i in range(62)}
-    assert rows["EFX Type"] == "1" and rows["Reverb Type"] == "ROOM1" and rows["Patch Name"] == "Init Patch"
+    assert rows["EFX Type"] == "STEREO-EQ" and rows["Reverb Type"] == "ROOM1" and rows["Patch Name"] == "Init Patch"
 
 
 def test_a_value_outside_the_manuals_range_is_called_out(env):
@@ -184,7 +186,7 @@ def test_saving_writes_a_syx_that_reads_back_as_the_same_patch(env, monkeypatch,
 def test_nothing_to_save_before_a_read(env):
     ports, session, _ = env
     w = window(session)
-    assert not w.btn_save.isEnabled() and not w.save_action.isEnabled()
+    assert not w.save_action.isEnabled()
 
 
 def test_settings_and_reads_are_off_while_the_worker_is_busy(env, monkeypatch):
@@ -457,3 +459,182 @@ def test_the_logo_is_top_left_and_matches_appheader_txt(env):
     w = window(session)
     art = (Path(__file__).resolve().parent.parent / "appheader.txt").read_text(encoding="utf-8")
     assert w.lbl_logo.text() == art.strip("\n") and w.lbl_logo.text().startswith("     ██╗██╗")
+
+
+# -- undo and redo --------------------------------------------------------------------------------------------------------------
+
+
+def test_undo_and_redo_walk_back_and_forward_through_edits(env):
+    w, ports = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    w.live_check.setChecked(False)
+    tempo = w.editor.widget_for("patch_common", "patch_tempo")
+    start = tempo.value()
+    tempo.setValue(100)
+    tempo.setValue(120)
+    assert w.undo_action.isEnabled() and not w.redo_action.isEnabled()
+    w.undo()
+    assert w._shown[1].get("patch_common", "patch_tempo") == 100 and tempo.value() == 100 and w.redo_action.isEnabled()
+    w.undo()
+    assert w._shown[1].get("patch_common", "patch_tempo") == start and not w._is_dirty()
+    w.redo()
+    assert w._shown[1].get("patch_common", "patch_tempo") == 100
+    tempo.setValue(77)  # a new edit ends the redo line
+    assert not w.redo_action.isEnabled()
+
+
+def test_undo_goes_to_the_unit_too_when_live(env):
+    w, ports = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    tempo = w.editor.widget_for("patch_common", "patch_tempo")
+    start = tempo.value()
+    tempo.setValue(150)
+    w.worker.process_pending()
+    assert ports.respond.temporary.get("patch_common", "patch_tempo") == 150
+    w.undo()
+    w.worker.process_pending()
+    assert ports.respond.temporary.get("patch_common", "patch_tempo") == start
+
+
+def test_showing_another_patch_clears_the_history(env):
+    w, ports = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    w.live_check.setChecked(False)
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(99)
+    w._original = w._shown[1].copy()  # (as if written): no discard prompt
+    w.read_temporary()
+    w.worker.process_pending()
+    assert not w.undo_action.isEnabled()
+
+
+def test_an_envelope_drag_is_one_undo_step(env):
+    from PySide6.QtCore import QPointF, Qt
+    from PySide6.QtTest import QTest
+
+    w, ports = connected(env)
+    w.resize(1100, 900)
+    w.show()
+    w.read_temporary()
+    w.worker.process_pending()
+    w.live_check.setChecked(False)
+    w.editor.tabs.setCurrentIndex(1)
+    graph = next(g for t, g in w.editor._graphs if t == 0 and g.NAMES[0].startswith("filter"))
+    centre = graph.handle_positions()[1]
+    QTest.mousePress(graph, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, centre.toPoint())
+    QTest.mouseMove(graph, (centre + QPointF(40, -40)).toPoint())
+    QTest.mouseRelease(graph, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, (centre + QPointF(40, -40)).toPoint())
+    assert len(w._undo) == 1 and len(w._undo[0]) >= 2  # the time and the level moved together
+    w.undo()
+    assert not w._is_dirty()
+
+
+# -- the USER list: rename, copy, swap ------------------------------------------------------------------------------------------
+
+
+@pytest.fixture
+def listed(writable, monkeypatch):
+    """A connected window with the 128 names read and every dialog auto-answered (the test sets what they return)."""
+    from jv_studio.ui import main_window as mw
+
+    w, ports, answers, tmp_path, _ = writable
+    answers["backup_first"] = QMessageBox.StandardButton.No
+    w.read_names()
+    w.worker.process_pending()
+    return w, ports, tmp_path, mw, monkeypatch
+
+
+def test_renaming_a_user_patch_updates_the_unit_and_the_list(listed):
+    w, ports, tmp_path, mw, monkeypatch = listed
+    monkeypatch.setattr(mw.RenameDialog, "exec", lambda self: self.DialogCode.Accepted)
+    monkeypatch.setattr(mw.RenameDialog, "name", lambda self: "Fresh Name")
+    w.rename_user(5)
+    w.worker.process_pending()
+    assert ports.respond.user[5].name == "Fresh Name" and w.names_list.item(5).text() == "006  Fresh Name"
+    assert len(list((tmp_path / "backups").glob("USER-006-*.syx"))) == 1
+    assert w.stock_label.text().startswith("0 of 128")  # the list's factory comparison follows
+
+
+def test_renaming_the_open_patch_reloads_it(listed):
+    w, ports, tmp_path, mw, monkeypatch = listed
+    w._read_user_from_item(w.names_list.item(5))
+    w.worker.process_pending()
+    monkeypatch.setattr(mw.RenameDialog, "exec", lambda self: self.DialogCode.Accepted)
+    monkeypatch.setattr(mw.RenameDialog, "name", lambda self: "Renamed")
+    w.rename_user(5)
+    w.worker.process_pending()
+    assert 'USER:006: "Renamed"' in w.patch_label.text() and not w._is_dirty()
+
+
+def test_a_slot_with_unsent_edits_is_not_renamed_underneath_them(listed):
+    w, ports, tmp_path, mw, monkeypatch = listed
+    w._read_user_from_item(w.names_list.item(5))
+    w.worker.process_pending()
+    w.live_check.setChecked(False)
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(222)
+    told = []
+    monkeypatch.setattr(QMessageBox, "information", lambda parent, title, text: told.append(text) or QMessageBox.StandardButton.Ok)
+    opened = []
+    monkeypatch.setattr(mw.RenameDialog, "exec", lambda self: opened.append(1) or self.DialogCode.Accepted)
+    w.rename_user(5)
+    assert told and "edits" in told[0] and opened == [] and ports.respond.writes == []
+
+
+def test_copy_and_swap_go_through_the_window(listed):
+    w, ports, tmp_path, mw, monkeypatch = listed
+    monkeypatch.setattr(mw.SlotDialog, "exec", lambda self: self.DialogCode.Accepted)
+    monkeypatch.setattr(mw.SlotDialog, "slot", lambda self: 9)
+    w.copy_user(2)
+    w.worker.process_pending()
+    assert ports.respond.user[9].name == "User 003" and w.names_list.item(9).text() == "010  User 003"
+    monkeypatch.setattr(mw.SlotDialog, "slot", lambda self: 11)
+    w.swap_user(0)
+    w.worker.process_pending()
+    assert ports.respond.user[0].name == "User 012" and ports.respond.user[11].name == "User 001"
+    assert w.names_list.item(0).text() == "001  User 012" and w.names_list.item(11).text() == "012  User 001"
+
+
+def test_copying_a_slot_onto_itself_does_nothing(listed):
+    w, ports, tmp_path, mw, monkeypatch = listed
+    monkeypatch.setattr(mw.SlotDialog, "exec", lambda self: self.DialogCode.Accepted)
+    monkeypatch.setattr(mw.SlotDialog, "slot", lambda self: 4)
+    w.copy_user(4)
+    w.worker.process_pending()
+    assert ports.respond.writes == []
+
+
+def test_the_rename_dialog_limits_the_name_and_needs_one(qapp):
+    from jv_studio.ui.unit_dialogs import RenameDialog
+
+    d = RenameDialog("Old")
+    d.edit.setText("A name that is far too long")
+    assert len(d.name()) == 12
+    d.edit.setText("   ")
+    assert not d.buttons.button(d.buttons.StandardButton.Ok).isEnabled()
+
+
+def test_about_credits_the_wave_names_with_a_link(qapp):
+    from PySide6.QtWidgets import QLabel
+
+    from jv_studio.ui.about_dialog import AboutDialog
+
+    d = AboutDialog()
+    texts = [label.text() for label in d.findChildren(QLabel)]
+    credit = next(t for t in texts if "gumielectronic.net/?p=2312" in t)
+    assert "Wave names" in credit and 'href="https://gumielectronic.net/?p=2312"' in credit
+    assert next(label for label in d.findChildren(QLabel) if label.text() == credit).openExternalLinks()
+
+
+def test_controls_explain_themselves_in_tooltips(env):
+    w, _ = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    tempo = w.editor.widget_for("patch_common", "patch_tempo").parentWidget()
+    assert "tempo" in tempo.toolTip().lower() and "Range: 20 to 250" in tempo.toolTip() and "Drag to turn" in tempo.toolTip()
+    cutoff = w.editor.widget_for("patch_tone", "cutoff_frequency", 0).parentWidget()
+    assert "cutoff" in cutoff.toolTip().lower()
+    assert w.btn_detect.toolTip() and w.btn_settings.toolTip() and w.btn_send.toolTip() and w.btn_write.toolTip()
+    key_assign = w.editor.widget_for("patch_common", "key_assign_mode")
+    assert "POLY" in key_assign.toolTip()

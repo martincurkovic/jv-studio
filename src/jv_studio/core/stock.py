@@ -15,16 +15,18 @@ def _norm(text):
     return " ".join(text.replace("\u2019", "'").replace("\u2018", "'").split()).lower()
 
 
+def compare_one(number, summary):
+    """(status, FactoryPatch) for the summary of USER slot `number` (0-based)."""
+    expected = params.load_table().factory_user_patches[number]
+    same = _norm(summary.name) == _norm(expected.name) and summary.key_assign == expected.key_assign
+    return (SAME if same else DIFFERENT, expected)
+
+
 def compare(summaries):
     """[(status, FactoryPatch)] for each summary: SAME if the name and key assign match the factory patch in that slot, else DIFFERENT."""
-    factory = params.load_table().factory_user_patches
-    result = []
-    for number, summary in enumerate(summaries):
-        expected = factory[number]
-        same = _norm(summary.name) == _norm(expected.name) and summary.key_assign == expected.key_assign
-        result.append((SAME if same else DIFFERENT, expected))
-    return result
+    return [compare_one(number, summary) for number, summary in enumerate(summaries)]
 
 
 def count_same(summaries):
     return sum(1 for status, _ in compare(summaries) if status == SAME)
+

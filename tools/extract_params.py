@@ -11,6 +11,7 @@ Every block is self-checked: the bytes its rows cover must be contiguous from 0 
 missed or misread fails loudly instead of silently shifting an offset. `--check` parses and verifies without writing.
 """
 
+import html
 import json
 import re
 import subprocess
@@ -225,6 +226,50 @@ def factory_user_patches(lines):
     return [found[n] for n in range(1, 129)]
 
 
+EFX_COLUMN_SPLIT = 430  # x (points) where the right-hand table column starts on the EFX pages: the page is printed wider than its MediaBox
+
+
+def _words(pdf, page):
+    out = subprocess.run(["pdftotext", "-bbox", "-f", str(page), "-l", str(page), str(pdf), "-"], capture_output=True, text=True, check=True).stdout
+    pattern = r'<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="[\d.]+" yMax="[\d.]+">(.*?)</word>'
+    return [(float(x), float(y), html.unescape(t)) for x, y, t in re.findall(pattern, out)]
+
+
+def efx_types(pdf):
+    """The 40 EFX types and the names and ranges of their parameters 1-12 ("Correspondence of the EFX algorithm and Exclusive Address", Supplementary
+    Material): [{number, name, params: [{n, name, min, max} | {n, name: None} for "(not used)"]}].
+
+    The tables are two columns of "prmN | Name | lo - hi" and the plain text flow interleaves them, so this works from word POSITIONS: split each page at
+    EFX_COLUMN_SPLIT, group words into rows by y, and read a row as a header ("● TypeNN: NAME") or a parameter. Fails unless there are exactly 40 types, each
+    with parameters numbered 1..n in order."""
+    info = subprocess.run(["pdfinfo", str(pdf)], capture_output=True, text=True, check=True).stdout
+    page_count = int(re.search(r"Pages:\s+(\d+)", info)[1])
+    pages = [p for p in range(60, page_count + 1) if any(t.startswith("Type") and t.endswith(":") for _, _, t in _words(pdf, p))]
+    types = {}
+    for page in pages:
+        words = [w for w in _words(pdf, page) if w[1] > 40]
+        for low, high in ((0, EFX_COLUMN_SPLIT), (EFX_COLUMN_SPLIT, 10000)):
+            rows = []
+            for x, y, t in sorted((w for w in words if low <= w[0] < high), key=lambda w: w[1]):
+                if rows and abs(rows[-1][0] - y) < 3:
+                    rows[-1][1].append((x, t))
+                else:
+                    rows.append([y, [(x, t)]])
+            current = None
+            for _, row in rows:
+                text = " ".join(t for _, t in sorted(row)).replace("\u2013", "-")
+                if m := re.match(r"●\s*Type\s*(\d+)\s*:\s*(.+)$", text):
+                    current = types.setdefault(int(m[1]), {"number": int(m[1]), "name": m[2].strip(), "params": []})
+                elif current and (m := re.match(r"prm(\d+)\s*\|\s*(.*?)\s*\|\s*(\d+)\s*-\s*(\d+)", text)):
+                    current["params"].append({"n": int(m[1]), "name": m[2], "min": int(m[3]), "max": int(m[4])})
+                elif current and (m := re.match(r"prm(\d+)\s*\|\s*\(not used\)", text)):
+                    current["params"].append({"n": int(m[1]), "name": None})
+    bad = [n for n in range(1, 41) if n not in types or [p["n"] for p in types[n]["params"]] != list(range(1, len(types[n]["params"]) + 1)) or not types[n]["params"]]
+    if sorted(types) != list(range(1, 41)) or bad:
+        sys.exit(f"EFX types: expected 40 with parameters numbered 1..n, problems with {bad or sorted(set(types) ^ set(range(1, 41)))}")
+    return [types[n] for n in range(1, 41)]
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     pdf = Path(args[0]) if args else DEFAULT_PDF
@@ -243,6 +288,7 @@ def main():
         ],
         "memory_map": memory_map(lines),
         "factory_user_patches": factory_user_patches(lines),
+        "efx_types": efx_types(pdf),
         "blocks": {},
     }
     problems = 0
@@ -270,6 +316,12 @@ def main():
             "footnotes": {str(k): v for k, v in sorted(footnotes.items())},
             "params": params,
         }
+    # the EFX Type value is a number 0-39 in the table; name it (the unit's display shows 1-40)
+    names = [t["name"] for t in data["efx_types"]]
+    for block in ("patch_common", "performance_common"):
+        for param in data["blocks"][block]["params"]:
+            if param["key"] == "efx_type" and param["max"] == 39:
+                param["labels"] = names
     if problems:
         sys.exit(f"{problems} block(s) failed their self-check: not writing")
     if check_only:

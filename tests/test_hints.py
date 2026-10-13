@@ -1,0 +1,30 @@
+import re
+
+from jv_studio.core import groups, hints, params, patch
+
+
+def test_every_hint_names_a_real_parameter():
+    table = params.load_table()
+    for block, mapping in (("patch_common", hints.COMMON), ("patch_tone", hints.TONE)):
+        missing = [key for key in mapping if key not in table.block(block)]
+        assert not missing, missing
+
+
+def test_hints_are_one_short_sentence():
+    for text in [*hints.COMMON.values(), *hints.TONE.values()]:
+        assert text.endswith(".") and len(text) <= 150 and "\n" not in text, text
+
+
+def test_most_shown_parameters_have_an_explanation():
+    for block in (patch.COMMON, patch.TONE):
+        shown = [p.key for _, members in groups.groups(block) for p in members]
+        explained = [k for k in shown if hints.hint(block, k)]
+        assert len(explained) >= 0.85 * len(shown), [k for k in shown if k not in explained]
+
+
+def test_the_envelope_and_controller_patterns():
+    assert "stage 4" in hints.hint("patch_tone", "filter_envelope_time_4") and "release" in hints.hint("patch_tone", "filter_envelope_time_4")
+    assert "sustain" in hints.hint("patch_tone", "level_envelope_level_3")
+    assert "controller 2" in hints.hint("patch_tone", "controller_2_depth_1")
+    assert hints.hint("patch_common", "efx_parameter_5").startswith("A parameter of the chosen effect")
+    assert hints.hint("patch_tone", "no_such_key") is None

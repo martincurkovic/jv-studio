@@ -61,10 +61,15 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
 
 ## The patch editor (phase 3, first cut)
 
-- `ui/patch_editor.py` builds one tab per block (Common, Tone 1-4) FROM THE TABLE: `core/groups.py` says which card a parameter is on (prefix rules; `tests/test_groups.py` fails if a table
-  parameter lands on no card, so a re-extracted table can't silently drop one). A string is a line edit (12 chars), a choice/label list a `ChoiceCombo` (JV-1080-only choices are not offered,
-  but a value the unit holds that isn't offered is shown, never hidden), anything else a `ValueSpinBox` that shows the unit's own text (note names, +12, L30, OFF) via `params.format_value`
-  and parses it back. Wheel events only act with focus. Pages are built when their tab is first shown (building all five cost ~2.5 s per window in tests).
+- **Window layout** (`ui/main_window.py`): a top bar (the logo left; connection summary, Detect and Settings right), a splitter with the USER patch list on the left and the patch on
+  the right, progress + Cancel in the STATUS BAR (visible from any page). Backup/restore/open/save are File-menu items only (no buttons); Read/Send/Write/Revert are buttons AND menu actions.
+  The right side is the editor's own tab row: Common | Tone 1-4 | Raw Values (`PatchEditor.add_extra_tab`; the raw tree is only rebuilt while its tab shows).
+- `ui/patch_editor.py` builds one tab per block FROM THE TABLE: `core/groups.py` says which card a parameter is on (prefix rules; `tests/test_groups.py` fails if a table parameter lands
+  on no card, so a re-extracted table can't silently drop one). Cards sit in two columns (each card goes to the shorter one). A string is a line edit (12 chars), a choice/label list a
+  `ChoiceCombo` (JV-1080-only choices are not offered, but a value the unit holds that isn't offered is shown, never hidden), anything with <= 255 steps a KNOB COLUMN (label, `ui/knob.py`,
+  `ValueSpinBox`) in a 4-wide grid below the card's form rows. The box shows the unit's own text (note names, +12, L30, OFF) via `params.format_value`, parses it back, and is where you type.
+  `ui/knob.py` is adapted from AKAISDS's `Knob` (no click-to-type popup, `is_dragging()`, `setOriginValue`: a pan/tune arc grows from its centre). A drag shows live and commits on RELEASE; a wheel or key step commits
+  150 ms after the last one; wheel events only act with focus. Pages are built when their tab is first shown (all five cost ~2.5 s per window in tests).
 - **The editor edits a `Patch` IN PLACE (the window's working copy) and never talks to the unit**; it emits `param_committed(block, key, tone, value)` once per user edit (a spin box on a step
   or Enter, a combo on `activated`, a name on `editingFinished`), never while showing a patch (`_loading`). The window owns the rest.
 - **Live edit rule** (owner's: live UI, MIDI on release): an edit becomes a `write_param` job (a single-parameter DT1 to the TEMPORARY patch, then a read-back of that parameter's block) only
@@ -72,8 +77,30 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
   lone parameter would make a hybrid, so the hint says "Send to Temporary Patch to hear your edits". A failed live write switches live sending off with ONE warning (queued edits fail too).
   **Single-parameter DT1 on a patch parameter is still not proven on the unit** (the manual's own example is a performance parameter); Revert and the working copy mean nothing is lost if it isn't.
 - Edits are not stored anywhere until Write to USER (backup first) or Save as .syx. Reading or opening another patch over edits asks first (default No). "(edited)" marks the label.
-- Not done: draggable envelope graphs, EFX parameter names per type (the 12 `efx_parameter_n` are plain numbers: the manual's per-type tables are not extracted), wave names (Wave Number is a
-  number), Undo (only Revert), a patch list that edits USER slots in place.
+- **Envelope graphs** (`ui/envelope_graph.py`, adapted from AKAISDS's `_EditableGraph`: same drag machinery, same rules): Pitch, Filter and Level cards open with a graph of the tone's
+  envelope (4 stages, level 3 held until key-off drawn as a flat segment; the level envelope has no level 4). Each stage's width depends ONLY on its own time. Handles move time (x) and
+  level (y), the flat sustain line moves level 3, Shift is fine, double-click resets to the knob default, Esc cancels. A graph NEVER writes: `values_changed` moves the knobs and boxes live,
+  `edit_committed` on release goes through `_edited` (so the patch, live send and Undo all see it; a drag that changed two values is ONE undo step).
+- **EFX parameters** (`ParameterTable.efx_types`, extracted from the manual's "Correspondence of the EFX algorithm and Exclusive Address" by position, `tools/extract_params.py efx_types`): the 12
+  `efx_parameter_n` knobs are renamed for the chosen type, greyed out when the type doesn't use them ("(not used)"), and their travel is the type's range. The patch still holds the real value
+  (a value beyond the new type's range shows in the box, the knob just stops at its end). The manual gives raw ranges only, not the display mapping (e.g. gains 0-30), so values show raw.
+  `efx_type` is a named list (STEREO-EQ ... CHORUS/FLANGER) in both the patch and performance common blocks.
+- **Wave names** (`core/waves.py`, `data/waves.json`, `ui/wave_picker.py`): the Owner's Manual has the wave-group TABLE (INT-A type 0 id 1 raw 0-254; INT-B type 0 id 2 raw 0-192; XP-A "Session"
+  type 2 id 9 raw 0-205; other boards type 2 id 1-127) but not the names. The names come from https://gumielectronic.net/?p=2312 (a third-party compilation of facts; `tools/import_wave_names.py`
+  records the URL and refuses a count that doesn't match the manual's ranges). `names[i]` is raw Wave Number i; the unit's display (and this app) says i + 1. **The SR-JV80-04 Vintage Synth
+  board's Group ID is not in the manual, so its names are stored with `id: null` and never looked up** (set it once measured on a unit with that board). Only (type, id) pairs the manual gives are
+  named; anything else shows "no name known".
+- **Undo/Redo** (Edit menu, Ctrl+Z / Ctrl+Shift+Z): a stack of GESTURES (`edits_recorded` from the editor: a box, a knob release, a name, a graph drag, a wave choice), 200 deep, per shown
+  patch (cleared when another patch is shown or on Revert). Undo/redo go to the unit live like any edit when live sending is on and the temporary patch is in step.
+- **The raw wave numbers are not controls** (`groups.HIDDEN`): the Wave card has the wave's NAME and Choose... (the picker sets type, ID and number as one undo step). The numbers stay in the Raw
+  Values tab and in the label when the group has no names.
+- **Tooltips** (`core/hints.py`, composed in `PatchEditor._tooltip`): an explanation, the range as the unit shows it, and "Drag to turn. Shift: fine. Double-click: reset." on knobs. **The explanations are
+  general synth knowledge, not from the manual (it gives ranges, not meanings) and not measured: correct any that are wrong.** `tests/test_hints.py` checks the keys exist and most parameters have one.
+- **USER list actions** (right-click, F2 renames): Rename, Copy To, Swap With, via the worker's slot jobs. EVERY overwritten slot is read and saved to `~/.jv-studio/backups/` first (a swap saves BOTH
+  before writing either) and each write is read back; a slot that is open with unsent edits is refused. A rename is a whole-patch write (read, change the name, `write_patch`), NOT a single-parameter
+  DT1 (that path is still unproven on patch parameters). Only USER slots can be renamed: the ROM presets are read-only on the unit.
+- Not done: Performance and Rhythm editors, the PCM wave groups of the JV-1080 family, per-effect display mapping, a patch list that edits USER slots in place (double-click opens one),
+  copy/swap between USER slots.
 
 ## The parameter table
 
@@ -157,6 +184,11 @@ Add dated entries as things are measured. Format: `- [hardware 2026-xx-xx] what 
   parameters** (so: Back Up Unit first, restore the USER patches after). The update area is not in `parameters.json` and nothing here writes there or should: a half-finished update can leave the
   unit unbootable and the files are Roland's. The identity reply's software revision is `00 00 00 00`, so the app can't show the firmware version (the service test mode shows it on the 7-segment LED).
   Not verified: whether the owner's unit is already on 1.02.
+
+- [2026-10-13] **Test-suite exit crash (fixed in the tests, not in the app).** `uv run pytest` exited 139 (SIGSEGV in Shiboken `recursive_invalidate`, called while PySide destroyed leftover widgets
+  at interpreter exit) after ALL tests had passed, about two runs in three. Cause: windows/editors the tests leave behind are kept alive by their own signal connections (closures over widgets) and
+  destroyed in an unlucky order at exit. Fix: `tests/conftest.py` `_destroy_qt_widgets_before_exit` closes and deletes every top-level widget (and gc.collect()s) at session end; 6 of 6 runs then exited 0.
+  The real app quitting (with the tone tabs built) exited 0 in 8 of 8 offscreen runs. If a crash report names `recursive_invalidate` again, check for new widgets that outlive their test.
 
 ## Open questions
 

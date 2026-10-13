@@ -37,18 +37,18 @@ record what they find in `AGENTS.md` (measured vs. guessed, dated).
 
 ## Phase 3 - Patch editor
 
-- [x] Working copy: edits are local until sent/written, Revert Edits, a discard prompt. [ ] Patch list that opens a USER slot in the editor with one click, and Undo.
+- [x] Working copy: edits are local until sent/written, Revert Edits, a discard prompt. [x] Undo. [x] The USER list opens a slot (double-click or Enter).
 - [x] Patch Common page (table-driven cards: Patch, Play, Structure, Controllers, EFX, Chorus, Reverb & Delay). Still plain controls: no knobs yet.
-- [x] Tone pages x4, table-driven (Wave, Ranges, Controllers, LFO 1/2, Pitch, Filter, Level, Pan, Output). [ ] Still to do: draggable pitch / filter / level envelope graphs.
-- [ ] EFX / chorus / reverb pages. **Needs the 40 EFX types' parameter tables** (the manual prints prm1-prm12 names and ranges per type; extend the extractor).
-- [ ] Wave names: the manual's waveform list (INT-A/INT-B, expansion boards) for the wave selector.
+- [x] Tone pages x4, table-driven (Wave, Ranges, Controllers, LFO 1/2, Pitch, Filter, Level, Pan, Output). [x] Draggable pitch / filter / level envelope graphs.
+- [x] EFX parameter names and ranges for the 40 types (extracted). [ ] Display mapping (the manual gives raw ranges only) and chorus/reverb pages beyond the plain knobs.
+- [x] Wave names and a picker for INT-A, INT-B and the SR-JV80-09 Session board (names from a third-party list; the Owner's Manual only has the group table). [ ] The Vintage Synth board's Group ID: measure it on a unit with that board.
 - [x] Live edit: each edit goes to the temporary patch on release, verified, when the shown patch is the one the unit is playing. [ ] Confirm single-parameter DT1 on patch parameters on the unit.
 
 ## Phase 4 - Library
 
 - [ ] Open/save `.syx` (one patch, a bank of 128).
-- [ ] Copy/swap/rename/initialise patches; categories.
-- [ ] Compare a patch with the unit's; undo.
+- [x] Rename, copy and swap USER patches (backup first, read back). [ ] Initialise a slot; categories; open/save a bank of 128.
+- [x] Undo/Redo. [ ] Compare a patch with the unit's.
 
 ## Phase 5 - Performance mode
 

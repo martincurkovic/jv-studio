@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QBrush, QColor, QFont, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
+    QMenu,
     QCheckBox,
     QInputDialog,
     QFileDialog,
@@ -16,22 +17,23 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QSplitter,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
-from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, stock, sysex, validate
+from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, stock, sysex, unit, validate
 from jv_studio.ui import theme
 from jv_studio.ui.about_dialog import AboutDialog
 from jv_studio.ui.ascii_logo import LOGO
 from jv_studio.ui.diagnostics_ui import add_open_log_folder_action
 from jv_studio.ui.midi_session import MidiSession
 from jv_studio.ui.patch_editor import PatchEditor
-from jv_studio.ui.qt_helpers import build_scroll_area, build_section_card, set_enabled_without_scrolling
+from jv_studio.ui.qt_helpers import set_enabled_without_scrolling
 from jv_studio.ui.settings_dialog import SettingsDialog
-from jv_studio.ui.unit_dialogs import RestoreDialog, WriteUserDialog
+from jv_studio.ui.unit_dialogs import RenameDialog, RestoreDialog, SlotDialog, WriteUserDialog
 from jv_studio.ui.unit_worker import UnitWorker
 
 
@@ -43,7 +45,7 @@ class MainWindow(QMainWindow):
     def __init__(self, session=None, worker=None, start_worker=True):
         super().__init__()
         self.setWindowTitle("JV Studio")
-        self.setMinimumSize(820, 640)
+        self.setMinimumSize(980, 700)
         app_config.ensure_defaults_saved()
         self.session = session if session is not None else MidiSession()
         self.worker = worker if worker is not None else UnitWorker(self.session)
@@ -66,6 +68,9 @@ class MainWindow(QMainWindow):
         self._long_job = False  # a job with a progress bar is running (names, backup, restore)
         self._summaries = []  # unit.PatchSummary of the USER patches read so far
         self._backed_up = False  # a whole-unit backup was saved in this session
+        self._writing_shown_to = None  # the USER slot the shown (edited) patch is being written to, so its write_done marks it as stored
+        self._undo = []  # steps of the shown patch's edits, each [(block, key, tone, old, new)]; cleared when another patch is shown
+        self._redo = []
 
         self._build_menus()
         self._build_central()
@@ -107,6 +112,20 @@ class MainWindow(QMainWindow):
         quit_action.triggered.connect(self.close)
         file_menu.addAction(quit_action)
 
+        edit_menu = self.menuBar().addMenu("&Edit")
+        self.undo_action = QAction("Undo", self)
+        self.undo_action.setShortcut(QKeySequence.StandardKey.Undo)
+        self.undo_action.triggered.connect(self.undo)
+        edit_menu.addAction(self.undo_action)
+        self.redo_action = QAction("Redo", self)
+        self.redo_action.setShortcut(QKeySequence.StandardKey.Redo)
+        self.redo_action.triggered.connect(self.redo)
+        edit_menu.addAction(self.redo_action)
+        edit_menu.addSeparator()
+        self.revert_action = QAction("Revert Edits", self)
+        self.revert_action.triggered.connect(self.revert_edits)
+        edit_menu.addAction(self.revert_action)
+
         hardware_menu = self.menuBar().addMenu("&Hardware")
         self.detect_action = QAction("Detect JV-1010", self)
         self.detect_action.setShortcut("Ctrl+D")
@@ -133,135 +152,9 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
     def _build_central(self):
-        connection = QVBoxLayout()
-        self.connection_label = QLabel()
-        self.connection_label.setWordWrap(True)
-        connection.addWidget(self.connection_label)
-        self.detect_results_label = QLabel()
-        self.detect_results_label.setWordWrap(True)
-        connection.addWidget(self.detect_results_label)
-        buttons = QHBoxLayout()
-        self.btn_settings = QPushButton("Settings...")
-        self.btn_settings.clicked.connect(self.open_settings)
-        self.btn_detect = QPushButton("Detect JV-1010")
-        self.btn_detect.clicked.connect(self.detect_hardware)
-        buttons.addWidget(self.btn_settings)
-        buttons.addWidget(self.btn_detect)
-        buttons.addStretch()
-        connection.addLayout(buttons)
-
-        # the viewer: what the unit holds, read-only
-        viewer = QVBoxLayout()
-        row = QHBoxLayout()
-        self.btn_read_temporary = QPushButton("Read Temporary Patch")
-        self.btn_read_temporary.setToolTip("Reads the patch the unit is playing now (read-only: nothing is written).")
-        self.btn_read_temporary.clicked.connect(self.read_temporary)
-        self.btn_open = QPushButton("Open .syx...")
-        self.btn_open.clicked.connect(self.open_syx)
-        self.btn_save = QPushButton("Save as .syx...")
-        self.btn_save.clicked.connect(self.save_shown_patch)
-        row.addWidget(self.btn_read_temporary)
-        row.addWidget(self.btn_open)
-        row.addWidget(self.btn_save)
-        row.addStretch()
-        viewer.addLayout(row)
-        write_row = QHBoxLayout()
-        self.btn_send = QPushButton("Send to Temporary Patch")
-        self.btn_send.setToolTip("Plays the shown patch on the unit without storing it, then reads it back to check.")
-        self.btn_send.clicked.connect(self.send_temporary)
-        self.btn_write = QPushButton("Write to USER...")
-        self.btn_write.setToolTip("Stores the shown patch in a USER slot. The slot's current patch is saved to a file first.")
-        self.btn_write.clicked.connect(self.write_user)
-        write_row.addWidget(self.btn_send)
-        write_row.addWidget(self.btn_write)
-        write_row.addStretch()
-        viewer.addLayout(write_row)
-        self.patch_label = QLabel("Nothing read yet.")
-        self.patch_label.setWordWrap(True)
-        viewer.addWidget(self.patch_label)
-        self.problems_label = QLabel()
-        self.problems_label.setWordWrap(True)
-        self.problems_label.setObjectName("mutedLabel")
-        viewer.addWidget(self.problems_label)
-        edit_row = QHBoxLayout()
-        self.live_check = QCheckBox("Hear edits on the unit as I make them")
-        self.live_check.setChecked(True)
-        self.live_check.setToolTip(
-            "Each edit is sent to the unit's temporary patch (not stored) when you finish it, and read back. "
-            "Works once the shown patch is on the unit's temporary patch: read it from there, or use Send to Temporary Patch."
-        )
-        self.live_check.toggled.connect(self._update_edit_hint)
-        self.btn_revert = QPushButton("Revert Edits")
-        self.btn_revert.setToolTip("Go back to the patch as it was read or opened.")
-        self.btn_revert.clicked.connect(self.revert_edits)
-        edit_row.addWidget(self.live_check)
-        edit_row.addWidget(self.btn_revert)
-        edit_row.addStretch()
-        viewer.addLayout(edit_row)
-        self.edit_hint = QLabel()
-        self.edit_hint.setWordWrap(True)
-        self.edit_hint.setObjectName("mutedLabel")
-        viewer.addWidget(self.edit_hint)
-        self.editor = PatchEditor()
-        self.editor.setMinimumHeight(520)
-        self.editor.param_committed.connect(self._on_param_committed)
-        viewer.addWidget(self.editor)
-        raw = QVBoxLayout()
-        self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Parameter", "Value", "Raw"])
-        self.tree.setMinimumHeight(260)
-        raw.addWidget(self.tree)
-
-        library = QVBoxLayout()
-        lib_row = QHBoxLayout()
-        self.btn_read_names = QPushButton("Read USER Patch Names")
-        self.btn_read_names.setToolTip("Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a name to read that patch.")
-        self.btn_read_names.clicked.connect(self.read_names)
-        self.btn_cancel = QPushButton("Cancel")
-        self.btn_cancel.clicked.connect(self.worker.cancel)
-        self.names_progress = QProgressBar()
-        self.names_progress.setVisible(False)
-        lib_row.addWidget(self.btn_read_names)
-        lib_row.addWidget(self.btn_cancel)
-        lib_row.addWidget(self.names_progress, 1)
-        library.addLayout(lib_row)
-        self.stock_label = QLabel()
-        self.stock_label.setWordWrap(True)
-        self.stock_label.setObjectName("mutedLabel")
-        library.addWidget(self.stock_label)
-        self.names_list = QListWidget()
-        self.names_list.setMinimumHeight(180)
-        self.names_list.itemDoubleClicked.connect(self._read_user_from_item)
-        library.addWidget(self.names_list)
-
-        whole = QVBoxLayout()
-        whole_row = QHBoxLayout()
-        self.btn_backup = QPushButton("Back Up Unit...")
-        self.btn_backup.setToolTip("Saves all USER patches, performances, rhythm sets and the system settings to one .syx file (read-only on the unit).")
-        self.btn_backup.clicked.connect(self.back_up_unit)
-        self.btn_restore = QPushButton("Restore Unit...")
-        self.btn_restore.setToolTip("Writes a backup file back to the unit.")
-        self.btn_restore.clicked.connect(self.restore_unit)
-        whole_row.addWidget(self.btn_backup)
-        whole_row.addWidget(self.btn_restore)
-        whole_row.addStretch()
-        whole.addLayout(whole_row)
-
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.addWidget(build_section_card("Connection", connection))
-        layout.addWidget(build_section_card("Whole Unit", whole))
-        layout.addWidget(build_section_card("Patch", viewer))
-        self.raw_card = build_section_card("Raw Values", raw, collapse_key="main_window/Raw Values")
-        self.raw_card.set_collapsed(True, remember=False)
-        self.raw_card.collapsed_changed.connect(lambda collapsed: None if collapsed or self._shown is None else self._fill_tree(self._shown[1], validate.out_of_range(self._shown[1])))
-        layout.addWidget(self.raw_card)
-        layout.addWidget(build_section_card("USER Patches", library))
-        layout.addStretch()
-
-        # the logo sits top left above the scrolling pages, like AKAISDS's Dashboard
+        # top bar: the logo on the left, the connection on the right
         top_bar = QHBoxLayout()
-        top_bar.setContentsMargins(15, 12, 15, 0)
+        top_bar.setContentsMargins(15, 12, 15, 6)
         self.lbl_logo = QLabel(LOGO.strip("\n"))
         logo_font = QFont("Menlo")
         logo_font.setStyleHint(QFont.StyleHint.Monospace)
@@ -272,13 +165,138 @@ class MainWindow(QMainWindow):
         self.lbl_logo.setStyleSheet("background: transparent;")
         top_bar.addWidget(self.lbl_logo)
         top_bar.addStretch()
+        connection = QVBoxLayout()
+        connection.setSpacing(4)
+        self.connection_label = QLabel()
+        self.connection_label.setObjectName("mutedLabel")
+        self.connection_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.detect_results_label = QLabel()
+        self.detect_results_label.setObjectName("mutedLabel")
+        self.detect_results_label.setWordWrap(True)
+        self.detect_results_label.setMaximumWidth(380)
+        self.detect_results_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        self.btn_detect = QPushButton("Detect JV-1010")
+        self.btn_detect.setToolTip("Asks the unit who it is and reads the name of its temporary patch. Nothing is written.")
+        self.btn_detect.clicked.connect(self.detect_hardware)
+        self.btn_settings = QPushButton("Settings...")
+        self.btn_settings.setToolTip("Choose the MIDI ports, the theme, and run the loopback and hardware tests.")
+        self.btn_settings.clicked.connect(self.open_settings)
+        buttons.addWidget(self.btn_detect)
+        buttons.addWidget(self.btn_settings)
+        connection.addWidget(self.connection_label)
+        connection.addWidget(self.detect_results_label)
+        connection.addLayout(buttons)
+        top_bar.addLayout(connection)
+
+        # left: the unit's USER patches. right: the patch being edited
+        library = QWidget()
+        library_layout = QVBoxLayout(library)
+        library_layout.setContentsMargins(15, 0, 6, 8)
+        library_header = QLabel("USER Patches")
+        library_header.setObjectName("sectionHeader")
+        library_header.setToolTip("The unit's 128 user patches. Double-click (or press Enter) to open one; right-click to rename, copy or swap.")
+        self.btn_read_names = QPushButton("Read Patch Names")
+        self.btn_read_names.setToolTip(
+            "Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a patch to open it."
+        )
+        self.btn_read_names.clicked.connect(self.read_names)
+        self.stock_label = QLabel()
+        self.stock_label.setWordWrap(True)
+        self.stock_label.setObjectName("mutedLabel")
+        self.names_list = QListWidget()
+        self.names_list.itemDoubleClicked.connect(self._read_user_from_item)
+        self.names_list.itemActivated.connect(self._read_user_from_item)
+        self.names_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.names_list.customContextMenuRequested.connect(self._names_context_menu)
+        self.rename_action = QAction("Rename...", self.names_list)
+        self.rename_action.setShortcut("F2")
+        self.rename_action.setShortcutContext(Qt.ShortcutContext.WidgetShortcut)
+        self.rename_action.triggered.connect(lambda: self.rename_user())
+        self.names_list.addAction(self.rename_action)
+        library_layout.addWidget(library_header)
+        library_layout.addWidget(self.btn_read_names)
+        library_layout.addWidget(self.stock_label)
+        library_layout.addWidget(self.names_list, 1)
+        library.setMinimumWidth(230)
+
+        patch_panel = QWidget()
+        panel = QVBoxLayout(patch_panel)
+        panel.setContentsMargins(6, 0, 15, 8)
+        self.patch_label = QLabel("No patch open. Read the temporary patch, double-click a USER patch, or open a .syx file.")
+        self.patch_label.setObjectName("sectionHeader")
+        self.patch_label.setWordWrap(True)
+        self.problems_label = QLabel()
+        self.problems_label.setWordWrap(True)
+        self.problems_label.setObjectName("mutedLabel")
+        actions = QHBoxLayout()
+        self.btn_read_temporary = QPushButton("Read Temporary Patch")
+        self.btn_read_temporary.setToolTip("Reads the patch the unit is playing now (read-only: nothing is written).")
+        self.btn_read_temporary.clicked.connect(self.read_temporary)
+        self.btn_send = QPushButton("Send to Temporary Patch")
+        self.btn_send.setToolTip("Plays the shown patch on the unit without storing it, then reads it back to check.")
+        self.btn_send.clicked.connect(self.send_temporary)
+        self.btn_write = QPushButton("Write to USER...")
+        self.btn_write.setToolTip("Stores the shown patch in a USER slot. The slot's current patch is saved to a file first.")
+        self.btn_write.clicked.connect(self.write_user)
+        self.btn_revert = QPushButton("Revert Edits")
+        self.btn_revert.setToolTip("Go back to the patch as it was read or opened.")
+        self.btn_revert.clicked.connect(self.revert_edits)
+        for button in (self.btn_read_temporary, self.btn_send, self.btn_write, self.btn_revert):
+            actions.addWidget(button)
+        actions.addStretch()
+        live = QHBoxLayout()
+        self.live_check = QCheckBox("Hear edits on the unit as I make them")
+        self.live_check.setChecked(True)
+        self.live_check.setToolTip(
+            "Each edit is sent to the unit's temporary patch (not stored) when you finish it, and read back. "
+            "Works once the shown patch is on the unit's temporary patch: read it from there, or use Send to Temporary Patch."
+        )
+        self.live_check.toggled.connect(self._update_edit_hint)
+        self.edit_hint = QLabel()
+        self.edit_hint.setObjectName("mutedLabel")
+        live.addWidget(self.live_check)
+        live.addWidget(self.edit_hint, 1)
+        self.editor = PatchEditor()
+        self.editor.param_committed.connect(self._on_param_committed)
+        self.editor.edits_recorded.connect(self._on_edits_recorded)
+        self.tree = QTreeWidget()  # the last tab of the editor: every value as the unit holds it
+        self.tree.setHeaderLabels(["Parameter", "Value", "Raw"])
+        self.editor.add_extra_tab(self.tree, "Raw Values")
+        self.editor.tabs.currentChanged.connect(lambda _i: self._refresh_tree_if_shown())
+        panel.addWidget(self.patch_label)
+        panel.addWidget(self.problems_label)
+        panel.addLayout(actions)
+        panel.addLayout(live)
+        panel.addWidget(self.editor, 1)
+
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.addWidget(library)
+        splitter.addWidget(patch_panel)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([280, 760])
+        splitter.setChildrenCollapsible(False)
+        self.splitter = splitter
+
         central = QWidget()
         central_layout = QVBoxLayout(central)
         central_layout.setContentsMargins(0, 0, 0, 0)
         central_layout.setSpacing(0)
         central_layout.addLayout(top_bar)
-        central_layout.addWidget(build_scroll_area(page), 1)
+        central_layout.addWidget(splitter, 1)
         self.setCentralWidget(central)
+
+        # progress of a long job (names, backup, restore) lives in the status bar, where it is visible from any page
+        self.btn_cancel = QPushButton("Cancel")
+        self.btn_cancel.setToolTip("Stop after the current step. A cancelled backup saves nothing; a cancelled restore leaves the unit part way through.")
+        self.btn_cancel.clicked.connect(self.worker.cancel)
+        self.names_progress = QProgressBar()
+        self.names_progress.setMaximumWidth(220)
+        self.btn_cancel.setVisible(False)
+        self.names_progress.setVisible(False)
+        self.statusBar().addPermanentWidget(self.names_progress)
+        self.statusBar().addPermanentWidget(self.btn_cancel)
 
     # -- connection --------------------------------------------------------------------------------------------------------
 
@@ -306,18 +324,19 @@ class MainWindow(QMainWindow):
         ready = self.session.is_open and idle
         for control in (self.btn_detect, self.detect_action, self.btn_read_temporary, self.read_action, self.btn_read_names):
             control.setEnabled(ready)
-        for control in (self.btn_backup, self.backup_action, self.btn_restore, self.restore_action):
+        for control in (self.backup_action, self.restore_action):
             control.setEnabled(ready)
         for control in (self.btn_send, self.send_action, self.btn_write, self.write_action):
             control.setEnabled(ready and self._shown is not None)
-        for control in (self.btn_open, self.open_action):
-            control.setEnabled(idle)
+        self.open_action.setEnabled(idle)
         self.btn_revert.setEnabled(self._shown is not None and self._is_dirty())
+        self.revert_action.setEnabled(self.btn_revert.isEnabled())
+        self.undo_action.setEnabled(bool(self._undo))
+        self.redo_action.setEnabled(bool(self._redo))
         for control in (self.btn_settings, self.settings_action):
             control.setEnabled(idle)  # Settings closes and reopens the connection: never under a running job
         self.btn_cancel.setVisible(self._long_job and not idle)
         self.names_progress.setVisible(self._long_job)
-        self.btn_save.setEnabled(self._shown is not None)
         self.save_action.setEnabled(self._shown is not None)
 
     def open_settings(self):
@@ -383,19 +402,12 @@ class MainWindow(QMainWindow):
         self._long_job = False
         self._summaries = list(summaries)
         self.names_list.clear()
-        warning = QBrush(QColor(theme.current_palette()["warning"]))
-        for number, ((status, factory), summary) in enumerate(zip(stock.compare(summaries), summaries)):
-            item = QListWidgetItem(f"{number + 1:03d}  {summary.name}")
+        for number in range(len(summaries)):
+            item = QListWidgetItem()
             item.setData(Qt.ItemDataRole.UserRole, number)
-            if status == stock.DIFFERENT:
-                item.setForeground(warning)
-                item.setToolTip(f'The factory patch here is "{factory.name}" ({factory.key_assign}).')
             self.names_list.addItem(item)
-        same = stock.count_same(summaries)
-        self.stock_label.setText(
-            f"{same} of {len(summaries)} match the factory patch list by name and key assign mode; the others are highlighted. "
-            "A matching name does not prove the patch is unchanged."
-        )
+            self._style_name_row(item, number)
+        self._update_stock_label()
         self.statusBar().showMessage(f"Read {len(summaries)} USER patch names", 5000)
         self._refresh_connection()
 
@@ -423,6 +435,8 @@ class MainWindow(QMainWindow):
         self._original = read.copy()
         self._where = where
         self._temp_synced = label == "temporary"
+        self._undo.clear()
+        self._redo.clear()
         self.editor.set_patch(read)
         self._update_patch_label()
         self._update_edit_hint()
@@ -432,7 +446,8 @@ class MainWindow(QMainWindow):
             self.problems_label.setText(f"{len(problems)} value(s) outside the manual's ranges: {shown}{more}. Details are in the log.")
         else:
             self.problems_label.setText("Every value is inside the manual's ranges.")
-        self._fill_tree(read, problems)
+        if self.editor.tabs.currentWidget() is self.tree:
+            self._fill_tree(read, problems)
         self.statusBar().showMessage(f"Read {where}", 5000)
         self._refresh_connection()
 
@@ -474,11 +489,43 @@ class MainWindow(QMainWindow):
         working = self._shown[1]
         self._update_patch_label()
         debug_log.get_logger().info(f"edit: {self._where} {block}{'' if tone < 0 else f' tone {tone + 1}'} {key} = {value!r}")
-        if not self.raw_card.is_collapsed():
-            self._fill_tree(working, validate.out_of_range(working))
+        self._refresh_tree_if_shown()
         if self.live_check.isChecked() and self._temp_synced and self.session.is_open:
             self.worker.submit("write_param", block, key, None if tone < 0 else tone, value)
         self._update_edit_hint()
+        self._refresh_connection()
+
+    UNDO_LIMIT = 200
+
+    def _on_edits_recorded(self, edits):
+        self._undo.append(edits)
+        del self._undo[: -self.UNDO_LIMIT]
+        self._redo.clear()  # a new edit ends the redo line
+        self._refresh_connection()
+
+    def undo(self):
+        self._step(self._undo, self._redo, reverse=True)
+
+    def redo(self):
+        self._step(self._redo, self._undo, reverse=False)
+
+    def _step(self, take_from, put_on, reverse):
+        """Undo or redo one gesture: put the old (or new) values back in the working copy, show them, and send them live like any edit."""
+        if self._shown is None or not take_from:
+            return
+        edits = take_from.pop()
+        working = self._shown[1]
+        for block, key, tone, old, new in (reversed(edits) if reverse else edits):
+            value = old if reverse else new
+            working.set(block, key, value, tone=None if tone < 0 else tone)
+            if self.live_check.isChecked() and self._temp_synced and self.session.is_open:
+                self.worker.submit("write_param", block, key, None if tone < 0 else tone, value)
+        put_on.append(edits)
+        self.editor.refresh()
+        self._update_patch_label()
+        self._refresh_tree_if_shown()
+        self._update_edit_hint()
+        debug_log.get_logger().info(f"{'undo' if reverse else 'redo'}: {len(edits)} value(s) on {self._where}")
         self._refresh_connection()
 
     def _on_param_written(self, block, key, tone, value):
@@ -489,14 +536,22 @@ class MainWindow(QMainWindow):
             return
         label, _, base = self._shown
         self._shown = (label, self._original.copy(), base)
+        self._undo.clear()
+        self._redo.clear()
         self.editor.set_patch(self._shown[1])
         self._update_patch_label()
-        self._fill_tree(self._shown[1], validate.out_of_range(self._shown[1]))
+        self._refresh_tree_if_shown()
         if self.live_check.isChecked() and self._temp_synced and self.session.is_open:
             self.statusBar().showMessage("Reverted. Send to Temporary Patch to put it back on the unit.")
             self._temp_synced = False  # the unit's temporary patch still holds the edits
         self._update_edit_hint()
         self._refresh_connection()
+
+    def _refresh_tree_if_shown(self):
+        """The Raw Values tab is only rebuilt while it is showing (it is ~190 rows per edit otherwise)."""
+        if self._shown is not None and self.editor.tabs.currentWidget() is self.tree:
+            working = self._shown[1]
+            self._fill_tree(working, validate.out_of_range(working))
 
     def _fill_tree(self, read, problems):
         flagged = {(p.block, p.tone, p.key) for p in problems}
@@ -611,6 +666,7 @@ class MainWindow(QMainWindow):
         if not self._offer_backup_first(f"overwriting USER:{number + 1:03d}"):
             return
         self.statusBar().showMessage(f'Writing "{shown.name}" to USER:{number + 1:03d}...')
+        self._writing_shown_to = number
         self.worker.submit("write_user", number, shown.copy())
 
     def back_up_unit(self):
@@ -666,14 +722,118 @@ class MainWindow(QMainWindow):
             self._update_edit_hint()
         else:
             number = int(label.split(":")[1])
-            if self._shown is not None and self._shown[1].name == name:
+            if self._writing_shown_to == number and self._shown is not None:
                 self._original = self._shown[1].copy()  # what is shown is now what USER:number holds
                 self._update_patch_label()
-            self.statusBar().showMessage(f'"{name}" written to USER:{number + 1:03d} and read back; the old patch is in {Path(backup_path).name}', 10000)
-            if number < self.names_list.count():
-                item = self.names_list.item(number)
-                item.setText(f"{number + 1:03d}  {name}")
+            elif self._shown is not None and self._shown[0] == label and not self._is_dirty():
+                self.worker.submit("user", number)  # a rename, copy or swap changed the slot that is open: show what it holds now
+            self._writing_shown_to = None
+            self.statusBar().showMessage(f'USER:{number + 1:03d} is now "{name}" (read back); the old patch is in {Path(backup_path).name}', 10000)
+            self._slot_changed(number, name)
         self._refresh_connection()
+
+    def _update_stock_label(self):
+        same = stock.count_same(self._summaries)
+        self.stock_label.setText(
+            f"{same} of {len(self._summaries)} match the factory patch list by name and key assign mode; the others are highlighted. "
+            "A matching name does not prove the patch is unchanged."
+        )
+
+    def _slot_changed(self, number, name):
+        """A USER slot now holds a patch called `name`: update the list row (its text and the factory comparison)."""
+        if number < len(self._summaries):
+            self._summaries[number] = unit.PatchSummary(name, self._summaries[number].key_assign)
+        if number < self.names_list.count():
+            self._style_name_row(self.names_list.item(number), number)
+        self._update_stock_label()
+
+    def _style_name_row(self, item, number):
+        summary = self._summaries[number] if number < len(self._summaries) else None
+        if summary is None:
+            return
+        item.setText(f"{number + 1:03d}  {summary.name}")
+        status, factory = stock.compare_one(number, summary)
+        if status == stock.DIFFERENT:
+            item.setForeground(QBrush(QColor(theme.current_palette()["warning"])))
+            item.setToolTip(f'The factory patch here is "{factory.name}" ({factory.key_assign}).')
+        else:
+            item.setData(Qt.ItemDataRole.ForegroundRole, None)
+            item.setToolTip("")
+
+    # -- the USER list's own actions: rename, copy, swap ----------------------------------------------------------------------------
+
+    def _names_context_menu(self, position):
+        item = self.names_list.itemAt(position)
+        if item is None:
+            return
+        number = item.data(Qt.ItemDataRole.UserRole)
+        ready = self.session.is_open and self.worker.is_idle()
+        menu = QMenu(self)
+        menu.addAction("Open", lambda: self._read_user_from_item(item))
+        menu.addSeparator()
+        for text, handler in (("Rename...", self.rename_user), ("Copy To...", self.copy_user), ("Swap With...", self.swap_user)):
+            action = menu.addAction(text, lambda h=handler, n=number: h(n))
+            action.setEnabled(ready)
+        menu.exec(self.names_list.viewport().mapToGlobal(position))
+
+    def _slot_for_action(self, number):
+        if number is None:
+            item = self.names_list.currentItem()
+            number = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+        if number is None or not self.session.is_open or not self.worker.is_idle():
+            return None
+        return number
+
+    def _slot_has_unsent_edits(self, number):
+        if self._shown is not None and self._shown[0] == f"user:{number}" and self._is_dirty():
+            QMessageBox.information(self, "USER Patches", f"USER:{number + 1:03d} is open with edits that aren't written. Write or revert them first.")
+            return True
+        return False
+
+    def _names(self):
+        return [s.name for s in self._summaries]
+
+    def rename_user(self, number=None):
+        number = self._slot_for_action(number)
+        if number is None or self._slot_has_unsent_edits(number):
+            return
+        current = self._summaries[number].name if number < len(self._summaries) else ""
+        dialog = RenameDialog(current, self)
+        if dialog.exec() != RenameDialog.DialogCode.Accepted:
+            return
+        name = dialog.name().rstrip()
+        if not name or name == current or not self._offer_backup_first(f"renaming USER:{number + 1:03d}"):
+            return
+        self.statusBar().showMessage(f"Renaming USER:{number + 1:03d}...")
+        self.worker.submit("rename_user", number, name)
+
+    def copy_user(self, number=None):
+        number = self._slot_for_action(number)
+        if number is None:
+            return
+        dialog = SlotDialog("Copy To", f"Copy USER:{number + 1:03d} to:", self._names(), min(number + 1, patch.USER_PATCH_COUNT - 1), "Overwrite",
+                            "The target's current patch is saved to a file first, and the copy is read back to check it.", self)
+        if dialog.exec() != SlotDialog.DialogCode.Accepted:
+            return
+        target = dialog.slot()
+        if target == number or self._slot_has_unsent_edits(target) or not self._offer_backup_first(f"overwriting USER:{target + 1:03d}"):
+            return
+        self.statusBar().showMessage(f"Copying USER:{number + 1:03d} to USER:{target + 1:03d}...")
+        self.worker.submit("copy_user", number, target)
+
+    def swap_user(self, number=None):
+        number = self._slot_for_action(number)
+        if number is None or self._slot_has_unsent_edits(number):
+            return
+        dialog = SlotDialog("Swap With", f"Swap USER:{number + 1:03d} with:", self._names(), min(number + 1, patch.USER_PATCH_COUNT - 1), "Swap",
+                            "Both patches are saved to files first, and each write is read back to check it.", self)
+        if dialog.exec() != SlotDialog.DialogCode.Accepted:
+            return
+        other = dialog.slot()
+        if other == number or self._slot_has_unsent_edits(other) or not self._offer_backup_first(f"swapping USER:{number + 1:03d} and USER:{other + 1:03d}"):
+            return
+        self.statusBar().showMessage(f"Swapping USER:{number + 1:03d} and USER:{other + 1:03d}...")
+        self.worker.submit("swap_user", number, other)
 
     def _on_cancelled(self, label, message):
         self._long_job = False

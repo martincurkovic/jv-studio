@@ -27,6 +27,10 @@ _TONE = [
 ]
 
 RULES = {patch.COMMON: _COMMON, patch.TONE: _TONE}
+
+#: parameters the editor does not show as controls: a tone's wave is chosen BY NAME (the Wave card's Choose... button sets all three together), and the raw numbers stay
+#: visible in the Raw Values tab and in the wave label when the group is not one we have names for
+HIDDEN = {(patch.TONE, "wave_group_type"), (patch.TONE, "wave_group_id"), (patch.TONE, "wave_number")}
 OTHER = "Other"
 
 
@@ -44,6 +48,6 @@ def groups(block_key):
     found = {title: [] for title in order}
     found[OTHER] = []
     for param in table.param_list():
-        if not param.jv1080_only:
+        if not param.jv1080_only and (block_key, param.key) not in HIDDEN:
             found[group_for(block_key, param.key)].append(param)
     return [(title, found[title]) for title in order + [OTHER] if found[title]]

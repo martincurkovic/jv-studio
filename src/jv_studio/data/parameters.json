@@ -864,6 +864,2382 @@
    "key_assign": "POLY"
   }
  ],
+ "efx_types": [
+  {
+   "number": 1,
+   "name": "STEREO-EQ",
+   "params": [
+    {
+     "n": 1,
+     "name": "Low Frequency",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "n": 2,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 3,
+     "name": "High Frequency",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "n": 4,
+     "name": "Hi Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 5,
+     "name": "Peaking1 Frequency",
+     "min": 0,
+     "max": 16
+    },
+    {
+     "n": 6,
+     "name": "Peaking1 Q",
+     "min": 0,
+     "max": 4
+    },
+    {
+     "n": 7,
+     "name": "Peaking1 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 8,
+     "name": "Peaking2 Frequency",
+     "min": 0,
+     "max": 16
+    },
+    {
+     "n": 9,
+     "name": "Peaking2 Q",
+     "min": 0,
+     "max": 4
+    },
+    {
+     "n": 10,
+     "name": "Peaking2 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 11,
+     "name": "Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 2,
+   "name": "OVERDRIVE",
+   "params": [
+    {
+     "n": 1,
+     "name": "Drive",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Output Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Amp Simulator Type",
+     "min": 0,
+     "max": 3
+    },
+    {
+     "n": 4,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 5,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 6,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 3,
+   "name": "DISTORTION",
+   "params": [
+    {
+     "n": 1,
+     "name": "Drive",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Output Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Amp Simulator Type",
+     "min": 0,
+     "max": 3
+    },
+    {
+     "n": 4,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 5,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 6,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 4,
+   "name": "PHASER",
+   "params": [
+    {
+     "n": 1,
+     "name": "Manual",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Resonance",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 5,
+     "name": "Mix Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Output Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 7,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 5,
+   "name": "SPECTRUM",
+   "params": [
+    {
+     "n": 1,
+     "name": "Band1 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 2,
+     "name": "Band2 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 3,
+     "name": "Band3 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 4,
+     "name": "Band4 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 5,
+     "name": "Band5 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 6,
+     "name": "Band6 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 7,
+     "name": "Band7 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 8,
+     "name": "Band8 Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 9,
+     "name": "Q",
+     "min": 0,
+     "max": 4
+    },
+    {
+     "n": 10,
+     "name": "Output Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 11,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 6,
+   "name": "ENHANCER",
+   "params": [
+    {
+     "n": 1,
+     "name": "Sens",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Mix Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 4,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 5,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 7,
+   "name": "AUTO-WAH",
+   "params": [
+    {
+     "n": 1,
+     "name": "Filter Type",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "n": 2,
+     "name": "Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Sens",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 5,
+     "name": "Manual",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Peak",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 7,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 8,
+   "name": "ROTARY",
+   "params": [
+    {
+     "n": 1,
+     "name": "High Frequency Slow Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Low Frequency Slow Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "High Frequency Fast Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Low Frequency Fast Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Speed",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "n": 6,
+     "name": "High Frequency Acceleration",
+     "min": 0,
+     "max": 15
+    },
+    {
+     "n": 7,
+     "name": "Low Frequency Acceleration",
+     "min": 0,
+     "max": 15
+    },
+    {
+     "n": 8,
+     "name": "High Frequency Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 9,
+     "name": "Low Frequency Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 10,
+     "name": "Separation",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 11,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 9,
+   "name": "COMPRESSOR",
+   "params": [
+    {
+     "n": 1,
+     "name": "Sustain",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Attack",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Output Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Post Gain",
+     "min": 0,
+     "max": 3
+    },
+    {
+     "n": 5,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 6,
+     "name": "HiGH Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 7,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 10,
+   "name": "LIMITER",
+   "params": [
+    {
+     "n": 1,
+     "name": "Threshold Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Release Time",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Compression Ratio",
+     "min": 0,
+     "max": 3
+    },
+    {
+     "n": 4,
+     "name": "Output Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 5,
+     "name": "Post Gain",
+     "min": 0,
+     "max": 3
+    },
+    {
+     "n": 6,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 7,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 11,
+   "name": "HEXA-CHORUS",
+   "params": [
+    {
+     "n": 1,
+     "name": "Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Pre Delay Deviation",
+     "min": 0,
+     "max": 20
+    },
+    {
+     "n": 5,
+     "name": "Depth Deviation",
+     "min": 0,
+     "max": 40
+    },
+    {
+     "n": 6,
+     "name": "Pan Deviation",
+     "min": 0,
+     "max": 20
+    },
+    {
+     "n": 7,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 12,
+   "name": "TREMOLO-CHORUS",
+   "params": [
+    {
+     "n": 1,
+     "name": "Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Chorus Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Chorus Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Tremolo Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Tremolo Separation",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Tremolo Phase",
+     "min": 0,
+     "max": 90
+    },
+    {
+     "n": 7,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 13,
+   "name": "SPACE-D",
+   "params": [
+    {
+     "n": 1,
+     "name": "Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Phase",
+     "min": 0,
+     "max": 90
+    },
+    {
+     "n": 5,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 6,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 7,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 14,
+   "name": "STEREO-CHORUS",
+   "params": [
+    {
+     "n": 1,
+     "name": "Filter Type",
+     "min": 0,
+     "max": 2
+    },
+    {
+     "n": 2,
+     "name": "Cutoff Frequency",
+     "min": 0,
+     "max": 16
+    },
+    {
+     "n": 3,
+     "name": "Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Phase",
+     "min": 0,
+     "max": 90
+    },
+    {
+     "n": 7,
+     "name": null
+    },
+    {
+     "n": 8,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 9,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 10,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 11,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 15,
+   "name": "STEREO-FLANGER",
+   "params": [
+    {
+     "n": 1,
+     "name": "Filter Type",
+     "min": 0,
+     "max": 2
+    },
+    {
+     "n": 2,
+     "name": "Cutoff Frequency",
+     "min": 0,
+     "max": 16
+    },
+    {
+     "n": 3,
+     "name": "Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Phase",
+     "min": 0,
+     "max": 90
+    },
+    {
+     "n": 7,
+     "name": "Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 8,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 9,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 10,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 11,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 16,
+   "name": "STEP-FLANGER",
+   "params": [
+    {
+     "n": 1,
+     "name": "Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 5,
+     "name": "Step Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 6,
+     "name": "Phase",
+     "min": 0,
+     "max": 90
+    },
+    {
+     "n": 7,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 8,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 9,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 10,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 17,
+   "name": "STEREO-DELAY",
+   "params": [
+    {
+     "n": 1,
+     "name": "Feedback Mode",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "n": 2,
+     "name": "Delay Time Left",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 3,
+     "name": "Delay Time Right",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 4,
+     "name": "Feedback Phase Left",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "n": 5,
+     "name": "Feedback Phase Right",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "n": 6,
+     "name": "Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 7,
+     "name": "HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 8,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 9,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 10,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 11,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 18,
+   "name": "MODULATION-DELAY",
+   "params": [
+    {
+     "n": 1,
+     "name": "Feedback Mode",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "n": 2,
+     "name": "Delay Time Left",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 3,
+     "name": "Delay Time Right",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 4,
+     "name": "Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 5,
+     "name": "HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 6,
+     "name": "Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 7,
+     "name": "Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 8,
+     "name": "Phase",
+     "min": 0,
+     "max": 90
+    },
+    {
+     "n": 9,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 10,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 11,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 12,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 19,
+   "name": "TRIPLE-TAP-DELAY",
+   "params": [
+    {
+     "n": 1,
+     "name": "Delay Time Left",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Delay Time Right",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Delay Time Center",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 5,
+     "name": "HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 6,
+     "name": "Left Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 7,
+     "name": "Right Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 8,
+     "name": "Center Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 9,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 10,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 11,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 12,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 20,
+   "name": "QUADRUPLE-TAP-DELAY",
+   "params": [
+    {
+     "n": 1,
+     "name": "Delay Time 1",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Delay Time 2",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Delay Time 3",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Delay Time 4",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Level 1",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Level 2",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 7,
+     "name": "Level 3",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 8,
+     "name": "Level 4",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 9,
+     "name": "Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 10,
+     "name": "HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 11,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 12,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 21,
+   "name": "TIME-CONTROL-DELAY",
+   "params": [
+    {
+     "n": 1,
+     "name": "Delay Time",
+     "min": 0,
+     "max": 120
+    },
+    {
+     "n": 2,
+     "name": "Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 3,
+     "name": "Acceleration",
+     "min": 0,
+     "max": 15
+    },
+    {
+     "n": 4,
+     "name": "HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 5,
+     "name": "Output Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 7,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 8,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 9,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 22,
+   "name": "2VOICE-PITCH-SHIFTER",
+   "params": [
+    {
+     "n": 1,
+     "name": "Pitch Shifter Mode",
+     "min": 0,
+     "max": 4
+    },
+    {
+     "n": 2,
+     "name": "Coarse Pitch A",
+     "min": 0,
+     "max": 36
+    },
+    {
+     "n": 3,
+     "name": "Coarse Pitch B",
+     "min": 0,
+     "max": 36
+    },
+    {
+     "n": 4,
+     "name": "Fine Pitch A",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 5,
+     "name": "Fine Pitch B",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 6,
+     "name": "Pre Delay Time A",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 7,
+     "name": "Pre Delay Time B",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 8,
+     "name": "Output Pan A",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 9,
+     "name": "Output Pan B",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 10,
+     "name": "Level Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 11,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 12,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 23,
+   "name": "FBK-PITCH-SHIFTER",
+   "params": [
+    {
+     "n": 1,
+     "name": "Pitch Shifter Mode",
+     "min": 0,
+     "max": 4
+    },
+    {
+     "n": 2,
+     "name": "Coarse Pitch",
+     "min": 0,
+     "max": 36
+    },
+    {
+     "n": 3,
+     "name": "Fine Pitch",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 4,
+     "name": "Pre Delay Time",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 5,
+     "name": "Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 6,
+     "name": "Output Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 7,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 8,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 9,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 10,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 24,
+   "name": "REVERB",
+   "params": [
+    {
+     "n": 1,
+     "name": "Reverb Type",
+     "min": 0,
+     "max": 5
+    },
+    {
+     "n": 2,
+     "name": "Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Gate Time",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 5,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 6,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 7,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 25,
+   "name": "GATE-REVERB",
+   "params": [
+    {
+     "n": 1,
+     "name": "Gate-Reverb Type",
+     "min": 0,
+     "max": 3
+    },
+    {
+     "n": 2,
+     "name": "Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Gate Time",
+     "min": 0,
+     "max": 99
+    },
+    {
+     "n": 4,
+     "name": "Low Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 5,
+     "name": "High Gain",
+     "min": 0,
+     "max": 30
+    },
+    {
+     "n": 6,
+     "name": "Effect Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 7,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 26,
+   "name": "OVERDRIVE→CHORUS (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Drive",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Over Drive Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Chorus Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Chorus Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Chorus Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": null
+    },
+    {
+     "n": 7,
+     "name": "Chorus Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 27,
+   "name": "OVERDRIVE→FLANGER (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Drive",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Over Drive Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Flanger Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Flanger Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Flanger Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Flanger Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 7,
+     "name": "Flanger Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 28,
+   "name": "OVERDRIVE→DELAY (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Drive",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Over Drive Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Delay Time",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 4,
+     "name": "Delay Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 5,
+     "name": "Delay HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 6,
+     "name": "Delay Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 7,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 29,
+   "name": "DISTORTION→CHORUS (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Distortion Drive",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Distortion Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Chorus Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Chorus Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Chorus Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": null
+    },
+    {
+     "n": 7,
+     "name": "Chorus Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 30,
+   "name": "DISTORTION→FLANGER (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Distortion Drive",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Distortion Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Flanger Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Flanger Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Flanger Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Flanger Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 7,
+     "name": "Flanger Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 31,
+   "name": "DISTORTION→DELAY (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Distortion Drive",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Distortion Pan",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Delay Time",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 4,
+     "name": "Delay Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 5,
+     "name": "Delay HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 6,
+     "name": "Delay Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 7,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 32,
+   "name": "ENHANCER→CHORUS (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Enhancer Sens",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Enhancer Mix Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Chorus Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Chorus Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Chorus Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": null
+    },
+    {
+     "n": 7,
+     "name": "Chorus Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 33,
+   "name": "ENHANCER→FLANGER (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Enhancer Sens",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Enhancer Mix Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Flanger Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 4,
+     "name": "Flanger Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 5,
+     "name": "Flanger Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 6,
+     "name": "Flanger Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 7,
+     "name": "Flanger Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 34,
+   "name": "ENHANCER→DELAY (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Enhancer Sens",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 2,
+     "name": "Enhancer Mix Level",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 3,
+     "name": "Delay Time",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 4,
+     "name": "Delay Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 5,
+     "name": "Delay HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 6,
+     "name": null
+    },
+    {
+     "n": 7,
+     "name": "Delay Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 8,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 35,
+   "name": "CHORUS→DELAY (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Chorus Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Chorus Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Chorus Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": null
+    },
+    {
+     "n": 5,
+     "name": "Chorus Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 6,
+     "name": "Delay Time",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 7,
+     "name": "Delay Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 8,
+     "name": "Delay HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 9,
+     "name": "Delay Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 10,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 36,
+   "name": "FLANGER→DELAY (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Flanger Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Flanger Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Flanger Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Flanger Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 5,
+     "name": "Flanger Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 6,
+     "name": "Delay Time",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 7,
+     "name": "Delay Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 8,
+     "name": "Delay HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 9,
+     "name": "Delay Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 10,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 37,
+   "name": "CHORUS→FLANGER (serial)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Chorus Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Chorus Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Chorus Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Chorus Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 5,
+     "name": "Flanger Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 6,
+     "name": "Flanger Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 7,
+     "name": "Flanger Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 8,
+     "name": "Flanger Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 9,
+     "name": "Flanger Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 10,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 38,
+   "name": "CHORUS/DELAY (parallel)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Chorus Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Chorus Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Chorus Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": null
+    },
+    {
+     "n": 5,
+     "name": "Chorus Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 6,
+     "name": "Delay Time",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 7,
+     "name": "Delay Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 8,
+     "name": "Delay HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 9,
+     "name": "Delay Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 10,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 39,
+   "name": "FLANGER/DELAY (parallel)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Flanger Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Flanger Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Flanger Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Flanger Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 5,
+     "name": "Flanger Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 6,
+     "name": "Delay Time",
+     "min": 0,
+     "max": 126
+    },
+    {
+     "n": 7,
+     "name": "Delay Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 8,
+     "name": "Delay HF Damp",
+     "min": 0,
+     "max": 17
+    },
+    {
+     "n": 9,
+     "name": "Delay Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 10,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  },
+  {
+   "number": 40,
+   "name": "CHORUS/FLANGER (parallel)",
+   "params": [
+    {
+     "n": 1,
+     "name": "Chorus Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 2,
+     "name": "Chorus Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 3,
+     "name": "Chorus Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 4,
+     "name": "Chorus Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 5,
+     "name": "Flanger Pre Delay Time",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 6,
+     "name": "Flanger Rate",
+     "min": 0,
+     "max": 125
+    },
+    {
+     "n": 7,
+     "name": "Flanger Depth",
+     "min": 0,
+     "max": 127
+    },
+    {
+     "n": 8,
+     "name": "Flanger Feedback Level",
+     "min": 0,
+     "max": 98
+    },
+    {
+     "n": 9,
+     "name": "Flanger Balance",
+     "min": 0,
+     "max": 100
+    },
+    {
+     "n": 10,
+     "name": "Output Level",
+     "min": 0,
+     "max": 127
+    }
+   ]
+  }
+ ],
  "blocks": {
   "system_common": {
    "section": "1-1-1",
@@ -2639,7 +5015,49 @@
      "display_text": "1 - 40",
      "display_min": 1,
      "display_max": 40,
-     "key": "efx_type"
+     "key": "efx_type",
+     "labels": [
+      "STEREO-EQ",
+      "OVERDRIVE",
+      "DISTORTION",
+      "PHASER",
+      "SPECTRUM",
+      "ENHANCER",
+      "AUTO-WAH",
+      "ROTARY",
+      "COMPRESSOR",
+      "LIMITER",
+      "HEXA-CHORUS",
+      "TREMOLO-CHORUS",
+      "SPACE-D",
+      "STEREO-CHORUS",
+      "STEREO-FLANGER",
+      "STEP-FLANGER",
+      "STEREO-DELAY",
+      "MODULATION-DELAY",
+      "TRIPLE-TAP-DELAY",
+      "QUADRUPLE-TAP-DELAY",
+      "TIME-CONTROL-DELAY",
+      "2VOICE-PITCH-SHIFTER",
+      "FBK-PITCH-SHIFTER",
+      "REVERB",
+      "GATE-REVERB",
+      "OVERDRIVE→CHORUS (serial)",
+      "OVERDRIVE→FLANGER (serial)",
+      "OVERDRIVE→DELAY (serial)",
+      "DISTORTION→CHORUS (serial)",
+      "DISTORTION→FLANGER (serial)",
+      "DISTORTION→DELAY (serial)",
+      "ENHANCER→CHORUS (serial)",
+      "ENHANCER→FLANGER (serial)",
+      "ENHANCER→DELAY (serial)",
+      "CHORUS→DELAY (serial)",
+      "FLANGER→DELAY (serial)",
+      "CHORUS→FLANGER (serial)",
+      "CHORUS/DELAY (parallel)",
+      "FLANGER/DELAY (parallel)",
+      "CHORUS/FLANGER (parallel)"
+     ]
     },
     {
      "name": "EFX Parameter 1",
@@ -3723,7 +6141,49 @@
      "display_text": "1 - 40",
      "display_min": 1,
      "display_max": 40,
-     "key": "efx_type"
+     "key": "efx_type",
+     "labels": [
+      "STEREO-EQ",
+      "OVERDRIVE",
+      "DISTORTION",
+      "PHASER",
+      "SPECTRUM",
+      "ENHANCER",
+      "AUTO-WAH",
+      "ROTARY",
+      "COMPRESSOR",
+      "LIMITER",
+      "HEXA-CHORUS",
+      "TREMOLO-CHORUS",
+      "SPACE-D",
+      "STEREO-CHORUS",
+      "STEREO-FLANGER",
+      "STEP-FLANGER",
+      "STEREO-DELAY",
+      "MODULATION-DELAY",
+      "TRIPLE-TAP-DELAY",
+      "QUADRUPLE-TAP-DELAY",
+      "TIME-CONTROL-DELAY",
+      "2VOICE-PITCH-SHIFTER",
+      "FBK-PITCH-SHIFTER",
+      "REVERB",
+      "GATE-REVERB",
+      "OVERDRIVE→CHORUS (serial)",
+      "OVERDRIVE→FLANGER (serial)",
+      "OVERDRIVE→DELAY (serial)",
+      "DISTORTION→CHORUS (serial)",
+      "DISTORTION→FLANGER (serial)",
+      "DISTORTION→DELAY (serial)",
+      "ENHANCER→CHORUS (serial)",
+      "ENHANCER→FLANGER (serial)",
+      "ENHANCER→DELAY (serial)",
+      "CHORUS→DELAY (serial)",
+      "FLANGER→DELAY (serial)",
+      "CHORUS→FLANGER (serial)",
+      "CHORUS/DELAY (parallel)",
+      "FLANGER/DELAY (parallel)",
+      "CHORUS/FLANGER (parallel)"
+     ]
     },
     {
      "name": "EFX Parameter 1",

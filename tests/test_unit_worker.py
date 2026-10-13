@@ -218,3 +218,62 @@ def test_restoring_an_incomplete_backup_fails_before_writing(qapp, tmp_path):
     worker.submit("restore", backup.Backup(), [memory.PATCHES])
     worker.process_pending()
     assert events["failed"] and "missing" in events["failed"][0][1] and fake.writes == []
+
+
+def _backups_to(tmp_path, monkeypatch):
+    from jv_studio.core import app_config
+
+    monkeypatch.setattr(app_config, "CONFIG_PATH", tmp_path / "config.json")
+
+
+def test_renaming_a_user_patch_changes_only_its_name_and_backs_it_up(qapp, tmp_path, monkeypatch):
+    _backups_to(tmp_path, monkeypatch)
+    worker, fake, events = rig()
+    more = extra_events(worker)
+    fake.user[4].set(patch.COMMON, "patch_tempo", 143)
+    before = fake.user[4].copy()
+    worker.submit("rename_user", 4, "Brand New")
+    worker.process_pending()
+    after = fake.user[4]
+    assert after.name == "Brand New" and after.get(patch.COMMON, "patch_tempo") == 143
+    assert after.tones == before.tones and more["written"][0][:2] == ("user:4", "Brand New")
+    assert patch.parse_syx(open(more["written"][0][2], "rb").read())[patch.user_base(4)].name == "User 005"
+
+
+def test_copy_user_duplicates_one_slot_over_another_after_backing_up_the_target(qapp, tmp_path, monkeypatch):
+    _backups_to(tmp_path, monkeypatch)
+    worker, fake, events = rig()
+    more = extra_events(worker)
+    worker.submit("copy_user", 2, 9)
+    worker.process_pending()
+    assert fake.user[9] == fake.user[2] and fake.user[9].name == "User 003"
+    assert patch.parse_syx(open(more["written"][0][2], "rb").read())[patch.user_base(9)].name == "User 010"  # the overwritten one is on disk
+
+
+def test_swap_user_exchanges_two_slots_and_backs_up_both_first(qapp, tmp_path, monkeypatch):
+    _backups_to(tmp_path, monkeypatch)
+    worker, fake, events = rig()
+    more = extra_events(worker)
+    worker.submit("swap_user", 1, 6)
+    worker.process_pending()
+    assert fake.user[1].name == "User 007" and fake.user[6].name == "User 002"
+    assert len(more["written"]) == 2 and len(list((tmp_path / "backups").glob("USER-*.syx"))) == 2
+
+
+def test_a_swap_with_a_failing_backup_writes_nothing(qapp, tmp_path, monkeypatch):
+    from jv_studio.core import backup
+
+    _backups_to(tmp_path, monkeypatch)
+    monkeypatch.setattr(backup, "write_file", lambda *a: (_ for _ in ()).throw(OSError("disk full")))
+    worker, fake, events = rig()
+    worker.submit("swap_user", 1, 6)
+    worker.process_pending()
+    assert events["failed"] and fake.writes == []
+
+
+def test_swapping_a_slot_with_itself_is_refused(qapp, tmp_path, monkeypatch):
+    _backups_to(tmp_path, monkeypatch)
+    worker, fake, events = rig()
+    worker.submit("swap_user", 3, 3)
+    worker.process_pending()
+    assert events["failed"] and fake.writes == []

@@ -53,6 +53,11 @@ QLabel#mutedLabel {
     color: ${text_disabled};
 }
 
+/* a knob's name over it in the patch editor: small, so a two-line name fits a narrow column */
+QLabel#knobLabel {
+    font-size: 11px;
+}
+
 /* the dot that marks a sample with unsent edits: in its list row and on the strip */
 QLabel#unsentDot {
     color: ${warning};

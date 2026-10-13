@@ -27,3 +27,26 @@ import pytest  # noqa: E402
 def _fresh_config():
     app_config.CONFIG_PATH.unlink(missing_ok=True)
     yield
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _destroy_qt_widgets_before_exit():
+    """Windows and editors the tests leave behind (their signal connections keep them alive) are torn down by PySide at interpreter exit, and that order
+    segfaults intermittently inside Shiboken's `recursive_invalidate` (exit status 139 AFTER every test passed). Delete them here, while the event loop and the
+    interpreter are still whole."""
+    yield
+    import gc
+
+    from PySide6.QtCore import QCoreApplication, QEvent
+    from PySide6.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is None:
+        return
+    for _ in range(3):
+        for widget in app.topLevelWidgets():
+            widget.close()
+            widget.deleteLater()
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        app.processEvents()
+        gc.collect()

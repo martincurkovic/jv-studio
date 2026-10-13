@@ -4,6 +4,8 @@ Request/reply code must never run twice at once on one connection (interleaved r
 crashed AKAISDS when a stale thread was garbage-collected mid-call. So: one `QThread` for the window's lifetime, a FIFO of jobs, results as signals.
 
 Reads: "temporary", "user" n (0-based), "names" (the 128 USER patch summaries), "backup" path [sections] (the whole user memory into a .syx).
+Slot jobs (each overwritten slot is saved to a `.syx` first and the write read back): "write_user" n patch, "rename_user" n name, "copy_user" src dst,
+"swap_user" a b.
 Writes (each verified by a read-back): "write_param" block key tone value (one parameter of the TEMPORARY patch: the live-edit path), "send_temporary" patch, "write_user" n patch (the slot's old contents are saved to `app_config.backups_dir()` FIRST and
 the write is abandoned if that fails), "restore" backup sections. `cancel()` stops a names read, a backup or a restore at the next block.
 While `is_idle()` is False the window must not open Settings or run a diagnostic: both close the connection the job is using.
@@ -148,6 +150,14 @@ class UnitWorker(QThread):
             self.write_done.emit("temporary", job[1].name, "")
         elif kind == "write_user":
             self._write_user(job[1], job[2])
+        elif kind == "rename_user":
+            renamed = self._unit().read_user_patch(job[1])
+            renamed.name = job[2]
+            self._write_user(job[1], renamed)
+        elif kind == "copy_user":
+            self._write_user(job[2], self._unit().read_user_patch(job[1]))
+        elif kind == "swap_user":
+            self._swap_user(job[1], job[2])
         else:
             raise ValueError(f"unknown job {kind!r}")
 
@@ -171,21 +181,38 @@ class UnitWorker(QThread):
         log.info(f"UnitWorker: restore wrote and verified {count} blocks")
         self.restore_done.emit(count)
 
-    def _write_user(self, number, new):
-        """Save what USER:number holds now, then replace it. Without that backup on disk, nothing is written."""
-        log = debug_log.get_logger()
-        unit_ = self._unit()
-        old = unit_.read_user_patch(number)
+    def _save_slot_backup(self, number, old):
+        """Write USER:number's current patch to a `.syx` in the backups folder. Raises (so nothing is written) if that fails."""
         path = backup.user_patch_backup_path(app_config.backups_dir(), number)
         try:
             backup.write_file(path, old.to_syx(patch.user_base(number)))
         except OSError as e:
-            log.error(f"UnitWorker: couldn't back up USER:{number + 1:03d} to {path}", exc_info=True)
+            debug_log.get_logger().error(f"UnitWorker: couldn't back up USER:{number + 1:03d} to {path}", exc_info=True)
             raise unit.UnitError(f"Couldn't save a backup of USER:{number + 1:03d} first ({e}); nothing was written.") from e
+        return path
+
+    def _write_user(self, number, new, old=None, path=None):
+        """Save what USER:number holds now, then replace it. Without that backup on disk, nothing is written."""
+        log = debug_log.get_logger()
+        unit_ = self._unit()
+        if old is None:
+            old = unit_.read_user_patch(number)
+        if path is None:
+            path = self._save_slot_backup(number, old)
         log.warning(f"UnitWorker: overwriting USER:{number + 1:03d} {old.name!r} with {new.name!r} (backup {path})")
         unit_.write_patch(patch.user_base(number), new)
         log.info(f"UnitWorker: USER:{number + 1:03d} written and read back identical")
         self.write_done.emit(f"user:{number}", new.name, str(path))
+
+    def _swap_user(self, a, b):
+        """Exchange two slots. BOTH are read and BOTH backed up before either is written, so a failure at any point before the first write changes nothing."""
+        if a == b:
+            raise unit.UnitError("Choose two different slots.")
+        unit_ = self._unit()
+        first, second = unit_.read_user_patch(a), unit_.read_user_patch(b)
+        path_a, path_b = self._save_slot_backup(a, first), self._save_slot_backup(b, second)
+        self._write_user(a, second, old=first, path=path_a)
+        self._write_user(b, first, old=second, path=path_b)
 
     def _finish_patch(self, label, read):
         problems = validate.out_of_range(read)
