@@ -86,6 +86,13 @@ class FactoryPatch:
 
 
 @dataclass(frozen=True)
+class PresetPatch:
+    name: str
+    voices: int
+    key_assign: str | None  # "POLY" or "SOLO"; None for the Session board's list (the manual doesn't give it)
+
+
+@dataclass(frozen=True)
 class EfxParam:
     n: int  # 1-12: which of the patch's EFX Parameter 1-12 it is
     name: str | None  # None: "(not used)" by this effect type
@@ -112,6 +119,7 @@ class ParameterTable:
     memory_map: tuple[MemoryEntry, ...]
     factory_user_patches: tuple[FactoryPatch, ...] = ()
     efx_types: tuple[EfxType, ...] = ()
+    preset_patches: dict = field(default_factory=dict)  # "PR-A".."PR-E", "XP-A" -> tuple[PresetPatch]
 
     def efx_type(self, value):
         """The EfxType for the EFX Type parameter's raw value (0-39), or None outside that."""
@@ -155,7 +163,8 @@ def load_table():
         EfxType(t["number"], t["name"], tuple(EfxParam(p["n"], p["name"], p.get("min", 0), p.get("max", 127)) for p in t["params"]))
         for t in raw.get("efx_types", ())
     )
-    return ParameterTable(int(raw["model_id"], 16), int(raw["device_id"], 16), blocks, memory, factory, efx)
+    presets = {group: tuple(PresetPatch(e["name"], e["voices"], e["key_assign"]) for e in entries) for group, entries in raw.get("preset_patches", {}).items()}
+    return ParameterTable(int(raw["model_id"], 16), int(raw["device_id"], 16), blocks, memory, factory, efx, presets)
 
 
 # -- reading and writing values ------------------------------------------------------------------------------------------

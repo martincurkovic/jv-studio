@@ -25,7 +25,13 @@ def _log_startup():
     diagnostics.log_session_config("startup")
 
 
-def main():
+def main(argv=None):
+    argv = sys.argv if argv is None else argv
+    smoke = next((a for a in argv[1:] if a == "--smoke-test" or a.startswith("--smoke-test=")), None)
+    if smoke is not None:  # before anything touches the user's settings, the log or a MIDI port
+        from jv_studio import smoke_test
+
+        return smoke_test.run(smoke.partition("=")[2] or None)
     diagnostics.install_crash_handlers()
     _log_startup()
     app = QApplication.instance() or QApplication(sys.argv)

@@ -18,6 +18,8 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QSplitter,
+    QStackedWidget,
+    QTabBar,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -31,6 +33,7 @@ from jv_studio.ui.ascii_logo import LOGO
 from jv_studio.ui.diagnostics_ui import add_open_log_folder_action
 from jv_studio.ui.midi_session import MidiSession
 from jv_studio.ui.patch_editor import PatchEditor
+from jv_studio.ui.performance_panel import PerformancePanel
 from jv_studio.ui.qt_helpers import set_enabled_without_scrolling
 from jv_studio.ui.settings_dialog import SettingsDialog
 from jv_studio.ui.unit_dialogs import RenameDialog, RestoreDialog, SlotDialog, WriteUserDialog
@@ -56,6 +59,7 @@ class MainWindow(QMainWindow):
         self.session.changed.connect(self._refresh_connection)
         self.worker.patch_read.connect(self._on_patch_read)
         self.worker.names_read.connect(self._on_names_read)
+        self.worker.performance_names_read.connect(self._on_performance_names_read)
         self.worker.backup_done.connect(self._on_backup_done)
         self.worker.restore_done.connect(self._on_restore_done)
         self.worker.write_done.connect(self._on_write_done)
@@ -198,9 +202,9 @@ class MainWindow(QMainWindow):
         library = QWidget()
         library_layout = QVBoxLayout(library)
         library_layout.setContentsMargins(15, 0, 6, 8)
-        library_header = QLabel("USER Patches")
-        library_header.setObjectName("sectionHeader")
-        library_header.setToolTip("The unit's 128 user patches. Double-click (or press Enter) to open one; right-click to rename, copy or swap.")
+        self.library_header = QLabel("USER Patches")
+        self.library_header.setObjectName("sectionHeader")
+        self.library_header.setToolTip("The unit's 128 user patches. Double-click (or press Enter) to open one; right-click to rename, copy or swap.")
         self.btn_read_names = QPushButton("Read Patch Names")
         self.btn_read_names.setToolTip(
             "Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a patch to open it."
@@ -216,9 +220,15 @@ class MainWindow(QMainWindow):
         self.rename_action.setShortcutContext(Qt.ShortcutContext.WidgetShortcut)
         self.rename_action.triggered.connect(lambda: self.rename_user())
         self.names_list.addAction(self.rename_action)
-        library_layout.addWidget(library_header)
+        self.perf_list = QListWidget()
+        self.perf_list.itemDoubleClicked.connect(self._open_perf_from_item)
+        self.perf_list.itemActivated.connect(self._open_perf_from_item)
+        self.list_stack = QStackedWidget()  # the USER patches or the USER performances, by mode
+        self.list_stack.addWidget(self.names_list)
+        self.list_stack.addWidget(self.perf_list)
+        library_layout.addWidget(self.library_header)
         library_layout.addWidget(self.btn_read_names)
-        library_layout.addWidget(self.names_list, 1)
+        library_layout.addWidget(self.list_stack, 1)
         library.setMinimumWidth(230)
 
         patch_panel = QWidget()
@@ -272,9 +282,15 @@ class MainWindow(QMainWindow):
         panel.addLayout(live)
         panel.addWidget(self.editor, 1)
 
+        self.performance_panel = PerformancePanel(self)
+        self.performance_panel.slot_changed.connect(self._perf_slot_changed)
+        self.right_stack = QStackedWidget()  # the patch editor or the performance editor, by mode
+        self.right_stack.addWidget(patch_panel)
+        self.right_stack.addWidget(self.performance_panel)
+
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(library)
-        splitter.addWidget(patch_panel)
+        splitter.addWidget(self.right_stack)
         splitter.setStretchFactor(1, 1)
         splitter.setSizes([280, 760])
         splitter.setChildrenCollapsible(False)
@@ -285,6 +301,19 @@ class MainWindow(QMainWindow):
         central_layout.setContentsMargins(0, 0, 0, 0)
         central_layout.setSpacing(0)
         central_layout.addLayout(top_bar)
+        mode_row = QHBoxLayout()
+        mode_row.setContentsMargins(15, 0, 15, 6)
+        self.mode_tabs = QTabBar()
+        self.mode_tabs.setExpanding(False)
+        self.mode_tabs.setDrawBase(False)
+        self.mode_tabs.addTab("Patches")
+        self.mode_tabs.addTab("Performances")
+        self.mode_tabs.setTabToolTip(0, "Edit single patches (the unit's Patch mode).")
+        self.mode_tabs.setTabToolTip(1, "Edit performances: 16 parts, each playing a patch (the unit's Performance mode).")
+        self.mode_tabs.currentChanged.connect(self._set_mode)
+        mode_row.addWidget(self.mode_tabs)
+        mode_row.addStretch()
+        central_layout.addLayout(mode_row)
         central_layout.addWidget(splitter, 1)
         self.setCentralWidget(central)
 
@@ -332,14 +361,67 @@ class MainWindow(QMainWindow):
             control.setEnabled(ready and self._shown is not None)
         self.open_action.setEnabled(idle)
         self.btn_revert.setEnabled(self._shown is not None and self._is_dirty())
-        self.revert_action.setEnabled(self.btn_revert.isEnabled())
-        self.undo_action.setEnabled(bool(self._undo))
-        self.redo_action.setEnabled(bool(self._redo))
+        self.performance_panel.refresh_state(ready)
+        perf = self._performance_mode()  # the menu acts on whichever editor is showing
+        shown = self.performance_panel.has_shown() if perf else self._shown is not None
+        for control in (self.send_action, self.write_action):
+            control.setEnabled(ready and shown)
+        self.read_action.setEnabled(ready)
+        self.revert_action.setEnabled(self.performance_panel.is_dirty() if perf else self.btn_revert.isEnabled())
+        self.undo_action.setEnabled(self.performance_panel.can_undo() if perf else bool(self._undo))
+        self.redo_action.setEnabled(self.performance_panel.can_redo() if perf else bool(self._redo))
         for control in (self.btn_settings, self.settings_action):
             control.setEnabled(idle)  # Settings closes and reopens the connection: never under a running job
         self.btn_cancel.setVisible(self._long_job and not idle)
         self.names_progress.setVisible(self._long_job)
-        self.save_action.setEnabled(self._shown is not None)
+        self.save_action.setEnabled(shown)
+
+    # -- the two modes -----------------------------------------------------------------------------------------------------
+
+    def _performance_mode(self):
+        return self.mode_tabs.currentIndex() == 1
+
+    def _set_mode(self, index):
+        """Patches or Performances: swap the list and the editor, and say what the menu and buttons now act on."""
+        perf = index == 1
+        self.list_stack.setCurrentIndex(index)
+        self.right_stack.setCurrentIndex(index)
+        if perf:
+            self.library_header.setText("USER Performances")
+            self.library_header.setToolTip("The unit's 32 user performances. Double-click (or press Enter) to open one.")
+            self.btn_read_names.setText("Read Performance Names")
+            self.btn_read_names.setToolTip("Reads the 32 USER performance names, one request each (read-only). Double-click a performance to open it.")
+        else:
+            self.library_header.setText("USER Patches")
+            self.library_header.setToolTip("The unit's 128 user patches. Double-click (or press Enter) to open one; right-click to rename, copy or swap.")
+            self.btn_read_names.setText("Read Patch Names")
+            self.btn_read_names.setToolTip(
+                "Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a patch to open it."
+            )
+        noun = "Performance" if perf else "Patch"
+        self.open_action.setText(f"Open {noun} .syx...")
+        self.save_action.setText(f"Save {noun} as .syx...")
+        self.read_action.setText(f"Read Temporary {noun}")
+        self.send_action.setText(f"Send to Temporary {noun}")
+        self._refresh_connection()
+
+    def _open_perf_from_item(self, item):
+        self.performance_panel.open_user(item.data(Qt.ItemDataRole.UserRole))
+
+    def _on_performance_names_read(self, names):
+        self._long_job = False
+        self.perf_list.clear()
+        for number, name in enumerate(names):
+            item = QListWidgetItem(f"{number + 1:02d}  {name}")
+            item.setData(Qt.ItemDataRole.UserRole, number)
+            self.perf_list.addItem(item)
+        self.performance_panel.set_names(names)
+        self.statusBar().showMessage(f"Read {len(names)} USER performance names", 5000)
+        self._refresh_connection()
+
+    def _perf_slot_changed(self, number, name):
+        if number < self.perf_list.count():
+            self.perf_list.item(number).setText(f"{number + 1:02d}  {name}")
 
     def open_settings(self):
         if not self.worker.is_idle():
@@ -373,12 +455,19 @@ class MainWindow(QMainWindow):
     # -- reading (read-only) -----------------------------------------------------------------------------------------------
 
     def read_temporary(self):
+        if self._performance_mode():
+            return self.performance_panel.read_temporary()
         if not self._confirm_discard():
             return
         self.statusBar().showMessage("Reading the temporary patch...")
         self.worker.submit("temporary")
 
     def read_names(self):
+        if self._performance_mode():
+            self.perf_list.clear()
+            self._start_progress("Reading the USER performance names...")
+            self.worker.submit("perf_names")
+            return
         self.names_list.clear()
         self._start_progress("Reading the USER patch names...")
         self.worker.submit("names")
@@ -402,6 +491,7 @@ class MainWindow(QMainWindow):
     def _on_names_read(self, summaries):
         self._long_job = False
         self._summaries = list(summaries)
+        self.performance_panel.set_user_patch_names([s.name for s in summaries])
         self.names_list.clear()
         for number in range(len(summaries)):
             item = QListWidgetItem()
@@ -415,6 +505,9 @@ class MainWindow(QMainWindow):
 
     def _on_failed(self, label, message):
         self._long_job = False
+        if label == "perf_write_param":
+            self.performance_panel.on_live_failed(message)
+            return
         if label == "write_param":  # a live edit the unit didn't take: stop sending live (one message, not one per queued edit)
             if self.live_check.isChecked():
                 self.live_check.setChecked(False)
@@ -507,9 +600,13 @@ class MainWindow(QMainWindow):
         self._refresh_connection()
 
     def undo(self):
+        if self._performance_mode():
+            return self.performance_panel.undo()
         self._step(self._undo, self._redo, reverse=True)
 
     def redo(self):
+        if self._performance_mode():
+            return self.performance_panel.redo()
         self._step(self._redo, self._undo, reverse=False)
 
     def _step(self, take_from, put_on, reverse):
@@ -535,6 +632,8 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Sent to the unit", 1500)
 
     def revert_edits(self):
+        if self._performance_mode():
+            return self.performance_panel.revert_edits()
         if self._shown is None or not self._is_dirty():
             return
         label, _, base = self._shown
@@ -576,6 +675,8 @@ class MainWindow(QMainWindow):
         self.tree.resizeColumnToContents(0)
 
     def save_shown_patch(self):
+        if self._performance_mode():
+            return self.performance_panel.save_syx()
         if self._shown is None:
             return
         label, read, base = self._shown
@@ -595,6 +696,8 @@ class MainWindow(QMainWindow):
     # -- opening a file ----------------------------------------------------------------------------------------------------
 
     def open_syx(self):
+        if self._performance_mode():
+            return self.performance_panel.open_syx()
         if not self._confirm_discard():
             return
         path, _ = QFileDialog.getOpenFileName(self, "Open patch .syx", str(Path.home()), "SysEx files (*.syx);;All files (*)")
@@ -649,6 +752,8 @@ class MainWindow(QMainWindow):
         return True
 
     def send_temporary(self):
+        if self._performance_mode():
+            return self.performance_panel.send_temporary()
         if self._shown is None or not self.session.is_open or not self.worker.is_idle():
             return
         _, shown, _ = self._shown
@@ -657,6 +762,8 @@ class MainWindow(QMainWindow):
         self.worker.submit("send_temporary", self._sent_snapshot)
 
     def write_user(self):
+        if self._performance_mode():
+            return self.performance_panel.write_user()
         if self._shown is None or not self.session.is_open or not self.worker.is_idle():
             return
         label, shown, base = self._shown
@@ -718,6 +825,8 @@ class MainWindow(QMainWindow):
         self._refresh_connection()
 
     def _on_write_done(self, label, name, backup_path):
+        if label.startswith("perf:"):
+            return  # a performance: the performance panel handles it
         if label == "temporary":
             self.statusBar().showMessage(f'"{name}" sent to the temporary patch and read back', 5000)
             # edits made while it was being sent are not on the unit: only a patch equal to what was sent counts as in step
@@ -739,6 +848,7 @@ class MainWindow(QMainWindow):
         """A USER slot now holds a patch called `name`: update the list row (its text and the factory comparison)."""
         if number < len(self._summaries):
             self._summaries[number] = unit.PatchSummary(name, self._summaries[number].key_assign)
+            self.performance_panel.set_user_patch_names(self._names())
         if number < self.names_list.count():
             self._style_name_row(self.names_list.item(number), number)
 

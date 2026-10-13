@@ -4,6 +4,8 @@ Request/reply code must never run twice at once on one connection (interleaved r
 crashed AKAISDS when a stale thread was garbage-collected mid-call. So: one `QThread` for the window's lifetime, a FIFO of jobs, results as signals.
 
 Reads: "temporary", "user" n (0-based), "names" (the 128 USER patch summaries), "backup" path [sections] (the whole user memory into a .syx).
+Performances: "perf_temporary", "perf_user" n, "perf_names" (reads); "perf_send_temporary" perf, "perf_write_user" n perf (the slot's old performance is saved to a `.syx` first, the write
+read back), "perf_write_param" block key part value (one parameter of the TEMPORARY performance, verified).
 Slot jobs (each overwritten slot is saved to a `.syx` first and the write read back): "write_user" n patch, "rename_user" n name, "copy_user" src dst,
 "swap_user" a b.
 Writes (each verified by a read-back): "write_param" block key tone value (one parameter of the TEMPORARY patch: the live-edit path), "send_temporary" patch, "write_user" n patch (the slot's old contents are saved to `app_config.backups_dir()` FIRST and
@@ -16,11 +18,13 @@ from collections import deque
 
 from PySide6.QtCore import QThread, Signal
 
-from jv_studio.core import app_config, backup, debug_log, memory, patch, unit, validate
+from jv_studio.core import app_config, backup, debug_log, memory, patch, performance, unit, validate
 
 
 class UnitWorker(QThread):
     patch_read = Signal(str, object, list)  # label ("temporary" or "user:N"), the Patch, its validate.Problems
+    performance_read = Signal(str, object, list)  # label ("temporary" or "user:N"), the Performance, its validate.Problems
+    performance_names_read = Signal(list)  # the 32 USER performance names
     names_read = Signal(list)  # [unit.PatchSummary] x 128 (fewer when cancelled)
     backup_done = Signal(str, int)  # path, bytes written
     restore_done = Signal(int)  # blocks written
@@ -108,7 +112,7 @@ class UnitWorker(QThread):
 
     def _safe_dispatch(self, job):
         # an exception escaping here would kill the thread silently: every later request would queue forever and nothing would ever load
-        label = job[0] if job[0] != "user" else f"user:{job[1]}"
+        label = job[0] if job[0] not in ("user", "perf_user") else f"{job[0]}:{job[1]}"
         try:
             self._dispatch(job)
         except backup.Cancelled as e:
@@ -144,6 +148,23 @@ class UnitWorker(QThread):
             _, block, key, tone, value = job
             sent = self._unit().write_param(patch.TEMPORARY_BASE, block, key, value, tone=tone, verify=True)
             self.param_written.emit(block, key, -1 if tone is None else tone, sent)
+        elif kind == "perf_temporary":
+            self._finish_performance("temporary", self._unit().read_temporary_performance())
+        elif kind == "perf_user":
+            self._finish_performance(f"user:{job[1]}", self._unit().read_user_performance(job[1]))
+        elif kind == "perf_names":
+            self._cancel = False
+            self.performance_names_read.emit(self._unit().read_user_performance_names(progress=self.progress.emit, cancelled=lambda: self._cancel))
+        elif kind == "perf_write_param":
+            _, block, key, part, value = job
+            sent = self._unit().write_performance_param(performance.TEMPORARY_BASE, block, key, value, part=part, verify=True)
+            self.param_written.emit(block, key, -1 if part is None else part, sent)
+        elif kind == "perf_send_temporary":
+            self._unit().write_performance(performance.TEMPORARY_BASE, job[1])
+            debug_log.get_logger().info(f"UnitWorker: wrote {job[1].name!r} to the temporary performance (read back identical)")
+            self.write_done.emit("perf:temporary", job[1].name, "")
+        elif kind == "perf_write_user":
+            self._write_user_performance(job[1], job[2])
         elif kind == "send_temporary":
             self._unit().write_patch(patch.TEMPORARY_BASE, job[1])
             debug_log.get_logger().info(f"UnitWorker: wrote {job[1].name!r} to the temporary patch (read back identical)")
@@ -213,6 +234,30 @@ class UnitWorker(QThread):
         path_a, path_b = self._save_slot_backup(a, first), self._save_slot_backup(b, second)
         self._write_user(a, second, old=first, path=path_a)
         self._write_user(b, first, old=second, path=path_b)
+
+    def _write_user_performance(self, number, new):
+        """Save what USER performance `number` holds now, then replace it. Without that backup on disk, nothing is written."""
+        log = debug_log.get_logger()
+        unit_ = self._unit()
+        old = unit_.read_user_performance(number)
+        path = backup.user_performance_backup_path(app_config.backups_dir(), number)
+        try:
+            backup.write_file(path, old.to_syx(performance.user_base(number)))
+        except OSError as e:
+            log.error(f"UnitWorker: couldn't back up USER performance {number + 1:02d} to {path}", exc_info=True)
+            raise unit.UnitError(f"Couldn't save a backup of USER performance {number + 1:02d} first ({e}); nothing was written.") from e
+        log.warning(f"UnitWorker: overwriting USER performance {number + 1:02d} {old.name!r} with {new.name!r} (backup {path})")
+        unit_.write_performance(performance.user_base(number), new)
+        log.info(f"UnitWorker: USER performance {number + 1:02d} written and read back identical")
+        self.write_done.emit(f"perf:{number}", new.name, str(path))
+
+    def _finish_performance(self, label, read):
+        problems = validate.out_of_range_performance(read)
+        log = debug_log.get_logger()
+        log.info(f"UnitWorker: read {label} performance {read.name!r}: {len(problems)} value(s) outside the table's ranges")
+        for problem in problems[:40]:
+            log.warning(f"UnitWorker: performance {label}: {problem}")
+        self.performance_read.emit(label, read, problems)
 
     def _finish_patch(self, label, read):
         problems = validate.out_of_range(read)

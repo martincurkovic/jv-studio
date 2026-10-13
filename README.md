@@ -4,14 +4,24 @@ A free, open-source **editor and librarian for the Roland JV-1010** sound module
 Built with PySide6 (Qt) and python-rtmidi. GPL-3.0-or-later.
 
 > **Status: early development.** You can read the unit's patches, edit any patch parameter on knobs and draggable envelope graphs (heard live on the unit's temporary patch, with undo), write to USER
-> slots, open and save `.syx` files, and back up and restore the whole unit. It has been tried on one JV-1010 (its author's). **Back the unit up before
-> writing to it** (File > Back Up Unit). Performance and rhythm editing and a fuller librarian are still to come: see [`dev_docs/roadmap.md`](dev_docs/roadmap.md).
+> slots, edit performances (16 parts, effects, the patch each part plays), open and save `.syx` files, and back up and restore the whole unit. It has been tried on one JV-1010 (its author's); the performance editor has not been tried on a unit yet. **Back the unit up before
+> writing to it** (File > Back Up Unit). The rhythm setups and a fuller librarian are still to come: see [`dev_docs/roadmap.md`](dev_docs/roadmap.md).
 
 ## Goals
 
 - Edit the JV-1010's patches visually: knobs, draggable envelope graphs, every parameter in the manual's MIDI Implementation.
 - Read and write the 128 user patches, load and save `.syx` files, and back up / restore the whole unit.
 - Be careful with the hardware: edits go to the temporary patch first, every USER write saves the old patch to a file first, and nothing is written without a read-back.
+
+## Download & Installation
+
+Builds for each release are on the [Releases](https://github.com/martincurkovic/jv-studio/releases) page. You need a MIDI interface cabled to the JV-1010 (MIDI OUT of the interface to the unit's MIDI IN, and back); Settings > Troubleshooting has a hardware test and cabling diagrams.
+
+**macOS** (14 or newer, Apple Silicon or Intel): open the `.dmg` and drag JV-Studio to Applications. Or install with [Homebrew](https://brew.sh): `brew install --cask martincurkovic/tap/jv-studio`. The app is not code-signed or notarized, so Gatekeeper blocks it the first time: open System Settings > Privacy & Security and click "Open Anyway", or run `xattr -dr com.apple.quarantine /Applications/JV-Studio.app`.
+
+**Windows**: run `JV-Studio-Setup.exe`. **Linux**: unzip `JV-Studio-linux.zip` and run the `.AppImage` (it needs ALSA, which every desktop distribution has).
+
+To build it yourself, see [`BUILDING.md`](BUILDING.md).
 
 ## Running it
 

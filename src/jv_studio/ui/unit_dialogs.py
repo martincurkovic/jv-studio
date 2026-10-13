@@ -79,16 +79,16 @@ class RestoreDialog(QDialog):
 class SlotDialog(QDialog):
     """Pick a USER slot for Copy To... or Swap With...: a prompt, the 128 slots (with the names read from the unit, if any) and a note."""
 
-    def __init__(self, title, prompt, names, default_slot, ok_text, note, parent=None):
+    def __init__(self, title, prompt, names, default_slot, ok_text, note, parent=None, count=patch.USER_PATCH_COUNT, label="USER:{:03d}"):
         super().__init__(parent)
         self.setWindowTitle(title)
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(prompt))
         self.slot_combo = QComboBox()
-        for number in range(patch.USER_PATCH_COUNT):
+        for number in range(count):
             known = f"  {names[number]}" if number < len(names) else ""
-            self.slot_combo.addItem(f"USER:{number + 1:03d}{known}", number)
-        self.slot_combo.setCurrentIndex(max(0, min(default_slot, patch.USER_PATCH_COUNT - 1)))
+            self.slot_combo.addItem(f"{label.format(number + 1)}{known}", number)
+        self.slot_combo.setCurrentIndex(max(0, min(default_slot, count - 1)))
         layout.addWidget(self.slot_combo)
         muted = QLabel(note)
         muted.setWordWrap(True)

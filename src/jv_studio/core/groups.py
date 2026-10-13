@@ -1,7 +1,7 @@
 """Which card a parameter sits on in the patch editor (Qt-free). Rules by key prefix; the first match wins, and every shown parameter must match one
 (`tests/test_groups.py`), so a new parameter in the table can't silently disappear from the editor."""
 
-from . import params, patch
+from . import params, patch, performance
 
 _COMMON = [
     ("Patch", ("patch_name", "patch_category", "patch_level", "patch_pan", "analog_feel", "patch_tempo", "clock_source", "octave_shift", "stretch_tune_depth", "voice_priority")),
@@ -26,11 +26,43 @@ _TONE = [
     ("Output", ("output_assign", "mix_efx_send_level", "chorus_send_level", "reverb_send_level")),
 ]
 
-RULES = {patch.COMMON: _COMMON, patch.TONE: _TONE}
+_PERFORMANCE_COMMON = [
+    ("Performance", ("performance_name", "performance_tempo", "clock_source", "keyboard_mode", "keyboard_range_switch")),
+    ("Voice Reserve", ("voice_reserve_",)),
+    ("EFX", ("efx_",)),
+    ("Chorus", ("chorus_",)),
+    ("Reverb & Delay", ("reverb_", "delay_")),
+]
+
+_PERFORMANCE_PART = [
+    ("Part", ("receive_", "midi_channel")),
+    ("Mix", ("part_", "output_assign", "mix_efx_send_level", "chorus_send_level", "reverb_send_level")),
+    ("Keyboard", ("keyboard_range_",)),
+]
+
+RULES = {patch.COMMON: _COMMON, patch.TONE: _TONE, performance.COMMON: _PERFORMANCE_COMMON, performance.PART: _PERFORMANCE_PART}
 
 #: parameters the editor does not show as controls: a tone's wave is chosen BY NAME (the Wave card's Choose... button sets all three together), and the raw numbers stay
 #: visible in the Raw Values tab and in the wave label when the group is not one we have names for
-HIDDEN = {(patch.TONE, "wave_group_type"), (patch.TONE, "wave_group_id"), (patch.TONE, "wave_number")}
+HIDDEN = {
+    (patch.TONE, "wave_group_type"),
+    (patch.TONE, "wave_group_id"),
+    (patch.TONE, "wave_number"),
+    # a part's patch is chosen BY NAME too (the part's Choose... button sets all three together)
+    (performance.PART, "patch_group_type"),
+    (performance.PART, "patch_group_id"),
+    (performance.PART, "patch_number"),
+    # the MIDI transmit settings follow the JV-1080-family-only ones (<Local Switch>, <Transmit Switch>) in the manual; the JV-1010 has no keyboard to transmit from
+    (performance.PART, "transmit_bank_select_group"),
+    (performance.PART, "transmit_volume"),
+}
+
+
+def supported(param):
+    """False for a parameter the JV-1010 doesn't have: the manual marks it with <> (a JV-1080-family value the unit ignores), either on the whole parameter or on EVERY one of its choices."""
+    if param.jv1080_only:
+        return False
+    return not (param.choices and not any(c.jv1010 for c in param.choices))
 OTHER = "Other"
 
 
@@ -48,6 +80,6 @@ def groups(block_key):
     found = {title: [] for title in order}
     found[OTHER] = []
     for param in table.param_list():
-        if not param.jv1080_only and (block_key, param.key) not in HIDDEN:
+        if supported(param) and (block_key, param.key) not in HIDDEN:
             found[group_for(block_key, param.key)].append(param)
     return [(title, found[title]) for title in order + [OTHER] if found[title]]

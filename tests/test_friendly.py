@@ -1,8 +1,8 @@
-from jv_studio.core import friendly, groups, params, patch
+from jv_studio.core import friendly, groups, params, patch, performance
 
 
 def shown_choice_params():
-    for block in (patch.COMMON, patch.TONE):
+    for block in (patch.COMMON, patch.TONE, performance.COMMON, performance.PART):
         for _, members in groups.groups(block):
             for param in members:
                 if param.has_choices():
@@ -38,3 +38,8 @@ def test_every_option_of_every_shown_list_has_a_readable_and_distinct_name():
             # nothing is left shouting: an all-caps word (other than the genuine abbreviations) means a missing entry
             words = [w for w in name.replace("→", " ").replace("/", " ").split() if w.isalpha() and w.isupper() and len(w) > 2]
             assert not [w for w in words if w not in {"LFO", "SAX", "VOX", "EFX"}], (param.key, text, name)
+
+
+def test_performance_option_names():
+    assert friendly.label("efx_source", "PERFORM") == "Performance" and friendly.label("efx_source", "PART 11") == "Part 11"
+    assert friendly.label("clock_source", "PERFORMANCE") == "Performance" and friendly.label("output_assign", "PATCH") == "Patch"

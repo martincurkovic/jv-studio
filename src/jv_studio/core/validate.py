@@ -5,7 +5,7 @@ real hardware are a free test of the whole generated table. Strings are checked 
 
 from dataclasses import dataclass
 
-from . import params, patch
+from . import params, patch, performance
 
 
 @dataclass(frozen=True)
@@ -46,4 +46,13 @@ def out_of_range(p):
     problems = _check(table.block(patch.COMMON), p.common, None)
     for i, tone in enumerate(p.tones):
         problems += _check(table.block(patch.TONE), tone, i)
+    return problems
+
+
+def out_of_range_performance(p):
+    """Every parameter of performance `p` whose stored value is outside the manual's range (the part is reported in `tone`, 0-15)."""
+    table = params.load_table()
+    problems = _check(table.block(performance.COMMON), p.common, None)
+    for i, part in enumerate(p.parts):
+        problems += _check(table.block(performance.PART), part, i)
     return problems

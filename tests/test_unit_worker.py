@@ -277,3 +277,80 @@ def test_swapping_a_slot_with_itself_is_refused(qapp, tmp_path, monkeypatch):
     worker.submit("swap_user", 3, 3)
     worker.process_pending()
     assert events["failed"] and fake.writes == []
+
+
+# -- performances ----------------------------------------------------------------------------------------------------------------
+
+
+def perf_events(worker):
+    events = {"read": [], "names": []}
+    worker.performance_read.connect(lambda label, p, problems: events["read"].append((label, p, problems)))
+    worker.performance_names_read.connect(events["names"].append)
+    return events
+
+
+def test_reading_performances_and_their_names(qapp):
+    from jv_studio.core import performance
+
+    worker, fake, events = rig()
+    got = perf_events(worker)
+    worker.submit("perf_temporary")
+    worker.submit("perf_user", 4)
+    worker.submit("perf_names")
+    worker.process_pending()
+    assert [(label, p.name, problems) for label, p, problems in got["read"]] == [("temporary", "Temp Perf", []), ("user:4", "Perf 05", [])]
+    assert len(got["names"][0]) == 32 and fake.writes == []
+
+
+def test_a_performance_value_outside_the_table_is_reported(qapp):
+    from jv_studio.core import params, performance
+
+    fake = FakeJV1010()
+    fake.temp_performance.parts[2][params.load_table().block(performance.PART).param("midi_channel").offset] = 99
+    worker, _, _ = rig(fake)
+    got = perf_events(worker)
+    worker.submit("perf_temporary")
+    worker.process_pending()
+    ((_, _, problems),) = got["read"]
+    assert [(p.tone, p.key) for p in problems] == [(2, "midi_channel")]
+
+
+def test_a_live_performance_edit_is_verified(qapp):
+    from jv_studio.core import performance
+
+    worker, fake, events = rig()
+    written = []
+    worker.param_written.connect(lambda *a: written.append(a))
+    worker.submit("perf_write_param", performance.PART, "part_level", 5, 88)
+    worker.submit("perf_write_param", performance.COMMON, "performance_tempo", None, 140)
+    worker.process_pending()
+    assert written == [(performance.PART, "part_level", 5, 88), (performance.COMMON, "performance_tempo", -1, 140)]
+    assert fake.temp_performance.get(performance.PART, "part_level", part=5) == 88 and fake.temp_performance.get(performance.COMMON, "performance_tempo") == 140
+
+
+def test_sending_a_performance_and_writing_a_user_one_with_a_backup(qapp, tmp_path, monkeypatch):
+    from jv_studio.core import performance
+
+    _backups_to(tmp_path, monkeypatch)
+    worker, fake, events = rig()
+    more = extra_events(worker)
+    new = performance.Performance.minimum()
+    new.name = "Fresh"
+    worker.submit("perf_send_temporary", new)
+    worker.submit("perf_write_user", 9, new)
+    worker.process_pending()
+    assert fake.temp_performance == new and fake.user_performances[9] == new
+    assert [w[:2] for w in more["written"]] == [("perf:temporary", "Fresh"), ("perf:9", "Fresh")]
+    backups = list((tmp_path / "backups").glob("PERF-10-*.syx"))
+    assert len(backups) == 1 and performance.parse_syx(backups[0].read_bytes())[performance.user_base(9)].name == "Perf 10"
+
+
+def test_a_performance_write_with_a_failing_backup_writes_nothing(qapp, tmp_path, monkeypatch):
+    from jv_studio.core import backup, performance
+
+    _backups_to(tmp_path, monkeypatch)
+    monkeypatch.setattr(backup, "write_file", lambda *a: (_ for _ in ()).throw(OSError("disk full")))
+    worker, fake, events = rig()
+    worker.submit("perf_write_user", 3, performance.Performance.minimum())
+    worker.process_pending()
+    assert events["failed"] and "nothing was written" in events["failed"][0][1] and fake.writes == []

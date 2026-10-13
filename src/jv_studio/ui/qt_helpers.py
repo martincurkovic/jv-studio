@@ -1,6 +1,6 @@
 """Small Qt helpers shared by the windows and dialogs: section cards, scroll pages, form alignment."""
 
-from PySide6.QtCore import QEvent
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import (
     QFormLayout,
@@ -117,3 +117,41 @@ def build_scroll_area(page):
     scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
     scroll_area.setWidget(page)
     return scroll_area
+
+
+#: a card column never gets narrower than this (a row of 4 knobs plus the card's padding)
+COLUMN_MIN_WIDTH = 346
+
+
+def build_two_column_page(cards, weights):
+    """A scrolling page with `cards` (widgets) in two columns, each card going to the shorter column (by `weights`, one rough height per card) so the page stays balanced.
+
+    The columns are EXACTLY half the page's width each: their size hints are ignored, so collapsing a card can never shift the split, and the vertical scroll bar is ALWAYS shown
+    (a bar that appears and disappears as cards collapse changes the width the columns share, and the whole page shifts sideways)."""
+    page = QWidget()
+    layout = QVBoxLayout(page)
+    layout.setContentsMargins(10, 10, 14, 10)  # room between the cards and the tab pane's frame
+    layout.setSpacing(6)
+    columns, column_layouts = [QWidget(), QWidget()], []
+    for column in columns:
+        column.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        column.setMinimumWidth(COLUMN_MIN_WIDTH)
+        column_layout = QVBoxLayout(column)
+        column_layout.setContentsMargins(0, 0, 0, 0)
+        column_layout.setSpacing(6)
+        column_layouts.append(column_layout)
+    heights = [0, 0]
+    for card, weight in zip(cards, weights):
+        side = 0 if heights[0] <= heights[1] else 1
+        column_layouts[side].addWidget(card)
+        heights[side] += weight
+    row = QHBoxLayout()
+    row.setSpacing(6)
+    for column, column_layout in zip(columns, column_layouts):
+        column_layout.addStretch()
+        row.addWidget(column, 1)  # equal stretch + ignored hints = exactly half each
+    layout.addLayout(row)
+    layout.addStretch()
+    area = build_scroll_area(page)
+    area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+    return area

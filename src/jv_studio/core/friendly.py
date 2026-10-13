@@ -108,6 +108,7 @@ BY_KEY = {
     "bias_direction": {"LOWER&UPPER": "Lower & Upper"},
     "output_assign": {"EFX": "Effect"},
     "efx_output_assign": {},
+    "efx_source": {"PERFORM": "Performance"},
     "structure_type_1and2": {k: v[0] for k, v in _STRUCTURE.items()},
     "structure_type_3and4": {k: v[0] for k, v in _STRUCTURE.items()},
 }

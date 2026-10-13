@@ -645,3 +645,212 @@ def test_the_window_has_no_stray_labels_or_size_grip(env):
     assert not w.statusBar().isSizeGripEnabled()
     margins = w.statusBar().contentsMargins()
     assert margins.left() >= 10 and margins.right() >= 10  # clear of the window's rounded corners
+
+
+# -- the Performances mode ---------------------------------------------------------------------------------------------------
+
+
+def perf_mode(env):
+    w, ports = connected(env)
+    w.mode_tabs.setCurrentIndex(1)
+    return w, ports
+
+
+def test_the_mode_tabs_swap_the_list_the_editor_and_the_menu_wording(env):
+    w, _ = connected(env)
+    assert not w._performance_mode() and w.library_header.text() == "USER Patches" and w.open_action.text() == "Open Patch .syx..."
+    w.mode_tabs.setCurrentIndex(1)
+    assert w._performance_mode() and w.list_stack.currentWidget() is w.perf_list and w.right_stack.currentWidget() is w.performance_panel
+    assert w.library_header.text() == "USER Performances" and w.btn_read_names.text() == "Read Performance Names"
+    assert w.open_action.text() == "Open Performance .syx..." and w.read_action.text() == "Read Temporary Performance" and w.send_action.text() == "Send to Temporary Performance"
+    w.mode_tabs.setCurrentIndex(0)
+    assert w.list_stack.currentWidget() is w.names_list and w.save_action.text() == "Save Patch as .syx..."
+
+
+def test_reading_the_temporary_performance_fills_the_editor(env):
+    w, ports = perf_mode(env)
+    ports.respond.temp_performance.name = "Live Rig"
+    ports.respond.temp_performance.set("performance_part", "part_level", 99, part=3)
+    w.read_temporary()  # routed to the performance panel
+    w.worker.process_pending()
+    panel = w.performance_panel
+    assert panel.label.text() == 'the temporary performance: "Live Rig"' and panel.problems_label.isHidden()
+    assert panel.editor.widget_for("performance_part", "part_level", part=3, grid=True).value() == 99
+    assert w.patch_label.text().startswith("No patch open")  # the patch side was not touched
+    assert ports.respond.writes == []
+
+
+def test_the_performance_names_list_and_opening_one(env):
+    w, ports = perf_mode(env)
+    w.read_names()
+    w.worker.process_pending()
+    assert w.perf_list.count() == 32 and w.perf_list.item(4).text() == "05  Perf 05" and "32 USER performance names" in w.statusBar().currentMessage()
+    w._open_perf_from_item(w.perf_list.item(4))
+    w.worker.process_pending()
+    assert w.performance_panel.label.text() == 'USER performance 05: "Perf 05"' and w.names_list.count() == 0
+
+
+def test_live_edits_reach_the_temporary_performance_only_when_it_is_the_one_shown(env):
+    w, ports = perf_mode(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    panel = w.performance_panel
+    panel.editor.widget_for("performance_part", "part_level", part=5, grid=True).setValue(88)
+    w.worker.process_pending()
+    assert ports.respond.temp_performance.get("performance_part", "part_level", part=5) == 88 and panel.is_dirty() and "(edited)" in panel.label.text()
+    ports.respond.writes.clear()
+    panel.revert_edits()  # (the edit above is on the unit already; reverting only changes what is shown)
+    w._open_perf_from_item(type("I", (), {"data": lambda self, role: 6})())
+    panel.live_check.setChecked(True)
+    w.worker.process_pending()
+    panel.editor.widget_for("performance_common", "performance_tempo").setValue(140)
+    w.worker.process_pending()
+    assert ports.respond.writes == [] and "Send to Temporary Performance" in panel.hint.text()  # a USER performance: edits stay local until sent
+    w.send_temporary()
+    w.worker.process_pending()
+    assert ports.respond.temp_performance.get("performance_common", "performance_tempo") == 140 and panel._temp_synced
+
+
+def test_performance_undo_redo_and_revert_follow_the_mode(env):
+    w, ports = perf_mode(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    panel = w.performance_panel
+    panel.live_check.setChecked(False)
+    level = panel.editor.widget_for("performance_part", "part_level", part=2, grid=True)
+    level.setValue(50)
+    level.setValue(70)
+    assert w.undo_action.isEnabled() and w.revert_action.isEnabled()
+    w.undo()
+    assert panel._shown[1].get("performance_part", "part_level", part=2) == 50
+    w.undo()
+    assert not panel.is_dirty() and w.redo_action.isEnabled()
+    w.redo()
+    assert panel._shown[1].get("performance_part", "part_level", part=2) == 50
+    w.revert_edits()
+    assert not panel.is_dirty() and not w.undo_action.isEnabled()
+    w.mode_tabs.setCurrentIndex(0)
+    assert not w.undo_action.isEnabled()  # the patch side has its own (empty) history
+
+
+def test_reading_another_performance_over_edits_asks_first(env, monkeypatch):
+    w, ports = perf_mode(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    panel = w.performance_panel
+    panel.live_check.setChecked(False)
+    panel.editor.widget_for("performance_common", "performance_tempo").setValue(99)
+    asked = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: asked.append(a[2]) or QMessageBox.StandardButton.No)
+    w.read_temporary()
+    w.worker.process_pending()
+    assert asked and panel.editor.widget_for("performance_common", "performance_tempo").value() == 99
+
+
+def test_a_unit_that_does_not_take_a_live_performance_edit_switches_it_off_once(env, monkeypatch):
+    w, ports = perf_mode(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    ports.respond.ignore_writes = True
+    warnings = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda parent, title, text: warnings.append(text) or QMessageBox.StandardButton.Ok)
+    panel = w.performance_panel
+    panel.editor.widget_for("performance_common", "performance_tempo").setValue(120)
+    panel.editor.widget_for("performance_common", "performance_tempo").setValue(121)
+    w.worker.process_pending()
+    assert len(warnings) == 1 and not panel.live_check.isChecked() and "Live sending is off" in warnings[0]
+
+
+def test_writing_a_user_performance_backs_up_the_old_one(writable, monkeypatch):
+    from jv_studio.ui import main_window as mw
+
+    w, ports, answers, tmp_path, _ = writable
+    w.mode_tabs.setCurrentIndex(1)
+    w.read_temporary()
+    w.worker.process_pending()
+    w.read_names()
+    w.worker.process_pending()
+    panel = w.performance_panel
+    panel.live_check.setChecked(False)
+    panel.editor.widget_for("performance_common", "performance_name").setText("Mine")
+    panel.editor.widget_for("performance_common", "performance_name").editingFinished.emit()
+    from jv_studio.ui import performance_panel as pp
+
+    monkeypatch.setattr(pp.SlotDialog, "exec", lambda self: self.DialogCode.Accepted)
+    monkeypatch.setattr(pp.SlotDialog, "slot", lambda self: 3)
+    w.write_user()
+    w.worker.process_pending()
+    assert ports.respond.user_performances[3].name == "Mine" and not panel.is_dirty() and w.perf_list.item(3).text() == "04  Mine"
+    assert len(list((tmp_path / "backups").glob("PERF-04-*.syx"))) == 1 and not w._is_dirty()  # (and no patch was written)
+    assert w.names_list.count() == 0
+
+
+def test_a_performance_write_does_not_look_like_a_patch_write(writable, monkeypatch):
+    w, ports, answers, tmp_path, _ = writable
+    w.read_temporary()  # a patch, in patch mode
+    w.worker.process_pending()
+    w.mode_tabs.setCurrentIndex(1)
+    w.read_temporary()
+    w.worker.process_pending()
+    w.performance_panel.send_temporary()
+    w.worker.process_pending()
+    assert w.patch_label.text().startswith('the temporary patch') and "(edited)" not in w.patch_label.text()
+    assert "temporary performance" in w.statusBar().currentMessage()
+
+
+def test_opening_and_saving_a_performance_file(env, monkeypatch, tmp_path):
+    from PySide6.QtWidgets import QFileDialog
+
+    from jv_studio.core import performance
+
+    w, ports = perf_mode(env)
+    p = performance.Performance.minimum()
+    p.name = "From File"
+    path = tmp_path / "perf.syx"
+    path.write_bytes(p.to_syx(performance.user_base(11)))
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(path), ""))
+    w.open_syx()
+    panel = w.performance_panel
+    assert "From File" in panel.label.text() and "USER performance 12" in panel.label.text() and w.save_action.isEnabled()
+    out = tmp_path / "out.syx"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: (str(out), ""))
+    w.save_shown_patch()
+    assert performance.parse_syx(out.read_bytes())[performance.user_base(11)] == p
+    assert ports.respond.writes == []
+
+
+def test_a_patch_file_is_not_a_performance(env, monkeypatch, tmp_path):
+    from PySide6.QtWidgets import QFileDialog
+
+    from jv_studio.core import patch
+
+    w, _ = perf_mode(env)
+    path = tmp_path / "patch.syx"
+    path.write_bytes(patch.Patch.minimum().to_syx(patch.user_base(0)))
+    told = []
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(path), ""))
+    monkeypatch.setattr(QMessageBox, "information", lambda parent, title, text: told.append(text) or QMessageBox.StandardButton.Ok)
+    w.open_syx()
+    assert told == ["That file holds no JV-1010 performance."]
+
+
+def test_user_patch_names_read_in_patch_mode_name_the_parts_in_performance_mode(env):
+    w, ports = connected(env)
+    ports.respond.user[4].name = "Viola"
+    w.read_names()
+    w.worker.process_pending()
+    w.mode_tabs.setCurrentIndex(1)
+    ports.respond.temp_performance.set("performance_part", "patch_group_id", 1, part=0)
+    ports.respond.temp_performance.set("performance_part", "patch_number", 4, part=0)
+    w.read_temporary()
+    w.worker.process_pending()
+    assert w.performance_panel.editor._grid_patch[0].text() == "USER 005  Viola"
+
+
+def test_the_raw_values_tab_shows_the_performance(env):
+    w, _ = perf_mode(env)
+    panel = w.performance_panel
+    w.read_temporary()
+    w.worker.process_pending()
+    panel.editor.tabs.setCurrentWidget(panel.tree)
+    assert panel.tree.topLevelItemCount() == 17 and panel.tree.topLevelItem(0).text(0) == "Common" and panel.tree.topLevelItem(1).text(0) == "Part 1"

@@ -145,6 +145,11 @@ def write_file(path, data):
     return path
 
 
+def user_performance_backup_path(directory, number, now=None):
+    """Where the backup of USER performance `number` (0-based) goes: `<directory>/PERF-07-20261013-090507.syx`."""
+    return Path(directory) / f"PERF-{number + 1:02d}-{(now or datetime.now()):%Y%m%d-%H%M%S}.syx"
+
+
 def user_patch_backup_path(directory, number, now=None):
     """Where the backup of USER patch `number` (0-based) goes: `<directory>/USER-007-20261013-090507.syx`."""
     return Path(directory) / f"USER-{number + 1:03d}-{(now or datetime.now()):%Y%m%d-%H%M%S}.syx"

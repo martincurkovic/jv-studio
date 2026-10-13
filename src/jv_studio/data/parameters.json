@@ -3240,6 +3240,4495 @@
    ]
   }
  ],
+ "preset_patches": {
+  "PR-A": [
+   {
+    "name": "64voicePiano",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bright Piano",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Classique",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Nice Piano",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Piano Thang",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Power Grand",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "House Piano",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "E.Grand",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "MIDIed Grand",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Piano Blend",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "West Coast",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "PianoStrings",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bs/Pno+Brs",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Waterhodes",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "S.A.E.P.",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "SA Rhodes 1",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "SA Rhodes 2",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Stiky Rhodes",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dig Rhodes",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Nylon EPiano",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Nylon Rhodes",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rhodes Mix",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "PsychoRhodes",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tremo Rhodes",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "MK-80 Rhodes",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "MK-80 Phaser",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Delicate EP",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Octa Rhodes1",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Octa Rhodes2",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JV Rhodes+",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": " EP+Mod Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Mr.Mellow",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Comp Clav",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Klavinet",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Winger Clav",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Phaze Clav 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Phaze Clav 2",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Phuzz Clav",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Chorus Clav",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Claviduck",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Velo-Rez Clv",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Clavicembalo",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Analog Clav1",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Analog Clav2",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Metal Clav",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Full Stops",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ballad B",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Mellow Bars",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "AugerMentive",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Perky B",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "The Big Spin",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Gospel Spin",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Roller Spin",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rocker Spin",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tone Wh.Solo",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Purple Spin",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "60's LeadORG",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Assalt Organ",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "D-50 Organ",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Cathedral",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Church Pipes",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Poly Key",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Poly Saws",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Poly Pulse",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dual Profs",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Saw Mass",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Poly Split",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Poly Brass",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Stackoid",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Poly Rock",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "D-50 Stack",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Fantasia JV",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jimmee Dee",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Heavenals",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Mallet Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Huff N Stuff",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Puff 1080",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "BellVox 1080",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Fantasy Vox",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Square Keys",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Childlike",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Music Box",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Toy Box",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Wave Bells",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tria Bells",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Beauty Bells",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Music Bells",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pretty Bells",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pulse Key",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Wide Tubular",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "AmbienceVibe",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Warm Vibes",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dyna Marimba",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bass Marimba",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Nomad Perc",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ethno Metals",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Islands Mlt",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Steelin Keys",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Steel Drums",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Voicey Pizz",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sitar",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Drone Split",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ethnopluck",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jamisen",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dulcimer",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "East Melody",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "MandolinTrem",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Nylon Gtr",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Gtr Strings",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Steel Away",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Heavenly Gtr",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "12str Gtr 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "12str Gtr 2",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jz Gtr Hall",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "LetterFrmPat",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jazz Scat",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Lounge Gig",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JC Strat",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Twin Strats",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JV Strat",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Syn Strat",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rotary Gtr",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Muted Gtr",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "SwitchOnMute",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Power Trip",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Crunch Split",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rezodrive",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "RockYurSocks",
+    "voices": 4,
+    "key_assign": "SOLO"
+   }
+  ],
+  "PR-B": [
+   {
+    "name": "Dist Gtr 1",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dist Gtr 2",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "R&R Chunk",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Phripphuzz",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Grungeroni",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Black Widow",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Velo-Wah Gtr",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Mod-Wah Gtr",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pick Bass",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Hip Bass",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Perc.Bass",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Homey Bass",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Finger Bass",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Nylon Bass",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ac.Upright",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Wet Fretls",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Fretls Dry",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Slap Bass 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Slap Bass 2",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Slap Bass 3",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Slap Bass 4",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "4 Pole Bass",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Tick Bass",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "House Bass",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Mondo Bass",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Clk AnalogBs",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Bass In Face",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "101 Bass",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Noiz Bass",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Super Jup Bs",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Occitan Bass",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Hugo Bass",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Multi Bass",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Moist Bass",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "BritelowBass",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Untamed Bass",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Rubber Bass",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Stereoww Bs",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Wonder Bass",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Deep Bass",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Super JX Bs",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "W<RED>-Bass",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "HI-Ring Bass",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Euro Bass",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "SinusoidRave",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Alternative",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Acid Line",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Auto TB-303",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Hihat Tekno",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Velo Tekno 1",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Raggatronic",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Blade Racer",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "S&H Pad",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Syncrosonix",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Fooled Again",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Alive",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Velo Tekno 2",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rezoid",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Raverborg",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Blow Hit",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Hammer Bell",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Seq Mallet",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Intentions",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pick It",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Analog Seq",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Impact Vox",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "TeknoSoloVox",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "X-Mod Man",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Paz <==> Zap",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "4 Hits 4 You",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Impact",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Phase Hit",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tekno Hit 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tekno Hit 2",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tekno Hit 3",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Reverse Hit",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "SquareLead 1",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "SquareLead 2",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "You and Luck",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Belly Lead",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "WhistlinAtom",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Edye Boost",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "MG Solo",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "FXM Saw Lead",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Sawteeth",
+    "voices": 3,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Smoothe",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "MG Lead",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "MG Interval",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Pulse Lead 1",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pulse Lead 2",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Little Devil",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Loud SynLead",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Analog Lead",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "5th Lead",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Flute",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Piccolo",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "VOX Flute",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Air Lead",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pan Pipes",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Airplaaane",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Taj Mahal",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Raya Shaku",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Oboe mf",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Oboe Express",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Clarinet mp",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "ClariExpress",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Mitzva Split",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "ChamberWinds",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "ChamberWoods",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Film Orch",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sop.Sax mf",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Alto Sax",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "AltoLead Sax",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tenor Sax",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Baritone Sax",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Take A Tenor",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sax Section",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bigband Sax",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Harmonica",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Harmo Blues",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "BluesHarp",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Hillbillys",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "French Bags",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Majestic Tpt",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Voluntare",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "2Trumpets",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tpt Sect",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Mute TP mod",
+    "voices": 4,
+    "key_assign": "POLY"
+   }
+  ],
+  "PR-C": [
+   {
+    "name": "Harmon Mute",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tp&Sax Sect",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sax+Tp+Tb",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Brass Sect",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Trombone",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Hybrid Bones",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Noble Horns",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Massed Horns",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Horn Swell",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Brass It!",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Brass Attack",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Archimede",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rugby Horn",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "MKS-80 Brass",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "True ANALOG",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dark Vox",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "RandomVowels",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Angels Sing",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pvox Oooze",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Longing...",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Arasian Morn",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Beauty Vox",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Mary-AnneVox",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Belltree Vox",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Vox Panner",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Spaced Voxx",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Glass Voices",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tubular Vox",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Velo Voxx",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Wavox",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Doos",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Synvox Comps",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Vocal Oohz",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "LFO Vox",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "St.Strings",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Warm Strings",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Somber Str",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Marcato",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bright Str",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "String Ens",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "TremoloStrng",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Chambers",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "ViolinCello",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Symphonique",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Film Octaves",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Film Layers",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bass Pizz",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Real Pizz",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Harp On It",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Harp",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JP-8 Str 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JP-8 Str 2",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "E-Motion Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JP-8 Str 3",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Vintage Orch",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JUNO Strings",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Gigantalog",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "PWM Strings",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Warmth",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "ORBit Pad",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Deep Strings",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pulsify",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pulse Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Greek Power",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Harmonicum",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "D-50 Heaven",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Afro Horns",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pop Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": " Dreamesque",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Square Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JP-8 Hollow",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JP-8Haunting",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Heirborne",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Hush Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jet Pad 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jet Pad 2",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Phaze Pad",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Phaze Str",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jet Str Ens",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pivotal Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "3D Flanged",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Fantawine",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Glassy Pad",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Moving Glass",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Glasswaves",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Shiny Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "ShiftedGlass",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Chime Pad",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Spin Pad",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rotary Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dawn 2 Dusk",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Aurora",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Strobe Mode",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Albion",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Running Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Stepped Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": " Random Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "SoundtrkDANC",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Flying Waltz",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Vanishing",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "5th Sweep",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Phazweep",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Big BPF",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "MG Sweep",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "CeremonyTimp",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dyno Toms",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sands ofTime",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Inertia",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Vektogram",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Crash Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Feedback VOX",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Cascade",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Shattered",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "NextFrontier",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pure Tibet",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": " Chime Wash",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Night Shade",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tortured",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dissimilate",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dunes",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ocean Floor",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Cyber Space",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Biosphere",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Variable Run",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ice Hall",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "ComputerRoom",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Inverted",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Terminate",
+    "voices": 3,
+    "key_assign": "POLY"
+   }
+  ],
+  "PR-D": [
+   {
+    "name": "Piano 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Piano 2",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Piano 3",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Honky-tonk",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "E.Piano 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "E.Piano 2",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Harpsichord",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Clav.",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Celesta",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Glockenspiel",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Music Box",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Vibraphone",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Marimba",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Xylophone",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tubular-bell",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Santur",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Organ 1",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Organ 2",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Organ 3",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Church Org.1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Reed Organ",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Accordion Fr",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Harmonica",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bandoneon",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Nylon-str.Gt",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Steel-str.Gt",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jazz Gt.",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Clean Gt.",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Muted Gt.",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Overdrive Gt",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "DistortionGt",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Gt.Harmonics",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Acoustic Bs.",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Fingered Bs.",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Picked Bs.",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Fretless Bs.",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Slap Bass 1",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Slap Bass 2",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Synth Bass 1",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Synth Bass 2",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Violin",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Viola",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Cello",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Contrabass",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tremolo Str",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "PizzicatoStr",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Harp",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Timpani",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Strings",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Slow Strings",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Syn.Strings1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Syn.Strings2",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Choir Aahs",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Voice Oohs",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "SynVox",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "OrchestraHit",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Trumpet",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Trombone",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tuba",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "MutedTrumpet",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "French Horn",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Brass 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Synth Brass1",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Synth Brass2",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Soprano Sax",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Alto Sax",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tenor Sax",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Baritone Sax",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Oboe",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "English Horn",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bassoon",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Clarinet",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Piccolo",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Flute",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Recorder",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pan Flute",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bottle Blow",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Shakuhachi",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Whistle",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ocarina",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Square Wave",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Saw Wave",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Syn.Calliope",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Chiffer Lead",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Charang",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Solo Vox",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "5th Saw Wave",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bass & Lead",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Fantasia",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Warm Pad",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Polysynth",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Space Voice",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bowed Glass",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Metal Pad",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Halo Pad",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sweep Pad",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ice Rain",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Soundtrack",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Crystal",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Atmosphere",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Brightness",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Goblin",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Echo Drops",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Star Theme",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sitar",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Banjo",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Shamisen",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Koto",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Kalimba",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bag Pipe",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Fiddle",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Shanai",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tinkle Bell",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Agogo",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Steel Drums",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Woodblock",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Taiko",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Melo. Tom 1",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Synth Drum",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Reverse Cym.",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Gt.FretNoise",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Breath Noise",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Seashore",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Bird",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Telephone 1",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Helicopter",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Applause",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Gun Shot",
+    "voices": 2,
+    "key_assign": "POLY"
+   }
+  ],
+  "PR-E": [
+   {
+    "name": "Echo Piano",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Upright Pno",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "RD-1000",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Player's EP",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "D-50 Rhodes",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Innocent EP",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Echo Rhodes",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "See-Thru EP",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "FM BellPiano",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ring E.Piano",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Soap Opera",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dirty Organ",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Surf's Up!",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Organesque",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "pp Harmonium",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "PieceOfCheez",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Harpsy Clav",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Exotic Velo",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "HolidayCheer",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Morning Lite",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Prefab Chime",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Belfry Chime",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Stacc.Heaven",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "2.2 Bell Pad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Far East",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Wire Pad",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "PhaseBlipper",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sweep Clav",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Glider",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Solo Steel",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "DesertCrystl",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Clear Guitar",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Solo Strat",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Feed Me!",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Tube Smoke",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Creamy",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Blusey OD",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Grindstone",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "OD 5ths",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "East Europe",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dulcitar",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Atmos Harp",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pilgrimage",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "202 Rude Bs",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "2pole Bass",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "4pole Bass",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Phaser MC",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Miniphaser",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Acid TB",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Full Orchest",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Str + Winds",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Flute 2080",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Scat Flute",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sax Choir",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Ballad Trump",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sm.Brass Grp",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Royale",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Brass Mutes",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Breathy Brs",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "3 Osc Brass",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "P5 Polymod",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Triumph Brs",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Techno Dream",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Organizer",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Civilization",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Mental Chord",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "House Chord",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Sequalog",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Booster Bips",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "VintagePlunk",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Plik-Plok",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "RingSequence",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Cyber Swing",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Keep :-)",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Resojuice",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "B'on d'moov!",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dist TB-303",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Temple of JV",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Planet Asia",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Afterlife",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Trancing Pad",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Pulsatronic",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Cyber Dreams",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Warm Pipe",
+    "voices": 1,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Pure Pipe",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "SH-2000",
+    "voices": 2,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "X..? Whistle",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jay Vee Solo",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Progresso Ld",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Adrenaline",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Enlighten",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Glass Blower",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Earth Blow",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JX SqrCarpet",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Dimensional",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Jupiterings",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Analog Drama",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rich Dynapad",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Silky Way",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Gluey Pad",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "BandPass Mod",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Soundtraque",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Translucence",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Darkshine",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "D'light",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "December Sky",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Octapad",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "JUNO Power!",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Spectrum Mod",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Stringsheen",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "GR500 TmpDly",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Mod DirtyWav",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Silicon Str",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "D50FantaPerc",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rotodreams",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Blue Notes",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "RiversOfTime",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Phobos",
+    "voices": 2,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "2 0 8 0",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Unearthly",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Glistening",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Sci-Fi Str",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Shadows",
+    "voices": 4,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Helium Queen",
+    "voices": 4,
+    "key_assign": "SOLO"
+   },
+   {
+    "name": "Sci-Fi FX x4",
+    "voices": 1,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Perky Noize",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Droplet",
+    "voices": 3,
+    "key_assign": "POLY"
+   },
+   {
+    "name": "Rain Forest",
+    "voices": 4,
+    "key_assign": "POLY"
+   }
+  ],
+  "XP-A": [
+   {
+    "name": "St.Concert",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "9ft.Grand 1",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "9ft.Grand 2",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Euro Classic",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "St.Pno & Str",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Compress Pno",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "LA Session",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Water Piano",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Vibra Rhodes",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Stack Rhodes",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "ArcoEnsemble",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Vienna Strgs",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Str Adagio",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Oct Strings",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Silky Filter",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Soft Strings",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "SlowStr.Sect",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "GiantStrings",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Str+Choir 1",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Str+Choir 2",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Str+Choir 3",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Breathy Humz",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Dream Voices",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Mmmms",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Chorale",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Space Men",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Choir Mm+Aah",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Ivory Mist",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "PercussiVox",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Mysteriouso",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Phase Mmhs",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "AmbientStory",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Venus",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "SessionBrass",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Port.Tpts",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "R&R Brass",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Echo Brass",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "E.Coast Brs",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Bop Soli",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Soft Saxes",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Orchestral",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Octalog Hrn",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Tpt Soloist",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Legato Tpt",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Dyno Trumpet",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Ethno-Trumps",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Super Tenor",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "TenorExpress",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "T.Sax f",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Legato Flute",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Touch Flute",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "NewAge Flute",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Flute inMist",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Hybrid Flute",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Flute & Cla",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "ChristmasFlt",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Fifth Flute",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Cosmic Flute",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Acc.de Paris",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Paris 50's",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Musette Ens",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Montmartre",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Sad Akordion",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Fr.Accordion",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Fr.Accord 2",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Troubadour",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "SessionNylon",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Solo Nylon 1",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Solo Nylon 2",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Nylon & Str",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Nylon & Flt",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Nylon Chord",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Stratar",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Clean Tele",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Nashville",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Super Trem",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "SpaghettiGtr",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Duanne'sTone",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Big Hair Ld",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Metal Solo",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Crunch Tone",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Overdriven",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Blues Tele",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Tube Double",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Neil's Rust",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Short Crunch",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "X-Fade Metal",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Velo Power",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Phazy Chunk",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Reso Tele",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Wah Wah BPM",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Rock P.Bass1",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Rock P.Bass2",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Rock P.Bass3",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Big Jazz Bs",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "BriteJazz Bs",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Ch.Jazz Bs",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Mellow Jz Bs",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Mute E.Bs",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Octabahn Bs",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Slobbery Bs",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Phase Worm",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Euro Rave Bs",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Pumpin' Bs",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Tech NoBase",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Bad Acid Bs",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "CheepEcho Bs",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Manic Bs",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "JP6 Sqr Key",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Square drops",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Celestial",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Heavenly Eko",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "JD-800 Nomad",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Vibrolater",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "MartianChime",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Big Wet Blip",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Amazing Echo",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DelaySession",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Deletex",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Tarlia",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Mahoroba",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Eurotek Clav",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Dope Resoclv",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Tekno Juno",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Buzzzzzzzzzz",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Slop-a-rama",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Isn't Pretty",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Polywasp",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Quixelate",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Trangoa Wave",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Spiked Cheez",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Glassy Cheez",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Super 808Cow",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Arpeggiatoid",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Euro Hit 1",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Euro Hit 2",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Rave Slice",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Str Torture",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Juno Harpsi",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Big Mess Pad",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Harpsichoir",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Echo Juno",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Phazerave",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DanceStack 1",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "DanceStack 2",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DanceStack 3",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DanceStack 4",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "DanceStack 5",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DanceStack 6",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "DanceStack 7",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DanceStack 8",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Eurotek Brs",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Synergy Brs",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "PortaSynthex",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Razor VCOs",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Big PWM",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Flutey Stack",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Wobbly 5th",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Tekno Square",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Trance VoXxX",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Random Rave",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Raver Circus",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Resorave",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Flangomatic",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "O-Zu-Nu",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Sub Divided",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Ancient Sqr",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Fat Flange",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Phaze NRG",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Phase Vox",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Systekno",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "On the move!",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "XP'ration",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Big Ensemble",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Lazerette",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Fazed String",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Combing Slow",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Jet Stack",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Phazeslopad",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Rize Mass",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Portent",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DCO Sweeper",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Sweep Rain",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Sweep Stack",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Big Vectors",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Poly Swell",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Alchemy",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Soli-na",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "90s Str Mach",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Ultra Cheez",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Juno-60 Pad",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Progressive",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Build-Up Syn",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Atlantis 2",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Perelandra",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Plutonium",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Nautilus",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Metal Dreams",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Glass Clouds",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Harmonicloud",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Shining Veil",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Ethereal JX",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Striking 5th",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Meow 5ths",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Stepflanger",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Happy LFOs",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Aero Insect",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Beat Sweeper",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Wormy Lead",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Atmo Lead",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Caliolead",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Tweedles",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Raw PWM",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Voc Solo 5th",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Dirty Lead",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Boostweeper1",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Boostweeper2",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "B3 Filth",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Phazed Organ",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "VSw Vibrafon",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "SA Vibe",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "Rich Vibes",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "SpaceGamelan",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Toy Vibe",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Analog Bomb",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "Seashore 2",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Creation",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Cyberjunkie",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "Sci-Fi Bells",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "Shine on",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Piano1",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Piano2",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO PnoVox",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Str 1",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Str 2",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Str 3",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO SynPuls",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO 5thPad",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Choir",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Brass",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Tenor",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Tpt",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Flute",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Nylon",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO PhaseGt",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO DistGt1",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO DistGt2",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Strat",
+    "voices": 3,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO SlapBs",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO P.Bass",
+    "voices": 1,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO SynBs",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO SynLead",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Insect",
+    "voices": 4,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Buzzzzz",
+    "voices": 2,
+    "key_assign": null
+   },
+   {
+    "name": "DEMO Crowd",
+    "voices": 4,
+    "key_assign": null
+   }
+  ]
+ },
  "blocks": {
   "system_common": {
    "section": "1-1-1",
@@ -3755,7 +8244,7 @@
       },
       {
        "label": "PANEL&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "rhythm_edit_source"
@@ -3970,11 +8459,11 @@
       },
       {
        "label": "MEDIUM",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "HEAVY",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "keyboard_sens"
@@ -4017,15 +8506,15 @@
       },
       {
        "label": "INT",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "MIDI",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "INT&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "pedal_1_output_mode"
@@ -4045,7 +8534,7 @@
       },
       {
        "label": "REVERSE",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "pedal_1_polarity"
@@ -4075,15 +8564,15 @@
       },
       {
        "label": "INT",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "MIDI",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "INT&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "pedal2_output_mode"
@@ -4103,7 +8592,7 @@
       },
       {
        "label": "REVERSE",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "pedal2_polarity"
@@ -4133,15 +8622,15 @@
       },
       {
        "label": "INT",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "MIDI",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "INT&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "c1_output_mode"
@@ -4171,15 +8660,15 @@
       },
       {
        "label": "INT",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "MIDI",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "INT&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "c2_output_mode"
@@ -4199,15 +8688,15 @@
       },
       {
        "label": "INT",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "MIDI",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "INT&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "hold_pedal_output_mode"
@@ -4227,7 +8716,7 @@
       },
       {
        "label": "REVERSE",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "hold_pedal_polarity"
@@ -4544,15 +9033,15 @@
       },
       {
        "label": "INT",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "MIDI",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "INT&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "pedal3_output_mode"
@@ -4572,7 +9061,7 @@
       },
       {
        "label": "REVERSE",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "pedal3_polarity"
@@ -4602,15 +9091,15 @@
       },
       {
        "label": "INT",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "MIDI",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "INT&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "pedal4_output_mode"
@@ -4630,7 +9119,7 @@
       },
       {
        "label": "REVERSE",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "pedal4_polarity"
@@ -4767,15 +9256,15 @@
       },
       {
        "label": "INT",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "MIDI",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "INT&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "c3_output_mode"
@@ -4805,15 +9294,15 @@
       },
       {
        "label": "INT",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "MIDI",
-       "jv1010": true
+       "jv1010": false
       },
       {
        "label": "INT&MIDI",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "c4_output_mode"
@@ -5003,7 +9492,25 @@
      "max": 15,
      "bits": "0000 aaaa",
      "footnote": 1,
-     "key": "efx_source"
+     "key": "efx_source",
+     "labels": [
+      "PERFORM",
+      "PART 1",
+      "PART 2",
+      "PART 3",
+      "PART 4",
+      "PART 5",
+      "PART 6",
+      "PART 7",
+      "PART 8",
+      "PART 9",
+      "PART 11",
+      "PART 12",
+      "PART 13",
+      "PART 14",
+      "PART 15",
+      "PART 16"
+     ]
     },
     {
      "name": "EFX Type",
@@ -5761,7 +10268,7 @@
       },
       {
        "label": "SINGLE",
-       "jv1010": true
+       "jv1010": false
       }
      ],
      "key": "keyboard_mode"
@@ -5823,7 +10330,25 @@
      "display_text": "1 - 16",
      "display_min": 1,
      "display_max": 16,
-     "key": "midi_channel"
+     "key": "midi_channel",
+     "labels": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
     },
     {
      "name": "Patch Group Type",

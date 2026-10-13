@@ -245,3 +245,59 @@ def test_write_param_verify_reads_the_block_back_and_catches_a_unit_that_ignored
     u2, _, _ = connect(stubborn)
     with pytest.raises(unit.UnitError):
         u2.write_param(patch.TEMPORARY_BASE, patch.COMMON, "patch_tempo", 150, verify=True)
+
+
+# -- performances ----------------------------------------------------------------------------------------------------------------
+
+
+def test_a_performance_is_read_in_17_requests_one_at_a_time():
+    from jv_studio.core import performance
+
+    fake = FakeJV1010()
+    fake.temp_performance.set(performance.PART, "part_level", 99, part=6)
+    u, ports, _ = connect(fake)
+    got = u.read_temporary_performance()
+    assert got == fake.temp_performance and got.get(performance.PART, "part_level", part=6) == 99
+    assert len(fake.requests) == 17 and [size for _, size in fake.requests] == [66] + [25] * 16
+
+
+def test_the_32_user_performance_names():
+    from jv_studio.core import performance
+
+    u, _, _ = connect(FakeJV1010())
+    seen = []
+    names = u.read_user_performance_names(progress=lambda d, t: seen.append((d, t)))
+    assert len(names) == 32 and names[0] == "Perf 01" and names[31] == "Perf 32" and seen[-1] == (32, 32)
+    assert len(u.read_user_performance_names(cancelled=lambda: True)) == 0
+
+
+def test_writing_a_performance_is_verified_by_a_read_back():
+    from jv_studio.core import performance
+
+    fake = FakeJV1010()
+    u, _, _ = connect(fake)
+    new = performance.Performance.minimum()
+    new.name = "Written"
+    new.set(performance.PART, "part_pan", 100, part=15)
+    u.write_performance(performance.user_base(7), new)
+    assert fake.user_performances[7] == new
+    stubborn = FakeJV1010(ignore_writes=True)
+    u2, _, _ = connect(stubborn)
+    with pytest.raises(unit.UnitError):
+        u2.write_performance(performance.user_base(7), new)
+
+
+def test_one_performance_parameter_can_be_set_and_checked():
+    from jv_studio.core import performance
+
+    fake = FakeJV1010()
+    u, _, _ = connect(fake)
+    assert u.write_performance_param(performance.TEMPORARY_BASE, performance.PART, "midi_channel", 9, part=9, verify=True) == 9
+    assert fake.temp_performance.get(performance.PART, "midi_channel", part=9) == 9 and fake.temp_performance.get(performance.PART, "midi_channel", part=8) == 0
+    assert u.write_performance_param(performance.TEMPORARY_BASE, performance.COMMON, "performance_tempo", 150) == 150
+    with pytest.raises(ValueError):
+        u.write_performance_param(performance.TEMPORARY_BASE, performance.PART, "part_level", 1)
+    stubborn = FakeJV1010(ignore_writes=True)
+    u2, _, _ = connect(stubborn)
+    with pytest.raises(unit.UnitError):
+        u2.write_performance_param(performance.TEMPORARY_BASE, performance.COMMON, "performance_tempo", 150, verify=True)

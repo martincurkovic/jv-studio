@@ -28,3 +28,20 @@ build/
 
 # half-written backups (the app writes name.syx.part, then renames it)
 *.part
+
+# standalone app builds (pyside6-deploy / Nuitka), written by scripts/build_*: the version from the git tag, the generated deploy spec, and the outputs
+src/jv_studio/_build_version.py
+*.spec
+*.build/
+*.dist/
+*.onefile-build/
+nuitka-crash-report.xml
+*.app/
+deployment/
+*.dmg
+*.AppImage
+*.exe
+/dmg-staging
+/AppDir
+/appimagetool-*
+/JV-Studio-Setup.exe

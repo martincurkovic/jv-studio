@@ -135,6 +135,31 @@ TONE = {
     "reverb_send_level": "How much of the tone is sent to the reverb.",
 }
 
+PERFORMANCE_COMMON = {
+    "performance_name": "The performance's name: up to 12 characters.",
+    "performance_tempo": "The performance's tempo, used by tempo-synced effects and LFOs when the clock source is PERFORMANCE.",
+    "clock_source": "Whether tempo-synced items follow this performance's tempo (PERFORMANCE) or the unit's system tempo (SYSTEM).",
+    "keyboard_range_switch": "When on, each part only plays within its own keyboard range.",
+    "efx_source": "Where the effect settings come from: this performance's own, or the patch playing on one part (part 10, the rhythm part, can't be the source).",
+}
+PERFORMANCE_PART = {
+    "receive_switch": "Whether this part plays. Off silences it without losing its settings.",
+    "midi_channel": "The MIDI channel this part listens to. Parts on the same channel play together (layering).",
+    "receive_program_change_switch": "Whether the part follows Program Change messages on its channel (changing its patch).",
+    "receive_volume_switch": "Whether the part follows MIDI Volume (CC 7) on its channel.",
+    "receive_hold_1_switch": "Whether the part follows the sustain pedal (Hold-1, CC 64) on its channel.",
+    "part_level": "The part's level in the mix.",
+    "part_pan": "Where the part sits in the stereo field.",
+    "part_coarse_tune": "Tunes the part in semitones.",
+    "part_fine_tune": "Tunes the part in cents (hundredths of a semitone).",
+    "output_assign": "Where the part goes: MIX (the normal stereo mix), EFX (through the performance's effect) or PATCH (whatever each patch itself says).",
+    "mix_efx_send_level": "How much of the part goes to the main mix or effect.",
+    "chorus_send_level": "How much of the part is sent to the chorus.",
+    "reverb_send_level": "How much of the part is sent to the reverb.",
+    "keyboard_range_lower": "The lowest key this part plays (when the Keyboard Range Switch is on).",
+    "keyboard_range_upper": "The highest key this part plays (when the Keyboard Range Switch is on).",
+}
+
 _ENVELOPE = re.compile(r"^(pitch|filter|level)_envelope_(time|level)_(\d)$")
 _CONTROLLER = re.compile(r"^controller_(\d)_(destination|depth)_(\d)$")
 _ENVELOPE_NAMES = {"pitch": "pitch", "filter": "filter", "level": "level"}
@@ -142,6 +167,18 @@ _ENVELOPE_NAMES = {"pitch": "pitch", "filter": "filter", "level": "level"}
 
 def hint(block_key, key):
     """The one-sentence explanation for a parameter, or None."""
+    if block_key == "performance_common":
+        if key in PERFORMANCE_COMMON:
+            return PERFORMANCE_COMMON[key]
+        if key.startswith("voice_reserve_"):
+            return "How many of the unit's 64 voices are kept for this part, so other parts can't take them."
+        if re.match(r"^efx_parameter_\d+$", key):
+            return "A parameter of the chosen effect type: its name changes with the type."
+        if key in COMMON and key.split("_")[0] in ("efx", "chorus", "reverb", "delay"):
+            return COMMON[key]
+        return None
+    if block_key == "performance_part":
+        return PERFORMANCE_PART.get(key)
     table = COMMON if block_key == "patch_common" else TONE if block_key == "patch_tone" else {}
     if key in table:
         return table[key]

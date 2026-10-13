@@ -1,6 +1,6 @@
 """Pretend MIDI ports and a pretend JV-1010, so MIDI code is tested without a backend or hardware."""
 
-from jv_studio.core import memory, patch, sysex
+from jv_studio.core import memory, patch, performance, sysex
 
 
 class FakePorts:
@@ -88,9 +88,14 @@ class FakeJV1010:
         self.identity = identity
         self.ignore_writes = ignore_writes
         self.drop_first_replies = drop_first_replies
-        # everything that is not a patch (system, performances, rhythm setups): block start -> bytes, filled with a recognisable 7-bit pattern
+        self.temp_performance = performance.Performance.minimum()
+        self.temp_performance.name = "Temp Perf"
+        self.user_performances = [performance.Performance.minimum() for _ in range(performance.USER_PERFORMANCE_COUNT)]
+        for i, p in enumerate(self.user_performances):
+            p.name = f"Perf {i + 1:02d}"
+        # everything that is neither a patch nor a performance (system, rhythm setups): block start -> bytes, filled with a recognisable 7-bit pattern
         self.other = {}
-        for block in memory.plan([memory.SYSTEM, memory.PERFORMANCES, memory.RHYTHM]):
+        for block in memory.plan([memory.SYSTEM, memory.RHYTHM]):
             self.other[block.start] = bytearray((block.start + i) % 100 for i in range(block.size))
         self.requests = []  # (address, size) of every RQ1
         self.writes = []  # every DT1 received, parsed
@@ -105,6 +110,10 @@ class FakeJV1010:
             return self.temporary, patch.TEMPORARY_BASE
         if address[0] == 0x11 and address[1] < patch.USER_PATCH_COUNT:
             return self.user[address[1]], (0x11, address[1], 0, 0)
+        if address[0] == 0x01:
+            return self.temp_performance, performance.TEMPORARY_BASE
+        if address[0] == 0x10 and address[1] < performance.USER_PERFORMANCE_COUNT:
+            return self.user_performances[address[1]], (0x10, address[1], 0, 0)
         return None
 
     def __call__(self, message):

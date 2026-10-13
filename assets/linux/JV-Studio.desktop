@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=JV Studio
+Exec=main.bin
+Icon=icon_512x512
+Categories=AudioVideo;Audio;Midi;Utility;
+Comment=Edit, back up and organise your Roland JV-1010 sound module
+Terminal=false

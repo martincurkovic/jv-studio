@@ -10,7 +10,7 @@ Rules that come from the manual and from AKAISDS's hardware lessons:
 import time
 from dataclasses import dataclass
 
-from . import params, patch, sysex
+from . import params, patch, performance, sysex
 
 DEFAULT_TIMEOUT = 1.0  # seconds to wait for one reply
 DEFAULT_RETRIES = 1  # extra attempts after a timeout (so two requests at most per block)
@@ -123,6 +123,63 @@ class JV1010Unit:
             self._wait(sysex.PACKET_GAP_MS / 1000)
             if self.read_block(address, len(data)) != bytes(data):
                 raise UnitError(f"the unit does not hold what was written at {' '.join(f'{b:02X}' for b in address)} (the read-back differs)")
+
+    # -- performances ----------------------------------------------------------------------------------------------------
+
+    def read_performance(self, base):
+        """The whole performance at `base`: 17 requests (the common block, then the 16 parts), one at a time."""
+        result = performance.Performance.blank()
+        for offset, buffer in result.blocks():
+            buffer[:] = self.read_block(sysex.add_to_address(base, offset), len(buffer))
+        return result
+
+    def read_temporary_performance(self):
+        return self.read_performance(performance.TEMPORARY_BASE)
+
+    def read_user_performance(self, number):
+        return self.read_performance(performance.user_base(number))
+
+    def read_user_performance_names(self, progress=None, cancelled=None):
+        """The 32 USER performance names, one request each (the common block: its first 12 bytes are the name). Stops early, returning what it has, if cancelled."""
+        common = params.load_table().block(performance.COMMON)
+        name = common.param("performance_name")
+        names = []
+        for number in range(performance.USER_PERFORMANCE_COUNT):
+            if cancelled is not None and cancelled():
+                break
+            names.append(params.read(self.read_block(performance.user_base(number), common.size), name))
+            if progress is not None:
+                progress(number + 1, performance.USER_PERFORMANCE_COUNT)
+        return names
+
+    def write_performance(self, base, new, verify=True):
+        """Write `new` to the performance at `base` (17 DT1 messages, >= 20 ms apart) and, with `verify`, read it back: it must be identical."""
+        for message in new.to_messages(base):
+            self._send_dt1(message)
+        if verify:
+            self._wait(sysex.PACKET_GAP_MS / 1000)
+            if self.read_performance(base) != new:
+                raise UnitError("the unit does not hold what was written (the read-back differs)")
+
+    def write_performance_param(self, base, block, key, value, part=None, verify=False):
+        """Set ONE parameter of the performance at `base` (a DT1 of just its bytes); with `verify`, read its block back and check. Returns the value sent."""
+        table = params.load_table()
+        param = table.block(block).param(key)
+        buffer = bytearray(table.block(block).size)
+        sent = params.write(buffer, param, value)
+        if block == performance.COMMON:
+            offset = 0
+        elif part is None:
+            raise ValueError("a part parameter needs a part number (0-15)")
+        else:
+            offset = performance.part_offset(part)
+        wanted = params.param_bytes(buffer, param)
+        self._send_dt1(sysex.dt1(sysex.add_to_address(base, offset + param.offset), wanted))
+        if verify:
+            self._wait(sysex.PACKET_GAP_MS / 1000)
+            if params.param_bytes(self.read_block(sysex.add_to_address(base, offset), table.block(block).size), param) != wanted:
+                raise UnitError(f"the unit did not take {param.name} (the read-back differs)")
+        return sent
 
     def write_param(self, base, block, key, value, tone=None, verify=False):
         """Set ONE parameter (a DT1 of just its bytes) in the patch at `base`. Returns the value actually sent (clamped to the range; the text for a name).

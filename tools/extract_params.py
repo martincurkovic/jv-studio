@@ -97,7 +97,15 @@ def parse_footnote_choices(text, lo, hi):
     items = [x.strip() for x in re.split(r",\s*", text) if x.strip()]
     if len(items) != count:
         return None
-    return [{"label": x.strip("<>"), "jv1010": not x.startswith("<")} for x in items]
+    out, inside = [], False  # an angle bracket can span several items: "<LAYER, SINGLE>" marks both, "<DIRECT-1>, <DIRECT-2>" one each
+    for x in items:
+        opened = x.startswith("<")
+        out.append({"label": x.strip("<>"), "jv1010": not (inside or opened)})
+        if opened and not x.endswith(">"):
+            inside = True
+        elif x.endswith(">"):
+            inside = False
+    return out
 
 
 def parse_block(lines, start):
@@ -270,6 +278,47 @@ def efx_types(pdf):
     return [types[n] for n in range(1, 41)]
 
 
+#: group title -> (patch count, whether the list has a "Key Assign" column). The manual prints these lists three or four columns per row: two groups side by side
+#: (USER and PR-A, PR-B and PR-C, PR-D and PR-E) with two 64-patch columns each, then XP-A (Session) alone with four columns.
+PRESET_GROUPS = {"PR-A": (128, True), "PR-B": (128, True), "PR-C": (128, True), "PR-D": (128, True), "PR-E": (128, True), "XP-A": (255, False)}
+
+
+def preset_patches(lines):
+    """The ROM patch lists of the manual's Patch List: {"PR-A": [{name, voices, key_assign|None}] x 128, ..., "XP-A": x 255}. (USER is `factory_user_patches`.)
+    Each group's number is checked to be complete: fails loudly on a missing or a repeated number."""
+    heading = re.compile(r"^(USER|PR-[A-E]|XP-A) \((?:[A-Za-z ]*Group|Session)\)")
+    starts = [(i, heading.findall(line)) for i, line in enumerate(lines) if heading.match(line)]
+    entry = re.compile(r"(\d{3}) {2,3}(.{12}) *(\d)(?: +(POLY|SOLO))?(?= {2,}|\s*$)")
+    found = {name: {} for name in PRESET_GROUPS}
+    for k, (start, _) in enumerate(starts):
+        end = starts[k + 1][0] if k + 1 < len(starts) else len(lines)
+        names = re.findall(r"(USER|PR-[A-E]|XP-A) \(", lines[start])
+        for line in lines[start + 1 : end]:
+            matches = list(entry.finditer(line))
+            for position, m in enumerate(matches):
+                if len(names) == 1:
+                    group = names[0]  # XP-A: four columns, one group
+                else:
+                    group = names[min(position // 2, len(names) - 1)]  # two groups of two columns each
+                if group not in found:
+                    continue
+                number = int(m[1])
+                name = m[2].rstrip().replace("\u2019", "'").replace("\u2018", "'")
+                if number in found[group]:
+                    continue
+                found[group][number] = {"name": name, "voices": int(m[3]), "key_assign": m[4]}
+    result = {}
+    for group, (count, has_key_assign) in PRESET_GROUPS.items():
+        missing = [n for n in range(1, count + 1) if n not in found[group]]
+        if missing:
+            sys.exit(f"patch list {group}: missing {missing[:10]} (found {len(found[group])} of {count})")
+        entries = [found[group][n] for n in range(1, count + 1)]
+        if has_key_assign and any(e["key_assign"] is None for e in entries):
+            sys.exit(f"patch list {group}: some entries have no key assign mode")
+        result[group] = entries
+    return result
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     pdf = Path(args[0]) if args else DEFAULT_PDF
@@ -289,6 +338,7 @@ def main():
         "memory_map": memory_map(lines),
         "factory_user_patches": factory_user_patches(lines),
         "efx_types": efx_types(pdf),
+        "preset_patches": preset_patches(lines),
         "blocks": {},
     }
     problems = 0
@@ -322,6 +372,14 @@ def main():
         for param in data["blocks"][block]["params"]:
             if param["key"] == "efx_type" and param["max"] == 39:
                 param["labels"] = names
+    # EFX Source (performance common): which part's patch supplies the effect settings: the performance's own (PERFORM), or part 1-9 / 11-16 (not 10: the rhythm part)
+    for param in data["blocks"]["performance_common"]["params"]:
+        if param["key"] == "efx_source" and (param["min"], param["max"]) == (0, 15):
+            param["labels"] = ["PERFORM"] + [f"PART {n}" for n in (*range(1, 10), *range(11, 17))]
+    # a part's MIDI channel is a 0-15 value shown as 1-16
+    for param in data["blocks"]["performance_part"]["params"]:
+        if param["key"] == "midi_channel" and (param["min"], param["max"]) == (0, 15):
+            param["labels"] = [str(n) for n in range(1, 17)]
     # the ten structure types are a 0-9 number that the manual shows as 1-10: name them TYPE 01..TYPE 10 (core/friendly.py has the readable names and descriptions)
     for param in data["blocks"]["patch_common"]["params"]:
         if param["key"] in ("structure_type_1and2", "structure_type_3and4") and (param["min"], param["max"]) == (0, 9):

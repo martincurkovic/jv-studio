@@ -12,22 +12,20 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
-    QSizePolicy,
     QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
 from jv_studio.core import friendly, groups, hints, params, patch, waves
+from jv_studio.ui.efx import apply_efx_meanings
 from jv_studio.ui.envelope_graph import GRAPH_FOR_CARD
 from jv_studio.ui.knob_control import KnobControl, origin_value
-from jv_studio.ui.qt_helpers import FullWidthTabBar, build_editor_card, build_scroll_area
+from jv_studio.ui.qt_helpers import FullWidthTabBar, build_editor_card, build_two_column_page
 from jv_studio.ui.wave_picker import WavePickerDialog
 
 #: how many knobs a card's grid holds per row
 KNOBS_PER_ROW = 4
-#: a card column never gets narrower than this (a row of 4 knobs plus the card's padding)
-COLUMN_MIN_WIDTH = 346
 #: a card with at least this many knobs uses the COMPACT layout (the value beside the knob, about half the height): the roomy one for a handful, the compact one for the
 #: envelope, LFO and controller cards
 COMPACT_FROM = 8
@@ -114,23 +112,8 @@ class PatchEditor(QWidget):
         self.refresh()
 
     def _page(self, block_key, tone):
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(10, 10, 14, 10)  # room between the cards and the tab pane's frame
-        layout.setSpacing(6)
         scope = "patch_editor_common" if tone is None else "patch_editor_tone"
-        # two columns of cards, each card going to the shorter column so the page stays balanced. The columns are EXACTLY half the width each (their size hints are
-        # ignored, so collapsing a card can never shift the split)
-        columns = [QWidget(), QWidget()]
-        column_layouts = []
-        for column in columns:
-            column.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-            column.setMinimumWidth(COLUMN_MIN_WIDTH)
-            column_layout = QVBoxLayout(column)
-            column_layout.setContentsMargins(0, 0, 0, 0)
-            column_layout.setSpacing(6)
-            column_layouts.append(column_layout)
-        heights = [0, 0]
+        cards, weights = [], []
         for title, members in groups.groups(block_key):
             form = QFormLayout()
             form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -154,20 +137,9 @@ class PatchEditor(QWidget):
             rows = [layout_ for layout_, used in ((form, form.rowCount()), (grid, knobs)) if used]
             if block_key == patch.TONE and title in GRAPH_FOR_CARD:
                 rows.insert(0, self._graph_row(tone, GRAPH_FOR_CARD[title]))
-            side = 0 if heights[0] <= heights[1] else 1
-            column_layouts[side].addWidget(build_editor_card(scope, title, *rows, key=f"{title}"))
-            heights[side] += form.rowCount() + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2
-        row = QHBoxLayout()
-        row.setSpacing(6)
-        for column, column_layout in zip(columns, column_layouts):
-            column_layout.addStretch()
-            row.addWidget(column, 1)  # equal stretch + ignored hints = exactly half each
-        layout.addLayout(row)
-        layout.addStretch()
-        area = build_scroll_area(page)
-        # always there: a scroll bar that appears and disappears as cards collapse and expand changes the width the two columns share, and the whole page shifts sideways
-        area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        return area
+            cards.append(build_editor_card(scope, title, *rows, key=f"{title}"))
+            weights.append(form.rowCount() + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2)
+        return build_two_column_page(cards, weights)
 
     def _wave_row(self, tone):
         """The tone's wave by name, and a button to choose another."""
@@ -351,19 +323,10 @@ class PatchEditor(QWidget):
     # -- user edits ------------------------------------------------------------------------------------------------------
 
     def _apply_efx_labels(self):
-        """EFX Parameter 1-12 mean different things for each of the 40 effect types: name their knobs after the chosen type and grey out the ones it
-        doesn't use. Only names, tooltips and the knob's travel change; the readout keeps showing (and the patch keeps holding) the real value."""
+        """EFX Parameter 1-12 mean different things for each of the 40 effect types: see `ui/efx.py`."""
         if self._patch is None or (patch.COMMON, None, "efx_parameter_1") not in self._widgets:
             return
-        efx = params.load_table().efx_type(self._patch.get(patch.COMMON, "efx_type"))
-        for n in range(1, 13):
-            control = self._widgets[(patch.COMMON, None, f"efx_parameter_{n}")]
-            meaning = efx.param(n) if efx is not None else params.EfxParam(n, f"EFX Parameter {n}")
-            used = meaning.name is not None
-            control.set_name(meaning.name if used else "(not used)")
-            control.setEnabled(used)
-            control.setToolTip(f"{meaning.name} ({efx.name}): {meaning.min} to {meaning.max}.\nDrag to turn. Shift: fine. Double-click: reset. Click and type for an exact value." if used and efx is not None else "")
-            control.set_travel(meaning.min, meaning.max)
+        apply_efx_meanings({n: self._widgets[(patch.COMMON, None, f"efx_parameter_{n}")] for n in range(1, 13)}, self._patch.get(patch.COMMON, "efx_type"))
 
     #: the structure types that use the booster (the manual: "when the Structure Type is 03 or 04"), as raw values
     BOOSTER_TYPES = (2, 3)

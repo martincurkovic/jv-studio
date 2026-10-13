@@ -42,11 +42,12 @@ def parse_display_text(param, text):
 class KnobControl(QWidget):
     committed = Signal(int)
 
-    def __init__(self, param, *, compact=False, parent=None):
+    def __init__(self, param, *, compact=False, show_name=True, knob_size=KNOB_SIZE, parent=None):
         super().__init__(parent)
         self.param = param
         self.setObjectName("transparentContainer")  # the card's own colour, not the page's
-        self.setFixedWidth(COMPACT_COLUMN_WIDTH if compact else COLUMN_WIDTH)
+        if show_name:
+            self.setFixedWidth(COMPACT_COLUMN_WIDTH if compact else COLUMN_WIDTH)
         self._value = param.min
         self._silent = False
         self.name_label = QLabel(param.name)
@@ -56,7 +57,7 @@ class KnobControl(QWidget):
         self.name_label.setMinimumHeight(30)  # room for two lines, so a row of knobs lines up whether or not a name wraps
         self.knob = Knob()
         self.knob.setRange(param.min, param.max)
-        self.knob.setFixedSize(KNOB_SIZE, KNOB_SIZE)
+        self.knob.setFixedSize(knob_size, knob_size)
         self.knob.setNotchesVisible(False)
         origin = origin_value(param)
         self.knob.setOriginValue(origin)
@@ -75,7 +76,10 @@ class KnobControl(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        layout.addWidget(self.name_label)
+        if show_name:
+            layout.addWidget(self.name_label)
+        else:
+            self.name_label.hide()  # a knob in a row or a grid that carries its own headers (the performance's parts)
         if compact:
             row = QHBoxLayout()
             row.setContentsMargins(0, 0, 0, 0)

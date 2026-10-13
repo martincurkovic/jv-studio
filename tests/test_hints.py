@@ -5,13 +5,13 @@ from jv_studio.core import groups, hints, params, patch
 
 def test_every_hint_names_a_real_parameter():
     table = params.load_table()
-    for block, mapping in (("patch_common", hints.COMMON), ("patch_tone", hints.TONE)):
+    for block, mapping in (("patch_common", hints.COMMON), ("patch_tone", hints.TONE), ("performance_common", hints.PERFORMANCE_COMMON), ("performance_part", hints.PERFORMANCE_PART)):
         missing = [key for key in mapping if key not in table.block(block)]
         assert not missing, missing
 
 
 def test_hints_are_one_short_sentence():
-    for text in [*hints.COMMON.values(), *hints.TONE.values()]:
+    for text in [*hints.COMMON.values(), *hints.TONE.values(), *hints.PERFORMANCE_COMMON.values(), *hints.PERFORMANCE_PART.values()]:
         assert text.endswith(".") and len(text) <= 170 and "\n" not in text, text
 
 
@@ -28,3 +28,14 @@ def test_the_envelope_and_controller_patterns():
     assert "controller 2" in hints.hint("patch_tone", "controller_2_depth_1")
     assert hints.hint("patch_common", "efx_parameter_5").startswith("A parameter of the chosen effect")
     assert hints.hint("patch_tone", "no_such_key") is None
+
+
+def test_performance_parameters_have_explanations_too():
+    from jv_studio.core import groups, performance
+
+    for block in (performance.COMMON, performance.PART):
+        shown = [p.key for _, members in groups.groups(block) for p in members]
+        missing = [k for k in shown if not hints.hint(block, k)]
+        assert len(missing) <= 0.1 * len(shown), (block, missing)
+    assert hints.hint("performance_common", "reverb_time") == hints.COMMON["reverb_time"]  # the effects are the patch's own
+    assert "64 voices" in hints.hint("performance_common", "voice_reserve_3")

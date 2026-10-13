@@ -111,7 +111,7 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
 - **USER list actions** (right-click, F2 renames): Rename, Copy To, Swap With, via the worker's slot jobs. EVERY overwritten slot is read and saved to `~/.jv-studio/backups/` first (a swap saves BOTH
   before writing either) and each write is read back; a slot that is open with unsent edits is refused. A rename is a whole-patch write (read, change the name, `write_patch`), NOT a single-parameter
   DT1 (that path is still unproven on patch parameters). Only USER slots can be renamed: the ROM presets are read-only on the unit.
-- Not done: Performance and Rhythm editors, the PCM wave groups of the JV-1080 family, per-effect display mapping, a patch list that edits USER slots in place (double-click opens one),
+- Not done: the Rhythm setup editor, rename/copy/swap of performances, the PCM wave groups of the JV-1080 family, per-effect display mapping, a patch list that edits USER slots in place (double-click opens one),
   copy/swap between USER slots.
 
 ## The parameter table
@@ -201,6 +201,42 @@ Add dated entries as things are measured. Format: `- [hardware 2026-xx-xx] what 
   at interpreter exit) after ALL tests had passed, about two runs in three. Cause: windows/editors the tests leave behind are kept alive by their own signal connections (closures over widgets) and
   destroyed in an unlucky order at exit. Fix: `tests/conftest.py` `_destroy_qt_widgets_before_exit` closes and deletes every top-level widget (and gc.collect()s) at session end; 6 of 6 runs then exited 0.
   The real app quitting (with the tone tabs built) exited 0 in 8 of 8 offscreen runs. If a crash report names `recursive_invalidate` again, check for new widgets that outlive their test.
+
+## The Performance editor (phase 5, written 2026-10-13, NOT tried on hardware)
+
+A performance is a common block (66 bytes: name, tempo, the performance's own effects, voice reserve for 16 parts) and 16 part blocks (25 bytes each: receive switch, MIDI channel, which patch, level, pan, tune, output, sends, key range).
+`core/performance.py` is the sibling of `core/patch.py` (same `get`/`set`/`to_messages`/`requests`/`parse_syx` shape; 17 blocks, each one DT1). **Addresses: the Temporary Performance is `01 00 00 00`; USER performances `10 nn 00 00`
+(nn 00-1F); inside one, the common block is at offset 00 00 and part n at `(0x10 + n) << 7`, so the THIRD address byte counts the parts (`01 00 10 00` is temporary part 1).**
+- **Window:** a `Patches | Performances` tab row under the logo swaps the left list (USER patches / USER performances) and the right editor (`list_stack`, `right_stack`); the menu and button wording follow the mode, and the File/Edit/Hardware
+  actions are ROUTED to the active side (`_performance_mode()` at the top of `read_temporary`, `read_names`, `open_syx`, `save_shown_patch`, `send_temporary`, `write_user`, `revert_edits`, `undo`, `redo`; `_refresh_connection` enables the menu from
+  the active side). `ui/performance_panel.py` owns the performance side's state (working copy, original, undo, live sync, files); the host window supplies the worker, status bar and the "back up first?" question. **A worker label starting
+  `perf:` / `perf_` belongs to the panel: `_on_write_done` skips `perf:` and `_on_failed` forwards `perf_write_param`** (a performance write once looked like a patch write because both labels split on ":").
+- `ui/performance_editor.py`: tabs Parts | Part | Effects | Setup | Raw Values. **Parts** is a 16-row mixer (on, channel, the patch by NAME, level, pan, output; the number button opens that part on the Part tab). **Part** edits one part in
+  full (its controls bind to `DETAIL` = "whichever part is chosen NOW": a lambda that captured part 0 at build time would write to part 1 forever). Mixer and detail show the same values twice and are kept in step by `_after_change`.
+  **Effects** and **Setup** are the table-driven cards (`groups.RULES` has `performance_common` / `performance_part`); EFX knobs are renamed per type through `ui/efx.py`, shared with the patch editor. The editor is built lazily (first shown or first
+  performance read: ~200 widgets) and the smoke test builds it.
+- **A part's patch is chosen by name** (`ui/patch_picker.py`, `core/patch_groups.py`): the three parameters (group type, ID, number) are hidden controls set together as one undo step. The manual's group table: USER = type 0 id 1; CARD id 2 (not on a
+  JV-1010); PR-A..PR-E = ids 3-7 (PR-D is GM); the Session board = type 2 id 9 (255 patches). Names of PR-A..E and Session come from the manual's Patch List (`tools/extract_params.py preset_patches`: a complete count is enforced); USER names are the unit's
+  (read in Patches mode and passed over); until they are read a USER patch shows as just `USER 005`. Other ids show as "Group type 2, ID 4, patch 007": never guessed.
+- **Live edits go to the TEMPORARY performance only** (`perf_write_param`: one DT1 + a read-back of the block), only while the shown performance is the one in it (`_temp_synced`); the unit must be in PERFORMANCE mode to play it. Writing a USER
+  performance (`perf_write_user`) saves the old one to `~/.jv-studio/backups/PERF-nn-<time>.syx` first and aborts if that fails. Rename/copy/swap of performances, the rhythm setups, and part 10's rhythm assignment are NOT done. **Unverified on a unit:**
+  the temporary performance address `01 00 00 00` for RQ1/DT1, single-parameter DT1 on performance parameters, and what part 10 plays.
+- The extractor now marks an angle bracket that spans several items (`<LAYER, SINGLE>`) correctly, so `keyboard_mode` and the JV-1080-only system choices are no longer offered; `groups.supported()` also hides a parameter whose choices are ALL unsupported.
+
+## Packaging and CI (written 2026-10-13, NOT run yet)
+
+Adapted from akaiutil-gui (same owner, same Nuitka / pyside6-deploy approach). **None of it has been run: the first tag build is the test.** Likely trouble spots, in order: Nuitka finding `importlib.resources` data
+(`jv_studio/data/*.json`, bundled with `--include-data-dir`), python-rtmidi's compiled module, Qt's SVG plugin (the smoke test checks the last two and the data files).
+- Names: app/artifacts `JV-Studio` (`JV-Studio.app`, `JV-Studio-macos-arm.dmg`, `JV-Studio-linux.zip`, `JV-Studio-Setup.exe`), package `jv_studio`, cask `jv-studio`. `APP_NAME` lives in `build.yml` and the three `scripts/build_*`.
+- `scripts/build_macos.sh`, `build_linux.sh`, `build_windows.ps1`: sync, write the version from the git tag into `src/jv_studio/_build_version.py` (untracked; `ui/_version.py` prefers it, then package metadata), generate `src/pysidedeploy.spec`
+  (untracked), run `pyside6-deploy` on `src/main.py`. The bundled data is listed in `DATA_ARGS`: **a new runtime data file or folder must be added there in all three scripts.**
+- `jv-studio --smoke-test[=report.txt]` (`jv_studio/smoke_test.py`, tested in `tests/test_smoke_test.py`): stylesheets, SVG, parameter table, wave names, diagrams, rtmidi present (never a client: that can abort on a headless
+  machine), main window + all five editor pages + About. Scratch settings and log, never the user's. CI runs it on every built app.
+- Dependencies: `PySide6-Essentials` (not the full meta-package), a `build` dependency group (Nuitka 4.1.3, imageio, PySide6-Addons); `uv sync` installs both, CI's test job uses `--no-group build`.
+- Icons (`assets/icon/`): `icon_1024x1024.png` is the master (macOS-style rounded art), `icon_source.png` the full-bleed square it came from. `scripts/make_icons.sh` derives `icon_512x512.png` (Linux AppImage, Windows) and
+  `jv-studio-macos.icns` (all ten sizes: the original was missing the 16 and 32 px 1x entries).
+- Tap: cask `Casks/jv-studio.rb` in `martincurkovic/homebrew-tap` (renamed from `homebrew-akaisds`); `update-homebrew-tap.yml` bumps the version and both sha256 lines (placeholders until the first release) when a release is
+  PUBLISHED, using the `TAP_REPO_TOKEN` secret. The tap repo name is `TAP_REPO` at the top of that workflow.
 
 ## Open questions
 

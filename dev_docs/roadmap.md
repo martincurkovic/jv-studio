@@ -52,7 +52,10 @@ record what they find in `AGENTS.md` (measured vs. guessed, dated).
 
 ## Phase 5 - Performance mode
 
-- [ ] Performance common + 16 parts, temporary and user performances, rhythm setups.
+- [x] Performance model, reads and verified writes (`core/performance.py`, `unit.read_performance` / `write_performance` / `write_performance_param`), USER performance names, backup before a USER write.
+- [x] Performance editor: a 16-part mixer, one part in detail, effects, setup (name, tempo, voice reserve), patches chosen by name (USER, PR-A to PR-E, Session), undo, live edit to the temporary performance, `.syx` open and save.
+- [ ] **Hardware:** read the temporary performance, edit live in Performance mode, write a USER performance and read it back. Check what part 10 plays (the rhythm setup?).
+- [ ] Rename, copy and swap USER performances; the rhythm setups (USER:1-2, 64 notes each); the temporary patches of the parts (`02 0n 00 00`).
 
 ## Phase 6 - Polish and release
 
