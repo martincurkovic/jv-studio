@@ -138,6 +138,27 @@ QPushButton:checked:hover {
     background-color: ${accent};
 }
 
+/* the joined buttons of a segmented control (the Patches | Performances switch): square where they meet, no double border, a little roomier than an ordinary button */
+QPushButton[segment] {
+    padding: 6px 20px;
+}
+
+QPushButton[segment="first"] {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+QPushButton[segment="middle"] {
+    border-radius: 0;
+    border-left-width: 0;
+}
+
+QPushButton[segment="last"] {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left-width: 0;
+}
+
 /* ---------- Line edits (queue row names, dialog fields) ---------- */
 QLineEdit {
     background-color: ${bg_input};

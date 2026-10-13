@@ -35,7 +35,7 @@ GRID_KNOB_SIZE = 28
 DETAIL = "detail"  # the part a control belongs to when it edits "whichever part the Part tab shows"
 TOTAL_VOICES = 64
 EFFECT_CARDS = ("EFX", "Chorus", "Reverb & Delay")
-SETUP_CARDS = ("Performance", "Voice Reserve")
+SETUP_CARDS = ("Performance",)  # (the voice reserve is a column of the Parts mixer: one small knob per part, with a running total)
 DETAIL_CARDS = ("Part", "Mix", "Keyboard")
 
 
@@ -124,12 +124,7 @@ class PerformanceEditor(QWidget):
         return build_two_column_page(cards, weights)
 
     def _setup_page(self):
-        self.reserve_label = QLabel()
-        self.reserve_label.setObjectName("mutedLabel")
-        self.reserve_label.setToolTip(f"The unit has {TOTAL_VOICES} voices. Voice Reserve keeps some of them for each part.")
-        row = QHBoxLayout()
-        row.addWidget(self.reserve_label)
-        return self._cards_page(performance.COMMON, SETUP_CARDS, "performance_setup", {"Voice Reserve": [row]})
+        return self._cards_page(performance.COMMON, SETUP_CARDS, "performance_setup")
 
     def _part_page(self):
         page = QWidget()
@@ -161,13 +156,15 @@ class PerformanceEditor(QWidget):
     def _parts_page(self):
         """The mixer: one row per part."""
         table = params.load_table().block(performance.PART)
+        common = params.load_table().block(performance.COMMON)
         page = QWidget()
         grid = QGridLayout(page)
         grid.setContentsMargins(12, 10, 16, 10)
         grid.setHorizontalSpacing(10)
         grid.setVerticalSpacing(4)
         for column, (title, tip) in enumerate((("Part", ""), ("On", "Whether the part plays."), ("Ch", "The MIDI channel the part listens to."), ("Patch", "The patch the part plays. Click to choose another."),
-                                               ("Level", "The part's level."), ("Pan", "The part's pan."), ("Output", "Where the part goes."))):
+                                               ("Level", "The part's level."), ("Pan", "The part's pan."),
+                                               ("Voices", f"How many of the unit's {TOTAL_VOICES} voices are kept for the part (Voice Reserve), so other parts can't take them."), ("Output", "Where the part goes."))):
             header = QLabel(title)
             header.setObjectName("sectionHeader")
             header.setToolTip(tip)
@@ -200,14 +197,27 @@ class PerformanceEditor(QWidget):
                 control, _ = self._make_control(performance.PART, part, table.param(key), compact=True, show_name=False, knob_size=GRID_KNOB_SIZE)
                 self._grid[(part, key)] = control
                 grid.addWidget(control, row, column)
+            reserve_key = f"voice_reserve_{part + 1}"  # a common-block parameter, shown on the part's own row
+            reserve, _ = self._make_control(performance.COMMON, None, common.param(reserve_key), compact=True, show_name=False, knob_size=GRID_KNOB_SIZE)
+            self._common[reserve_key] = reserve
+            grid.addWidget(reserve, row, 6)
             control, _ = self._make_control(performance.PART, part, table.param("output_assign"))
             self._grid[(part, "output_assign")] = control
-            grid.addWidget(control, row, 6)
+            grid.addWidget(control, row, 7)
         grid.setColumnStretch(3, 1)
         grid.setRowStretch(performance.PART_COUNT + 1, 1)
         area = build_scroll_area(page)
         area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        return area
+        self.reserve_label = QLabel()
+        self.reserve_label.setObjectName("mutedLabel")
+        self.reserve_label.setToolTip(f"The unit has {TOTAL_VOICES} voices. Voice Reserve keeps some of them for each part.")
+        holder = QWidget()
+        outer = QVBoxLayout(holder)
+        outer.setContentsMargins(12, 6, 16, 0)
+        outer.setSpacing(2)
+        outer.addWidget(self.reserve_label)
+        outer.addWidget(area, 1)
+        return holder
 
     def add_extra_tab(self, widget, title):
         """Add a tab after the editor's own pages (the window's raw-values view)."""

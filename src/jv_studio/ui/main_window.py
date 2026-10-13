@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QBrush, QColor, QFont, QKeySequence
+from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QMenu,
@@ -19,7 +19,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSplitter,
     QStackedWidget,
-    QTabBar,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -29,12 +28,13 @@ from PySide6.QtWidgets import (
 from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, stock, sysex, unit, validate
 from jv_studio.ui import theme
 from jv_studio.ui.about_dialog import AboutDialog
-from jv_studio.ui.ascii_logo import LOGO
+from jv_studio.ui.ascii_logo import LOGO, logo_font
 from jv_studio.ui.diagnostics_ui import add_open_log_folder_action
 from jv_studio.ui.midi_session import MidiSession
 from jv_studio.ui.patch_editor import PatchEditor
 from jv_studio.ui.performance_panel import PerformancePanel
-from jv_studio.ui.qt_helpers import set_enabled_without_scrolling
+from jv_studio.ui.qt_helpers import item_heading, set_enabled_without_scrolling
+from jv_studio.ui.segmented import SegmentedControl
 from jv_studio.ui.settings_dialog import SettingsDialog
 from jv_studio.ui.unit_dialogs import RenameDialog, RestoreDialog, SlotDialog, WriteUserDialog
 from jv_studio.ui.unit_worker import UnitWorker
@@ -71,6 +71,7 @@ class MainWindow(QMainWindow):
         self.worker.busy_changed.connect(self._refresh_connection)
         self._shown = None  # (label, working Patch, base address); the patch is the WORKING COPY the editor changes; label is "temporary", "user:N" or "file"
         self._original = None  # what was read or opened, for Revert and for the "edited" mark
+        self._sized_library = False
         self._where = ""  # how the shown patch is described ("USER:005")
         self._temp_synced = False  # the unit's temporary patch holds the working copy as it was last sent/read: only then can edits be heard live
         self._sent_snapshot = None  # a copy of the patch at the moment Send to Temporary Patch was queued
@@ -170,10 +171,7 @@ class MainWindow(QMainWindow):
         top_bar = QHBoxLayout()
         top_bar.setContentsMargins(15, 12, 15, 6)
         self.lbl_logo = QLabel(LOGO.strip("\n"))
-        logo_font = QFont("Menlo")
-        logo_font.setStyleHint(QFont.StyleHint.Monospace)
-        logo_font.setPointSize(8)
-        self.lbl_logo.setFont(logo_font)
+        self.lbl_logo.setFont(logo_font())
         self.lbl_logo.setTextFormat(Qt.TextFormat.PlainText)
         self.lbl_logo.setWordWrap(False)
         self.lbl_logo.setStyleSheet("background: transparent;")
@@ -235,7 +233,7 @@ class MainWindow(QMainWindow):
         library_layout.addWidget(self.library_header)
         library_layout.addWidget(self.btn_read_names)
         library_layout.addWidget(self.list_stack, 1)
-        library.setMinimumWidth(230)
+        library.setMinimumWidth(150)
 
         patch_panel = QWidget()
         panel = QVBoxLayout(patch_panel)
@@ -263,18 +261,13 @@ class MainWindow(QMainWindow):
         for button in (self.btn_read_temporary, self.btn_send, self.btn_write, self.btn_revert):
             actions.addWidget(button)
         actions.addStretch()
-        live = QHBoxLayout()
-        self.live_check = QCheckBox("Hear edits on the unit as I make them")
+        self.live_check = QCheckBox("Live edits")
         self.live_check.setChecked(True)
         self.live_check.setToolTip(
-            "Each edit is sent to the unit's temporary patch (not stored) when you finish it, and read back. "
-            "Works once the shown patch is on the unit's temporary patch: read it from there, or use Send to Temporary Patch."
+            "Hear your edits on the unit as you make them: each one is sent to its temporary patch (not stored) when you finish it, and read back. "
+            "Works once the shown patch is on the temporary patch: read it from there, or use Send to Temporary Patch. Otherwise edits stay in the editor."
         )
-        self.live_check.toggled.connect(self._update_edit_hint)
-        self.edit_hint = QLabel()
-        self.edit_hint.setObjectName("mutedLabel")
-        live.addWidget(self.live_check)
-        live.addWidget(self.edit_hint, 1)
+        actions.insertWidget(actions.count() - 1, self.live_check)  # on the button row, after Revert Edits (before the stretch)
         self.editor = PatchEditor()
         self.editor.param_committed.connect(self._on_param_committed)
         self.editor.edits_recorded.connect(self._on_edits_recorded)
@@ -285,7 +278,6 @@ class MainWindow(QMainWindow):
         panel.addWidget(self.patch_label)
         panel.addWidget(self.problems_label)
         panel.addLayout(actions)
-        panel.addLayout(live)
         panel.addWidget(self.editor, 1)
 
         self.performance_panel = PerformancePanel(self)
@@ -298,7 +290,7 @@ class MainWindow(QMainWindow):
         splitter.addWidget(library)
         splitter.addWidget(self.right_stack)
         splitter.setStretchFactor(1, 1)
-        splitter.setSizes([280, 760])
+        splitter.setSizes([280, 760])  # (the left column is made as wide as the mode switch when the window is first shown)
         splitter.setChildrenCollapsible(False)
         self.splitter = splitter
 
@@ -309,13 +301,10 @@ class MainWindow(QMainWindow):
         central_layout.addLayout(top_bar)
         mode_row = QHBoxLayout()
         mode_row.setContentsMargins(15, 0, 15, 6)
-        self.mode_tabs = QTabBar()
-        self.mode_tabs.setExpanding(False)
-        self.mode_tabs.setDrawBase(False)
-        self.mode_tabs.addTab("Patches")
-        self.mode_tabs.addTab("Performances")
-        self.mode_tabs.setTabToolTip(0, "Edit single patches (the unit's Patch mode).")
-        self.mode_tabs.setTabToolTip(1, "Edit performances: 16 parts, each playing a patch (the unit's Performance mode).")
+        self.mode_tabs = SegmentedControl(
+            ["Patches", "Performances"],
+            ["Edit single patches (the unit's Patch mode).", "Edit performances: 16 parts, each playing a patch (the unit's Performance mode)."],
+        )
         self.mode_tabs.currentChanged.connect(self._set_mode)
         mode_row.addWidget(self.mode_tabs)
         mode_row.addStretch()
@@ -543,7 +532,6 @@ class MainWindow(QMainWindow):
         self._redo.clear()
         self.editor.set_patch(read)
         self._update_patch_label()
-        self._update_edit_hint()
         if problems:
             shown = "; ".join(str(p) for p in problems[:3])
             more = f" (and {len(problems) - 3} more)" if len(problems) > 3 else ""
@@ -564,18 +552,7 @@ class MainWindow(QMainWindow):
     def _update_patch_label(self):
         if self._shown is None:
             return
-        edited = "  (edited)" if self._is_dirty() else ""
-        self.patch_label.setText(f'{self._where}: "{self._shown[1].name}"{edited}')
-
-    def _update_edit_hint(self, *_):
-        if self._shown is None:
-            self.edit_hint.clear()
-        elif not self.live_check.isChecked():
-            self.edit_hint.setText("Edits stay in the editor until you send or write the patch.")
-        elif self._temp_synced:
-            self.edit_hint.setText("Edits are sent to the unit's temporary patch as you make them (not stored).")
-        else:
-            self.edit_hint.setText("Send to Temporary Patch to hear your edits: the unit is playing a different patch.")
+        self.patch_label.setText(item_heading(self._where, self._shown[1].name, self._is_dirty()))
 
     def _confirm_discard(self):
         """Edits would be lost by showing another patch: ask (default No). True to carry on."""
@@ -596,7 +573,6 @@ class MainWindow(QMainWindow):
         self._refresh_tree_if_shown()
         if self.live_check.isChecked() and self._temp_synced and self.session.is_open:
             self.worker.submit("write_param", block, key, None if tone < 0 else tone, value)
-        self._update_edit_hint()
         self._refresh_connection()
 
     UNDO_LIMIT = 200
@@ -632,7 +608,6 @@ class MainWindow(QMainWindow):
         self.editor.refresh()
         self._update_patch_label()
         self._refresh_tree_if_shown()
-        self._update_edit_hint()
         debug_log.get_logger().info(f"{'undo' if reverse else 'redo'}: {len(edits)} value(s) on {self._where}")
         self._refresh_connection()
 
@@ -654,7 +629,6 @@ class MainWindow(QMainWindow):
         if self.live_check.isChecked() and self._temp_synced and self.session.is_open:
             self.statusBar().showMessage("Reverted. Send to Temporary Patch to put it back on the unit.")
             self._temp_synced = False  # the unit's temporary patch still holds the edits
-        self._update_edit_hint()
         self._refresh_connection()
 
     def _refresh_tree_if_shown(self):
@@ -839,7 +813,6 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f'"{name}" sent to the temporary patch and read back', 5000)
             # edits made while it was being sent are not on the unit: only a patch equal to what was sent counts as in step
             self._temp_synced = self._shown is not None and self._shown[1] == self._sent_snapshot
-            self._update_edit_hint()
         else:
             number = int(label.split(":")[1])
             if self._writing_shown_to == number and self._shown is not None:
@@ -952,6 +925,13 @@ class MainWindow(QMainWindow):
         self._long_job = False
         self.statusBar().showMessage(message, 8000)
         self._refresh_connection()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not self._sized_library:  # once: the list starts as wide as the Patches / Performances switch (the user can still drag the divider)
+            self._sized_library = True
+            left = self.mode_tabs.sizeHint().width() + 21  # the switch's left margin (15) less the list's (15), plus the list's right margin (6)
+            self.splitter.setSizes([left, max(1, self.splitter.width() - left)])
 
     def closeEvent(self, event):
         self.worker.cancel()

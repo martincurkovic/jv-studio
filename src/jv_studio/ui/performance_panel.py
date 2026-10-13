@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 from jv_studio.core import app_config, debug_log, params, performance, sysex, validate
 from jv_studio.ui import theme
 from jv_studio.ui.performance_editor import PerformanceEditor
+from jv_studio.ui.qt_helpers import item_heading
 from jv_studio.ui.unit_dialogs import SlotDialog
 
 
@@ -74,19 +75,14 @@ class PerformancePanel(QWidget):
         for button in (self.btn_read, self.btn_send, self.btn_write, self.btn_revert):
             actions.addWidget(button)
         actions.addStretch()
-        live = QHBoxLayout()
-        self.live_check = QCheckBox("Hear edits on the unit as I make them")
+        self.live_check = QCheckBox("Live edits")
         self.live_check.setChecked(True)
         self.live_check.setToolTip(
-            "Each edit is sent to the unit's temporary performance (not stored) when you finish it, and read back. Works once the shown performance is the one in the "
-            "temporary performance: read it from there, or use Send. Put the unit in Performance mode to hear it."
+            "Hear your edits on the unit as you make them: each one is sent to its temporary performance (not stored) when you finish it, and read back. "
+            "Works once the shown performance is the one in the temporary performance: read it from there, or use Send. Put the unit in Performance mode to hear it. "
+            "Otherwise edits stay in the editor."
         )
-        self.live_check.toggled.connect(self._update_hint)
-        self.hint = QLabel()
-        self.hint.setObjectName("mutedLabel")
-        self.hint.setWordWrap(True)  # (an unwrapped label's width is the panel's minimum width: the whole editor got wider than the window)
-        live.addWidget(self.live_check)
-        live.addWidget(self.hint, 1)
+        actions.insertWidget(actions.count() - 1, self.live_check)  # on the button row, after Revert Edits (before the stretch)
         # the editor (about 200 widgets) is built the first time it is needed: when the Performances mode is first shown, or a performance first arrives
         self.editor = None
         self.tree = None
@@ -94,7 +90,6 @@ class PerformancePanel(QWidget):
         for item in (self.label, self.problems_label):
             layout.addWidget(item)
         layout.addLayout(actions)
-        layout.addLayout(live)
         self._layout = layout
 
         self.worker.performance_read.connect(self._on_read)
@@ -183,7 +178,6 @@ class PerformancePanel(QWidget):
         self._redo.clear()
         self.ensure_editor().set_performance(read)
         self._update_label()
-        self._update_hint()
         if problems:
             shown = "; ".join(str(p) for p in problems[:3])
             more = f" (and {len(problems) - 3} more)" if len(problems) > 3 else ""
@@ -197,17 +191,7 @@ class PerformancePanel(QWidget):
 
     def _update_label(self):
         if self._shown is not None:
-            self.label.setText(f'{self._where}: "{self._shown[1].name}"' + ("  (edited)" if self.is_dirty() else ""))
-
-    def _update_hint(self, *_):
-        if self._shown is None:
-            self.hint.clear()
-        elif not self.live_check.isChecked():
-            self.hint.setText("Edits stay in the editor until you send or write the performance.")
-        elif self._temp_synced:
-            self.hint.setText("Edits go to the temporary performance as you make them (not stored). Use Performance mode on the unit to hear them.")
-        else:
-            self.hint.setText("Send to Temporary Performance to hear your edits: the unit's temporary performance holds a different one.")
+            self.label.setText(item_heading(self._where, self._shown[1].name, self.is_dirty()))
 
     # -- editing ---------------------------------------------------------------------------------------------------------
 
@@ -220,7 +204,6 @@ class PerformancePanel(QWidget):
         self._refresh_tree_if_shown()
         if self._live():
             self.worker.submit("perf_write_param", block, key, None if part < 0 else part, value)
-        self._update_hint()
         self.host._refresh_connection()
 
     def _on_edits_recorded(self, edits):
@@ -249,7 +232,6 @@ class PerformancePanel(QWidget):
         self.editor.refresh()
         self._update_label()
         self._refresh_tree_if_shown()
-        self._update_hint()
         debug_log.get_logger().info(f"{'undo' if reverse else 'redo'}: {len(edits)} value(s) on {self._where}")
         self.host._refresh_connection()
 
@@ -266,7 +248,6 @@ class PerformancePanel(QWidget):
         if self._live():
             self.host.statusBar().showMessage("Reverted. Send to Temporary Performance to put it back on the unit.")
             self._temp_synced = False  # the unit's temporary performance still holds the edits
-        self._update_hint()
         self.host._refresh_connection()
 
     def on_live_failed(self, message):
@@ -313,7 +294,6 @@ class PerformancePanel(QWidget):
         if label == "perf:temporary":
             self.host.statusBar().showMessage(f'"{name}" sent to the temporary performance and read back', 5000)
             self._temp_synced = self._shown is not None and self._shown[1] == self._sent_snapshot
-            self._update_hint()
         else:
             number = int(label.split(":")[1])
             if self._writing_shown_to == number and self._shown is not None:

@@ -155,3 +155,9 @@ def build_two_column_page(cards, weights):
     area = build_scroll_area(page)
     area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
     return area
+
+
+def item_heading(where, name, edited):
+    """The line over an open patch or performance: 'Temporary patch · St.Concert', 'USER:005 · My Lead  (edited)'."""
+    where = where.removeprefix("the ")
+    return f"{where[:1].upper()}{where[1:]} · {name}" + ("  (edited)" if edited else "")
