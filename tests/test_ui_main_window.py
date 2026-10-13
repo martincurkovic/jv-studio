@@ -41,7 +41,7 @@ def test_the_saved_ports_are_reopened_at_startup(env):
     _, session, _ = env
     app_config.save_ports("JV In", "JV Out")
     w = window(session)
-    assert session.is_open and "JV In" in w.connection_label.text() and "JV Out" in w.connection_label.text() and w.btn_detect.isEnabled()
+    assert session.is_open and w.connection_label.isHidden() and w.btn_detect.isEnabled()  # the ports are not printed in the window
 
 
 def test_saved_ports_the_system_no_longer_offers_are_not_opened(env):
@@ -115,7 +115,7 @@ def test_reading_the_temporary_patch_fills_the_viewer(env):
     w.editor.tabs.setCurrentWidget(w.tree)  # the Raw Values tab is only filled while it shows
     w.read_temporary()
     w.worker.process_pending()
-    assert w.patch_label.text() == 'the temporary patch: "Init Patch"' and "Every value is inside" in w.problems_label.text()
+    assert w.patch_label.text() == 'the temporary patch: "Init Patch"' and w.problems_label.isHidden() and w.problems_label.text() == ""
     assert [w.tree.topLevelItem(i).text(0) for i in range(w.tree.topLevelItemCount())] == ["Common", "Tone 1", "Tone 2", "Tone 3", "Tone 4"]
     assert w.tree.topLevelItem(0).childCount() == 62 and w.tree.topLevelItem(1).childCount() == 128 and w.save_action.isEnabled()
 
@@ -313,7 +313,7 @@ def test_the_stock_check_counts_factory_matches_and_flags_the_rest(env):
     ports.respond.user[4].name = "Not Stock"
     w.read_names()
     w.worker.process_pending()
-    assert w.stock_label.text().startswith("127 of 128 match")
+    assert "1 differ" in w.statusBar().currentMessage()
     assert "factory patch here" in w.names_list.item(4).toolTip() and w.names_list.item(5).toolTip() == ""
 
 
@@ -452,13 +452,12 @@ def test_writing_to_user_saves_the_edited_copy(writable, monkeypatch):
     assert ports.respond.user[2].get("patch_common", "patch_tempo") == 111 and not w._is_dirty()
 
 
-def test_the_logo_is_top_left_and_matches_appheader_txt(env):
-    from pathlib import Path
+def test_the_logo_is_top_left_and_is_the_embedded_art(env):
+    from jv_studio.ui.ascii_logo import LOGO
 
     _, session, _ = env
     w = window(session)
-    art = (Path(__file__).resolve().parent.parent / "appheader.txt").read_text(encoding="utf-8")
-    assert w.lbl_logo.text() == art.strip("\n") and w.lbl_logo.text().startswith("     ██╗██╗")
+    assert w.lbl_logo.text() == LOGO.strip("\n") and w.lbl_logo.text().startswith("     ██╗██╗")  # the owner's art, unchanged
 
 
 # -- undo and redo --------------------------------------------------------------------------------------------------------------
@@ -554,7 +553,7 @@ def test_renaming_a_user_patch_updates_the_unit_and_the_list(listed):
     w.worker.process_pending()
     assert ports.respond.user[5].name == "Fresh Name" and w.names_list.item(5).text() == "006  Fresh Name"
     assert len(list((tmp_path / "backups").glob("USER-006-*.syx"))) == 1
-    assert w.stock_label.text().startswith("0 of 128")  # the list's factory comparison follows
+    assert "factory patch here" in w.names_list.item(5).toolTip()  # the list's factory comparison follows
 
 
 def test_renaming_the_open_patch_reloads_it(listed):
@@ -631,10 +630,18 @@ def test_controls_explain_themselves_in_tooltips(env):
     w, _ = connected(env)
     w.read_temporary()
     w.worker.process_pending()
-    tempo = w.editor.widget_for("patch_common", "patch_tempo").parentWidget()
+    tempo = w.editor.widget_for("patch_common", "patch_tempo")
     assert "tempo" in tempo.toolTip().lower() and "Range: 20 to 250" in tempo.toolTip() and "Drag to turn" in tempo.toolTip()
-    cutoff = w.editor.widget_for("patch_tone", "cutoff_frequency", 0).parentWidget()
+    cutoff = w.editor.widget_for("patch_tone", "cutoff_frequency", 0)
     assert "cutoff" in cutoff.toolTip().lower()
     assert w.btn_detect.toolTip() and w.btn_settings.toolTip() and w.btn_send.toolTip() and w.btn_write.toolTip()
     key_assign = w.editor.widget_for("patch_common", "key_assign_mode")
     assert "POLY" in key_assign.toolTip()
+
+
+def test_the_window_has_no_stray_labels_or_size_grip(env):
+    w, _ = connected(env)
+    assert not hasattr(w, "stock_label") and w.connection_label.isHidden()
+    assert not w.statusBar().isSizeGripEnabled()
+    margins = w.statusBar().contentsMargins()
+    assert margins.left() >= 10 and margins.right() >= 10  # clear of the window's rounded corners

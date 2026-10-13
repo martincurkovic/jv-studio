@@ -1,4 +1,5 @@
-"""Choose a tone's wave by name: a group (INT-A, INT-B, an expansion board), a filter box and the list of its waves."""
+"""Choose a tone's wave by name: a group (INT-A, INT-B, an expansion board), a filter box and the list of its waves. The JV-1010 has no "no wave" value: a tone
+makes no sound when its Tone Switch is OFF, so "No Wave" here means that (`wants_off`)."""
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QLabel, QLineEdit, QListWidget, QListWidgetItem, QVBoxLayout
@@ -28,6 +29,10 @@ class WavePickerDialog(QDialog):
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
+        self.wants_off = False
+        self.off_button = self.buttons.addButton("No Wave (Tone Off)", QDialogButtonBox.ButtonRole.ActionRole)
+        self.off_button.setToolTip("Turns the tone off: it makes no sound. The wave stays chosen, so switching the tone back on restores it.")
+        self.off_button.clicked.connect(self._choose_off)
         for widget in (self.group_combo, self.filter_edit, self.list, self.note, self.buttons):
             layout.addWidget(widget)
         self.group_combo.currentIndexChanged.connect(lambda _i: self._fill(None))
@@ -35,6 +40,10 @@ class WavePickerDialog(QDialog):
         self.list.itemDoubleClicked.connect(lambda _item: self.accept())
         self.list.currentItemChanged.connect(lambda *_: self._update_ok())
         self._fill(number if current is not None else None)
+
+    def _choose_off(self):
+        self.wants_off = True
+        self.accept()
 
     def _fill(self, select_number):
         group = self.group_combo.currentData()

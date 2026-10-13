@@ -37,6 +37,9 @@ from jv_studio.ui.unit_dialogs import RenameDialog, RestoreDialog, SlotDialog, W
 from jv_studio.ui.unit_worker import UnitWorker
 
 
+STATUS_BAR_MARGIN = 12  # px: the status bar's text keeps this far from the window's sides (and so from its rounded corners)
+
+
 class MainWindow(QMainWindow):
     """The application window: the connection, a hardware check, a look at the unit's patches, whole-unit backup and restore, and the only two places
     that write to the unit: Send to Temporary Patch and Write to USER (both read back; the second saves the slot's old patch first).
@@ -45,7 +48,8 @@ class MainWindow(QMainWindow):
     def __init__(self, session=None, worker=None, start_worker=True):
         super().__init__()
         self.setWindowTitle("JV Studio")
-        self.setMinimumSize(980, 700)
+        self.setMinimumSize(1100, 700)
+        self.resize(1260, 880)  # wide enough that the editor's pages need no horizontal scroll bar
         app_config.ensure_defaults_saved()
         self.session = session if session is not None else MidiSession()
         self.worker = worker if worker is not None else UnitWorker(self.session)
@@ -202,9 +206,6 @@ class MainWindow(QMainWindow):
             "Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a patch to open it."
         )
         self.btn_read_names.clicked.connect(self.read_names)
-        self.stock_label = QLabel()
-        self.stock_label.setWordWrap(True)
-        self.stock_label.setObjectName("mutedLabel")
         self.names_list = QListWidget()
         self.names_list.itemDoubleClicked.connect(self._read_user_from_item)
         self.names_list.itemActivated.connect(self._read_user_from_item)
@@ -217,7 +218,6 @@ class MainWindow(QMainWindow):
         self.names_list.addAction(self.rename_action)
         library_layout.addWidget(library_header)
         library_layout.addWidget(self.btn_read_names)
-        library_layout.addWidget(self.stock_label)
         library_layout.addWidget(self.names_list, 1)
         library.setMinimumWidth(230)
 
@@ -230,6 +230,7 @@ class MainWindow(QMainWindow):
         self.problems_label = QLabel()
         self.problems_label.setWordWrap(True)
         self.problems_label.setObjectName("mutedLabel")
+        self.problems_label.setVisible(False)
         actions = QHBoxLayout()
         self.btn_read_temporary = QPushButton("Read Temporary Patch")
         self.btn_read_temporary.setToolTip("Reads the patch the unit is playing now (read-only: nothing is written).")
@@ -295,6 +296,8 @@ class MainWindow(QMainWindow):
         self.names_progress.setMaximumWidth(220)
         self.btn_cancel.setVisible(False)
         self.names_progress.setVisible(False)
+        self.statusBar().setSizeGripEnabled(False)  # the square in the corner: macOS windows have no grip
+        self.statusBar().setContentsMargins(STATUS_BAR_MARGIN, 0, STATUS_BAR_MARGIN, 0)  # (the window's rounded corners clip text set against the edge)
         self.statusBar().addPermanentWidget(self.names_progress)
         self.statusBar().addPermanentWidget(self.btn_cancel)
 
@@ -316,10 +319,9 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Couldn't open the saved MIDI ports: choose them in Settings")
 
     def _refresh_connection(self, *_):
-        if self.session.is_open:
-            self.connection_label.setText(f"MIDI input: {self.session.input_name}\nMIDI output: {self.session.output_name}")
-        else:
-            self.connection_label.setText("No MIDI ports are open. Choose the interface the JV-1010 is connected to in Settings.")
+        # the ports themselves are shown in Settings; here only the prompt when there are none
+        self.connection_label.setText("No MIDI ports are open. Choose the interface the JV-1010 is connected to in Settings.")
+        self.connection_label.setVisible(not self.session.is_open)
         idle = self.worker.is_idle()
         ready = self.session.is_open and idle
         for control in (self.btn_detect, self.detect_action, self.btn_read_temporary, self.read_action, self.btn_read_names):
@@ -378,7 +380,6 @@ class MainWindow(QMainWindow):
 
     def read_names(self):
         self.names_list.clear()
-        self.stock_label.clear()
         self._start_progress("Reading the USER patch names...")
         self.worker.submit("names")
 
@@ -407,8 +408,9 @@ class MainWindow(QMainWindow):
             item.setData(Qt.ItemDataRole.UserRole, number)
             self.names_list.addItem(item)
             self._style_name_row(item, number)
-        self._update_stock_label()
-        self.statusBar().showMessage(f"Read {len(summaries)} USER patch names", 5000)
+        differing = len(summaries) - stock.count_same(summaries)
+        note = f"; {differing} differ from the factory list (highlighted)" if differing else "; all match the factory list"
+        self.statusBar().showMessage(f"Read {len(summaries)} USER patch names{note}", 8000)
         self._refresh_connection()
 
     def _on_failed(self, label, message):
@@ -445,7 +447,8 @@ class MainWindow(QMainWindow):
             more = f" (and {len(problems) - 3} more)" if len(problems) > 3 else ""
             self.problems_label.setText(f"{len(problems)} value(s) outside the manual's ranges: {shown}{more}. Details are in the log.")
         else:
-            self.problems_label.setText("Every value is inside the manual's ranges.")
+            self.problems_label.clear()
+        self.problems_label.setVisible(bool(problems))
         if self.editor.tabs.currentWidget() is self.tree:
             self._fill_tree(read, problems)
         self.statusBar().showMessage(f"Read {where}", 5000)
@@ -732,20 +735,12 @@ class MainWindow(QMainWindow):
             self._slot_changed(number, name)
         self._refresh_connection()
 
-    def _update_stock_label(self):
-        same = stock.count_same(self._summaries)
-        self.stock_label.setText(
-            f"{same} of {len(self._summaries)} match the factory patch list by name and key assign mode; the others are highlighted. "
-            "A matching name does not prove the patch is unchanged."
-        )
-
     def _slot_changed(self, number, name):
         """A USER slot now holds a patch called `name`: update the list row (its text and the factory comparison)."""
         if number < len(self._summaries):
             self._summaries[number] = unit.PatchSummary(name, self._summaries[number].key_assign)
         if number < self.names_list.count():
             self._style_name_row(self.names_list.item(number), number)
-        self._update_stock_label()
 
     def _style_name_row(self, item, number):
         summary = self._summaries[number] if number < len(self._summaries) else None

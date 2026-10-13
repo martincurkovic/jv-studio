@@ -1,12 +1,9 @@
 """The patch editor: one tab for the patch common block and one per tone, built from the parameter table (`core/groups.py` says which card a
 parameter is on). It edits a `Patch` IN PLACE (the caller's working copy) and never talks to the unit: it emits `param_committed` for each user edit
-and the window decides what to do with it (the owner's rule: the UI is live, MIDI goes out on release; a spin box commits on a step or Enter).
+and the window decides what to do with it (the owner's rule: the UI is live, MIDI goes out on release: a knob commits when a drag ends or a value is typed).
 """
 
-from functools import lru_cache
-
-from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QValidator
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -15,78 +12,25 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
-    QSpinBox,
+    QSizePolicy,
     QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from jv_studio.core import groups, hints, params, patch, waves
+from jv_studio.core import friendly, groups, hints, params, patch, waves
 from jv_studio.ui.envelope_graph import GRAPH_FOR_CARD
-from jv_studio.ui.knob import Knob
-from jv_studio.ui.wave_picker import WavePickerDialog
+from jv_studio.ui.knob_control import KnobControl, origin_value
 from jv_studio.ui.qt_helpers import FullWidthTabBar, build_editor_card, build_scroll_area
+from jv_studio.ui.wave_picker import WavePickerDialog
 
-
-@lru_cache(maxsize=None)
-def _text_to_value(param):
-    """{displayed text, lower case: raw value} for a parameter whose range is small enough to list."""
-    if param.max - param.min > 20000:
-        return {}
-    return {params.format_value(param, v).lower(): v for v in range(param.min, param.max + 1)}
-
-
-#: a number with at most this many steps gets a knob over its box (a wave number's thousands of steps would be useless on one)
-KNOB_MAX_STEPS = 255
+#: how many knobs a card's grid holds per row
 KNOBS_PER_ROW = 4
-KNOB_COLUMN_WIDTH = 78
-KNOB_SIZE = 38
-COMMIT_DELAY_MS = 150  # a wheel or arrow-key step on a knob commits this long after the last one
-
-
-class ValueSpinBox(QSpinBox):
-    """Shows a raw value the way the unit's display does (a note name, +12, L30, OFF...) and accepts that text back. The mouse wheel only acts when
-    the box has focus, so scrolling a page of them never changes a value by accident."""
-
-    def __init__(self, param, parent=None):
-        super().__init__(parent)
-        self.param = param
-        self.setRange(param.min, param.max)
-        self.setKeyboardTracking(False)
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)  # the slider (or the arrow keys and wheel) moves it; the buttons only crowded the number
-        self.setFixedWidth(60 if param.max - param.min < 1000 else 72)
-
-    def textFromValue(self, value):
-        return params.format_value(self.param, value)
-
-    def _parse(self, text):
-        return _text_to_value(self.param).get(text.strip().lower())
-
-    def valueFromText(self, text):
-        found = self._parse(text)
-        return self.value() if found is None else found
-
-    def validate(self, text, pos):
-        state = QValidator.State.Acceptable if self._parse(text) is not None else QValidator.State.Intermediate
-        return state, text, pos
-
-    def wheelEvent(self, event):
-        if self.hasFocus():
-            super().wheelEvent(event)
-        else:
-            event.ignore()
-
-
-def _origin_value(param):
-    """The raw value a knob's arc grows from: the centre of a parameter that is shown as negative-to-positive (a pan, a tune), else None (the minimum)."""
-    text = param.display_text or ""
-    if param.display_min is not None and param.display_max is not None and param.display_min < 0 < param.display_max and param.max != param.min:
-        return round(param.min + (0 - param.display_min) * (param.max - param.min) / (param.display_max - param.display_min))
-    if text in ("L64 - 63R", "L63 - 63R"):
-        return 64
-    return None
+#: a card column never gets narrower than this (a row of 4 knobs plus the card's padding)
+COLUMN_MIN_WIDTH = 346
+#: a card with at least this many knobs uses the COMPACT layout (the value beside the knob, about half the height): the roomy one for a handful, the compact one for the
+#: envelope, LFO and controller cards
+COMPACT_FROM = 8
 
 
 class ChoiceCombo(QComboBox):
@@ -95,17 +39,25 @@ class ChoiceCombo(QComboBox):
         self.param = param
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         if param.choices:
-            for index, choice in enumerate(param.choices):
-                if choice.jv1010:  # a JV-1080-family value the JV-1010 ignores is not offered
-                    self.addItem(choice.label, param.min + index)
+            options = [(index, choice.label) for index, choice in enumerate(param.choices) if choice.jv1010]  # a JV-1080-family value the JV-1010 ignores is not offered
         else:
-            for index, label in enumerate(param.labels):
-                self.addItem(label, param.min + index)
+            options = list(enumerate(param.labels))
+        for index, label in options:
+            self._add(label, param.min + index)
+
+    def _add(self, label, value):
+        """An option under its readable name (core/friendly.py); the tooltip says what the unit's own display calls it."""
+        name = friendly.label(self.param.key, label)
+        self.addItem(name, value)
+        if text := friendly.description(self.param.key, label):
+            self.setItemData(self.count() - 1, text, Qt.ItemDataRole.ToolTipRole)
+        elif name != label:
+            self.setItemData(self.count() - 1, f"On the unit: {label}", Qt.ItemDataRole.ToolTipRole)
 
     def set_raw(self, value):
         index = self.findData(value)
         if index < 0:  # the unit holds a value we don't offer (a JV-1080-only choice, or outside the table): show it, don't hide it
-            self.addItem(f"{params.format_value(self.param, value)} (not offered)", value)
+            self.addItem(f"{friendly.label(self.param.key, params.format_value(self.param, value))} (not offered)", value)
             index = self.count() - 1
         self.setCurrentIndex(index)
 
@@ -127,7 +79,6 @@ class PatchEditor(QWidget):
         self._patch = None
         self._loading = False
         self._widgets = {}  # (block, tone or None, key) -> widget
-        self._knob_parts = {}  # (block, tone or None, key) -> (label, knob, column) of a number's knob column
         self._graphs = []  # (tone, the envelope graph)
         self._graph_of = {}  # (tone, parameter key) -> the graph that draws and edits it
         self._wave_labels = {}  # tone -> the label that names the tone's wave
@@ -165,11 +116,20 @@ class PatchEditor(QWidget):
     def _page(self, block_key, tone):
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.setContentsMargins(0, 0, 8, 0)
+        layout.setContentsMargins(10, 10, 14, 10)  # room between the cards and the tab pane's frame
         layout.setSpacing(6)
         scope = "patch_editor_common" if tone is None else "patch_editor_tone"
-        # two columns of cards, each card going to the shorter column so the page stays balanced
-        columns = [QVBoxLayout(), QVBoxLayout()]
+        # two columns of cards, each card going to the shorter column so the page stays balanced. The columns are EXACTLY half the width each (their size hints are
+        # ignored, so collapsing a card can never shift the split)
+        columns = [QWidget(), QWidget()]
+        column_layouts = []
+        for column in columns:
+            column.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+            column.setMinimumWidth(COLUMN_MIN_WIDTH)
+            column_layout = QVBoxLayout(column)
+            column_layout.setContentsMargins(0, 0, 0, 0)
+            column_layout.setSpacing(6)
+            column_layouts.append(column_layout)
         heights = [0, 0]
         for title, members in groups.groups(block_key):
             form = QFormLayout()
@@ -178,11 +138,12 @@ class PatchEditor(QWidget):
             grid = QGridLayout()
             grid.setHorizontalSpacing(2)
             grid.setVerticalSpacing(6)
+            compact = sum(1 for p in members if not p.string and not p.has_choices()) >= COMPACT_FROM
             knobs = 0
             if block_key == patch.TONE and title == "Wave":
                 form.addRow("Wave", self._wave_row(tone))
             for param in members:
-                widget, control, is_knob = self._make_widget(block_key, tone, param)
+                widget, control, is_knob = self._make_widget(block_key, tone, param, compact)
                 self._widgets[(block_key, tone, param.key)] = control
                 if is_knob:
                     grid.addWidget(widget, knobs // KNOBS_PER_ROW, knobs % KNOBS_PER_ROW, Qt.AlignmentFlag.AlignTop)
@@ -194,17 +155,19 @@ class PatchEditor(QWidget):
             if block_key == patch.TONE and title in GRAPH_FOR_CARD:
                 rows.insert(0, self._graph_row(tone, GRAPH_FOR_CARD[title]))
             side = 0 if heights[0] <= heights[1] else 1
-            columns[side].addWidget(build_editor_card(scope, title, *rows, key=f"{title}"))
-            heights[side] += form.rowCount() + 3 * -(-knobs // KNOBS_PER_ROW) + 2
+            column_layouts[side].addWidget(build_editor_card(scope, title, *rows, key=f"{title}"))
+            heights[side] += form.rowCount() + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2
         row = QHBoxLayout()
         row.setSpacing(6)
-        for column in columns:
-            column.setSpacing(6)
-            column.addStretch()
-            row.addLayout(column, 1)
+        for column, column_layout in zip(columns, column_layouts):
+            column_layout.addStretch()
+            row.addWidget(column, 1)  # equal stretch + ignored hints = exactly half each
         layout.addLayout(row)
         layout.addStretch()
-        return build_scroll_area(page)
+        area = build_scroll_area(page)
+        # always there: a scroll bar that appears and disappears as cards collapse and expand changes the width the two columns share, and the whole page shifts sideways
+        area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        return area
 
     def _wave_row(self, tone):
         """The tone's wave by name, and a button to choose another."""
@@ -227,7 +190,13 @@ class PatchEditor(QWidget):
             return
         for tone, label in self._wave_labels.items():
             args = [self._patch.get(patch.TONE, key, tone=tone) for key in ("wave_group_type", "wave_group_id", "wave_number")]
-            label.setText(waves.describe(*args) or f"Group type {args[0]}, ID {args[1]}, wave {args[2] + 1:03d} (no name known)")
+            described = waves.describe(*args) or f"Group type {args[0]}, ID {args[1]}, wave {args[2] + 1:03d} (no name known)"
+            if self._patch.get(patch.TONE, "tone_switch", tone=tone):
+                label.setText(described)
+                label.setToolTip("")
+            else:
+                label.setText("No wave (tone off)")
+                label.setToolTip(f"The tone is switched off. Its wave is still {described}.")
 
     def _choose_wave(self, tone):
         if self._patch is None:
@@ -239,10 +208,16 @@ class PatchEditor(QWidget):
         table = params.load_table().block(patch.TONE)
         self._gesture = []
         try:
-            for key, value in zip(("wave_group_type", "wave_group_id", "wave_number"), dialog.result_wave()):
-                self._edited(patch.TONE, tone, table.param(key), value)
+            if dialog.wants_off:
+                self._edited(patch.TONE, tone, table.param("tone_switch"), 0)
+            else:
+                for key, value in zip(("wave_group_type", "wave_group_id", "wave_number"), dialog.result_wave()):
+                    self._edited(patch.TONE, tone, table.param(key), value)
+                if not self._patch.get(patch.TONE, "tone_switch", tone=tone):
+                    self._edited(patch.TONE, tone, table.param("tone_switch"), 1)  # choosing a wave for a silent tone means you want to hear it
         finally:
             gesture, self._gesture = self._gesture, None
+        self.refresh()  # (the Tone Switch box follows)
         if gesture:
             self.edits_recorded.emit(gesture)
 
@@ -255,7 +230,7 @@ class PatchEditor(QWidget):
         table = params.load_table().block(patch.TONE)
         defaults = {}
         for name in graph.NAMES:
-            origin = _origin_value(table.param(name))
+            origin = origin_value(table.param(name))
             defaults[name] = origin if origin is not None else table.param(name).min
         graph.set_defaults(defaults)
         graph.values_changed.connect(lambda changed, t=tone: self._graph_moved(t, changed))
@@ -270,17 +245,9 @@ class PatchEditor(QWidget):
         return row
 
     def _graph_moved(self, tone, changed):
-        """Live while a graph handle moves (or a drag is cancelled): show the values in the knobs and boxes without touching the patch."""
+        """Live while a graph handle moves (or a drag is cancelled): show the values in the knobs without touching the patch."""
         for key, value in changed.items():
-            spin = self._widgets[(patch.TONE, tone, key)]
-            spin.blockSignals(True)
-            spin.setValue(value)
-            spin.blockSignals(False)
-            parts = self._knob_parts.get((patch.TONE, tone, key))
-            if parts:
-                parts[1].blockSignals(True)
-                parts[1].setValue(value)
-                parts[1].blockSignals(False)
+            self._widgets[(patch.TONE, tone, key)].set_value(value)
 
     def _graph_committed(self, tone, changed):
         table = params.load_table().block(patch.TONE)
@@ -304,30 +271,27 @@ class PatchEditor(QWidget):
             graph.set_values({name: self._patch.get(patch.TONE, name, tone=tone) for name in graph.NAMES})
             graph.set_editable(True)
 
-    def _make_widget(self, block_key, tone, param):
-        """(widget to place, the control the editor reads and sets, is it a knob column). A number gets a knob column (label, knob, box); a name,
-        a choice list or a huge range goes in a form row."""
+    def _make_widget(self, block_key, tone, param, compact=False):
+        """(widget to place, the control the editor reads and sets, is it a knob). A number is a `KnobControl` (name, knob, value readout: below the knob, or beside it when
+        `compact`); a name or a choice list goes in a form row."""
         if param.string:
             control = QLineEdit()
             control.setMaxLength(param.size)
             control.editingFinished.connect(lambda w=control, p=param: self._name_edited(w, p))
-            widget, is_knob = control, False
+            is_knob = False
         elif param.has_choices():
             control = ChoiceCombo(param)
             # sized by a typical item, not the longest one: a few lists (patch categories, EFX types) have long names that would widen the whole page
             control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             control.setMinimumContentsLength(7)
             control.activated.connect(lambda _i, w=control, b=block_key, t=tone, p=param: self._edited(b, t, p, w.currentData()))
-            widget, is_knob = control, False
+            is_knob = False
         else:
-            control = ValueSpinBox(param)
-            control.valueChanged.connect(lambda v, b=block_key, t=tone, p=param: self._edited(b, t, p, v))
-            if param.max - param.min <= KNOB_MAX_STEPS:
-                widget, is_knob = self._knob_column(block_key, tone, param, control), True
-            else:
-                widget, is_knob = control, False
-        widget.setToolTip(self._tooltip(block_key, param, is_knob))
-        return widget, control, is_knob
+            control = KnobControl(param, compact=compact)
+            control.committed.connect(lambda v, b=block_key, t=tone, p=param: self._edited(b, t, p, v))
+            is_knob = True
+        control.setToolTip(self._tooltip(block_key, param, is_knob))
+        return control, control, is_knob
 
     @staticmethod
     def _tooltip(block_key, param, is_knob):
@@ -341,61 +305,8 @@ class PatchEditor(QWidget):
             if note:
                 parts.append(f"({note})")
         if is_knob:
-            parts.append("Drag to turn. Shift: fine. Double-click: reset.")
+            parts.append("Drag to turn. Shift: fine. Double-click: reset. Click and type for an exact value.")
         return "\n".join(parts)
-
-    def _knob_column(self, block_key, tone, param, spin):
-        """Label over a knob over the value box. Turning the knob shows the value live in the box and commits when the drag is RELEASED; a wheel or
-        arrow-key step commits shortly after the last one; typing in the box commits like any box edit (its own signal). The box moves the knob
-        silently, the knob moves the box silently: one commit path each."""
-        column = QWidget()
-        column.setObjectName("transparentContainer")  # the card's own colour, not the page's
-        column.setFixedWidth(KNOB_COLUMN_WIDTH)
-        layout = QVBoxLayout(column)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        label = QLabel(param.name)
-        label.setObjectName("knobLabel")
-        label.setWordWrap(True)
-        label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
-        label.setMinimumHeight(30)  # room for two lines, so a row of knobs lines up whether or not a name wraps
-        knob = Knob()
-        knob.setRange(param.min, param.max)
-        knob.setFixedSize(KNOB_SIZE, KNOB_SIZE)
-        knob.setNotchesVisible(False)
-        origin = _origin_value(param)
-        knob.setOriginValue(origin)
-        knob.setDefaultValue(origin if origin is not None else param.min)
-        knob.setValue(spin.value())
-        spin.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        timer = QTimer(column)
-        timer.setSingleShot(True)
-        timer.setInterval(COMMIT_DELAY_MS)
-
-        def set_silently(widget, value):
-            widget.blockSignals(True)
-            widget.setValue(value)
-            widget.blockSignals(False)
-
-        def commit():
-            timer.stop()
-            self._edited(block_key, tone, param, knob.value())
-
-        def knob_moved(value):
-            set_silently(spin, value)
-            if not knob.is_dragging():
-                timer.start()  # a wheel or key step
-
-        timer.timeout.connect(commit)
-        knob.valueChanged.connect(knob_moved)
-        knob.sliderReleased.connect(commit)
-        spin.valueChanged.connect(lambda v: set_silently(knob, v))
-        layout.addWidget(label)
-        layout.addWidget(knob, alignment=Qt.AlignmentFlag.AlignHCenter)
-        layout.addWidget(spin, alignment=Qt.AlignmentFlag.AlignHCenter)
-        column.knob = knob
-        self._knob_parts[(block_key, tone, param.key)] = (label, knob, column)
-        return column
 
     # -- showing a patch -------------------------------------------------------------------------------------------------
 
@@ -424,10 +335,11 @@ class PatchEditor(QWidget):
                 elif isinstance(widget, ChoiceCombo):
                     widget.set_raw(value)
                 else:
-                    widget.setValue(max(param.min, min(param.max, value)))
+                    widget.set_value(value)
         finally:
             self._loading = False
         self._apply_efx_labels()
+        self._apply_structure_states()
         self._sync_graphs()
         self._update_wave_labels()
 
@@ -440,22 +352,31 @@ class PatchEditor(QWidget):
 
     def _apply_efx_labels(self):
         """EFX Parameter 1-12 mean different things for each of the 40 effect types: name their knobs after the chosen type and grey out the ones it
-        doesn't use. Only labels, tooltips and the knob's travel change; the box keeps showing (and the patch keeps holding) the real value."""
-        if self._patch is None or (patch.COMMON, None, "efx_parameter_1") not in self._knob_parts:
+        doesn't use. Only names, tooltips and the knob's travel change; the readout keeps showing (and the patch keeps holding) the real value."""
+        if self._patch is None or (patch.COMMON, None, "efx_parameter_1") not in self._widgets:
             return
         efx = params.load_table().efx_type(self._patch.get(patch.COMMON, "efx_type"))
         for n in range(1, 13):
-            label, knob, column = self._knob_parts[(patch.COMMON, None, f"efx_parameter_{n}")]
+            control = self._widgets[(patch.COMMON, None, f"efx_parameter_{n}")]
             meaning = efx.param(n) if efx is not None else params.EfxParam(n, f"EFX Parameter {n}")
             used = meaning.name is not None
-            label.setText(meaning.name if used else "(not used)")
-            column.setEnabled(used)
-            column.setToolTip(f"{meaning.name} ({efx.name}): {meaning.min} to {meaning.max}.\nDrag to turn. Shift: fine. Double-click: reset." if used and efx is not None else "")
-            spin = self._widgets[(patch.COMMON, None, f"efx_parameter_{n}")]
-            knob.blockSignals(True)
-            knob.setRange(meaning.min, meaning.max)
-            knob.setValue(max(meaning.min, min(meaning.max, spin.value())))
-            knob.blockSignals(False)
+            control.set_name(meaning.name if used else "(not used)")
+            control.setEnabled(used)
+            control.setToolTip(f"{meaning.name} ({efx.name}): {meaning.min} to {meaning.max}.\nDrag to turn. Shift: fine. Double-click: reset. Click and type for an exact value." if used and efx is not None else "")
+            control.set_travel(meaning.min, meaning.max)
+
+    #: the structure types that use the booster (the manual: "when the Structure Type is 03 or 04"), as raw values
+    BOOSTER_TYPES = (2, 3)
+
+    def _apply_structure_states(self):
+        """The Booster only does anything for structure types 03 and 04: grey it out for the others (its value is kept)."""
+        if self._patch is None or (patch.COMMON, None, "booster_1and2") not in self._widgets:
+            return
+        for structure, booster in (("structure_type_1and2", "booster_1and2"), ("structure_type_3and4", "booster_3and4")):
+            used = self._patch.get(patch.COMMON, structure) in self.BOOSTER_TYPES
+            control = self._widgets[(patch.COMMON, None, booster)]
+            control.setEnabled(used)
+            control.setToolTip(hints.hint(patch.COMMON, booster) if used else "Not used by this structure type: the booster only works with types 03 and 04.")
 
     def _edited(self, block_key, tone, param, value):
         if self._loading or self._patch is None:
@@ -464,7 +385,9 @@ class PatchEditor(QWidget):
         stored = self._patch.set(block_key, param.key, value, tone=tone)
         if param.key == "efx_type":
             self._apply_efx_labels()
-        if param.key in ("wave_group_type", "wave_group_id", "wave_number"):
+        if param.key.startswith("structure_type"):
+            self._apply_structure_states()
+        if param.key in ("tone_switch", "wave_group_type", "wave_group_id", "wave_number"):
             self._update_wave_labels()
         graph = self._graph_of.get((tone, param.key))
         if graph is not None:

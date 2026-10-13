@@ -8,7 +8,7 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
 ## House rules
 
 - The project was `jv1010editor` until 2026-10-13: now **JV Studio** (repo/folder `jv-studio`, package `jv_studio`, command `jv-studio`, data in `~/.jv-studio`). "JV-1010" still names the hardware.
-  The logo is `appheader.txt` embedded byte-for-byte in `ui/ascii_logo.py` (a test compares them); re-copy it there if the art changes.
+  The logo is the owner's ASCII art embedded byte-for-byte in `ui/ascii_logo.py` (the source `appheader.txt` was removed from the repo); replace the art there if it changes.
 
 - Keep `.gitignore` current as files appear (the owner asked): build output, caches, local captures (`*.syx` is ignored except `tests/fixtures/`), editor folders. Commit `uv.lock`
   and the generated `data/parameters.json` and diagrams.
@@ -61,17 +61,23 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
 
 ## The patch editor (phase 3, first cut)
 
-- **Window layout** (`ui/main_window.py`): a top bar (the logo left; connection summary, Detect and Settings right), a splitter with the USER patch list on the left and the patch on
-  the right, progress + Cancel in the STATUS BAR (visible from any page). Backup/restore/open/save are File-menu items only (no buttons); Read/Send/Write/Revert are buttons AND menu actions.
+- **Window layout** (`ui/main_window.py`, default 1260 x 880, minimum 1060 x 700: the editor pages need ~725 px, so anything narrower gets a horizontal scroll bar): a top bar (the logo left; Detect, Settings and the Detect result right; the MIDI ports are NOT printed (Settings has them), a muted prompt shows only while no ports are open), a splitter with the USER patch list on the left and the patch on
+  the right, progress + Cancel in the STATUS BAR (visible from any page; no size grip (the corner square) and `STATUS_BAR_MARGIN` 12 px each side so the rounded window corners don't clip text, as in akaiutil-gui). Deliberately NOT shown (owner's call): the factory-match count (rows that differ are just highlighted; the count goes to the status bar when names are read), and "every value is inside the manual's ranges" (the problems label appears only when something is outside). Backup/restore/open/save are File-menu items only (no buttons); Read/Send/Write/Revert are buttons AND menu actions.
   The right side is the editor's own tab row: Common | Tone 1-4 | Raw Values (`PatchEditor.add_extra_tab`; the raw tree is only rebuilt while its tab shows).
-- `ui/patch_editor.py` builds one tab per block FROM THE TABLE: `core/groups.py` says which card a parameter is on (prefix rules; `tests/test_groups.py` fails if a table parameter lands
-  on no card, so a re-extracted table can't silently drop one). Cards sit in two columns (each card goes to the shorter one). A string is a line edit (12 chars), a choice/label list a
-  `ChoiceCombo` (JV-1080-only choices are not offered, but a value the unit holds that isn't offered is shown, never hidden), anything with <= 255 steps a KNOB COLUMN (label, `ui/knob.py`,
-  `ValueSpinBox`) in a 4-wide grid below the card's form rows. The box shows the unit's own text (note names, +12, L30, OFF) via `params.format_value`, parses it back, and is where you type.
-  `ui/knob.py` is adapted from AKAISDS's `Knob` (no click-to-type popup, `is_dragging()`, `setOriginValue`: a pan/tune arc grows from its centre). A drag shows live and commits on RELEASE; a wheel or key step commits
-  150 ms after the last one; wheel events only act with focus. Pages are built when their tab is first shown (all five cost ~2.5 s per window in tests).
-- **The editor edits a `Patch` IN PLACE (the window's working copy) and never talks to the unit**; it emits `param_committed(block, key, tone, value)` once per user edit (a spin box on a step
-  or Enter, a combo on `activated`, a name on `editingFinished`), never while showing a patch (`_loading`). The window owns the rest.
+- `ui/patch_editor.py` builds one tab per block FROM THE TABLE: `core/groups.py` says which card a parameter is on (prefix rules; `tests/test_groups.py` fails if a table
+  parameter lands on no card, so a re-extracted table can't silently drop one). A string is a line edit (12 chars), a choice/label list a `ChoiceCombo` (JV-1080-only choices are not offered,
+  but a value the unit holds that isn't offered is shown, never hidden), every number a `KnobControl` (`ui/knob_control.py`): the name, a knob (`ui/knob.py`, adapted from AKAISDS's `Knob`) and a PLAIN-LABEL readout in the
+  unit's own terms (note names, +12, L30, OFF via `params.format_value`). **Click a knob once and type** (a digit, sign or letter opens a small box, as in AKAISDS); the text is parsed the way the unit shows it
+  (`parse_display_text`: `C#5`, `L24`, `+12`; a bare number is the DISPLAYED number) and nonsense is ignored. The knob only emits `text_entered`: the owner parses. The readout is BELOW the knob (a card with fewer than
+  `COMPACT_FROM` = 8 knobs) or BESIDE it (a dense card: name above, [knob | value] under it, about half the height), the AKAISDS "value right or below depending on space" rule. A drag shows live and commits on RELEASE; a wheel
+  or key step commits 150 ms after the last one; wheel events only act with focus. Pages are built when their tab is first shown (all five cost ~2.5 s per window in tests).
+- **Card columns are locked to exactly half the page each** (size hints Ignored, equal stretch, `COLUMN_MIN_WIDTH`), and the page's vertical scroll bar is ALWAYS shown: both a card collapsing (hints changing) and a scroll bar
+  appearing/disappearing (viewport width changing) used to shift the columns sideways. `tests/test_patch_editor.py` collapses every card and checks the widths don't move.
+- **Drop-down option names are readable** (`core/friendly.py`): the table keeps the manual's labels (what the unit's display shows, and what the Raw Values tab prints); combos show `Triangle`, `Hall 1`, `Low-Pass`, `Cutoff`, `Overdrive → Chorus (serial)`
+  and an item tooltip says "On the unit: TRI". An option with no entry falls back to Title Case; `tests/test_friendly.py` fails if a shown list has a missing entry or two options end up with the same name. Some names are
+  inferred from JV-series knowledge, not the manual (the controller destinations PCH/CUT/..., KEY-OFF-N/D, the dB units of Booster and Wave Gain, the Hz of HF Damp): correct them in `friendly.py` if the unit disagrees.
+- **The editor edits a `Patch` IN PLACE (the window's working copy) and never talks to the unit**; it emits `param_committed(block, key, tone, value)` once per user edit (a knob release or typed value,
+  a combo on `activated`, a name on `editingFinished`), never while showing a patch (`_loading`). The window owns the rest.
 - **Live edit rule** (owner's: live UI, MIDI on release): an edit becomes a `write_param` job (a single-parameter DT1 to the TEMPORARY patch, then a read-back of that parameter's block) only
   when `_temp_synced`: the shown patch was read from the temporary patch, or was sent with Send to Temporary Patch and unchanged since. Otherwise the unit is playing a different patch and a
   lone parameter would make a hybrid, so the hint says "Send to Temporary Patch to hear your edits". A failed live write switches live sending off with ONE warning (queued edits fail too).
@@ -92,6 +98,12 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
   named; anything else shows "no name known".
 - **Undo/Redo** (Edit menu, Ctrl+Z / Ctrl+Shift+Z): a stack of GESTURES (`edits_recorded` from the editor: a box, a knob release, a name, a graph drag, a wave choice), 200 deep, per shown
   patch (cleared when another patch is shown or on Revert). Undo/redo go to the unit live like any edit when live sending is on and the temporary patch is in step.
+- **Structure types** (Common > Structure): ten ways to connect the two tones of a pair (1 & 2, 3 & 4): independent; stacked filters; mix > filter > booster; booster > filters; four ring-modulator
+  variants; filters > ring mod (+ Tone 2). They are a 0-9 value (shown 1-10); the extractor gives them labels `TYPE 01..10` and `core/friendly.py` the names and a one-sentence description per option
+  (the combo's item tooltips). **Source: Roland's JV-1080 Software Synthesizer Owner's Manual (Roland Cloud), "Structure", paraphrased; the JV-1010 Owner's Manual does not describe them.** Same engine, but not
+  checked on a JV-1010. From that manual: the Booster only acts for types 03 and 04 (so the editor greys it out for the others, keeping its value), and when one tone of a pair is off or outside its key/velocity
+  range the other plays as type 01. The manual also confirms KEY-OFF-N/D = Key-Off Normal/Decay (tone delay).
+- **No wave:** the JV-1010 has no "no wave" value. The Wave picker's "No Wave (Tone Off)" sets Tone Switch OFF (the wave stays chosen), the label then reads "No wave (tone off)", and choosing a wave for an OFF tone switches it on (one undo step).
 - **The raw wave numbers are not controls** (`groups.HIDDEN`): the Wave card has the wave's NAME and Choose... (the picker sets type, ID and number as one undo step). The numbers stay in the Raw
   Values tab and in the label when the group has no names.
 - **Tooltips** (`core/hints.py`, composed in `PatchEditor._tooltip`): an explanation, the range as the unit shows it, and "Drag to turn. Shift: fine. Double-click: reset." on knobs. **The explanations are

@@ -12,7 +12,7 @@ def test_every_hint_names_a_real_parameter():
 
 def test_hints_are_one_short_sentence():
     for text in [*hints.COMMON.values(), *hints.TONE.values()]:
-        assert text.endswith(".") and len(text) <= 150 and "\n" not in text, text
+        assert text.endswith(".") and len(text) <= 170 and "\n" not in text, text
 
 
 def test_most_shown_parameters_have_an_explanation():

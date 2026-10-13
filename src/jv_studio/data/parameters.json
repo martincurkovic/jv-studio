@@ -7135,7 +7135,19 @@
      "display_text": "1 - 10",
      "display_min": 1,
      "display_max": 10,
-     "key": "structure_type_1and2"
+     "key": "structure_type_1and2",
+     "labels": [
+      "TYPE 01",
+      "TYPE 02",
+      "TYPE 03",
+      "TYPE 04",
+      "TYPE 05",
+      "TYPE 06",
+      "TYPE 07",
+      "TYPE 08",
+      "TYPE 09",
+      "TYPE 10"
+     ]
     },
     {
      "name": "Booster 1&2",
@@ -7175,7 +7187,19 @@
      "display_text": "1 - 10",
      "display_min": 1,
      "display_max": 10,
-     "key": "structure_type_3and4"
+     "key": "structure_type_3and4",
+     "labels": [
+      "TYPE 01",
+      "TYPE 02",
+      "TYPE 03",
+      "TYPE 04",
+      "TYPE 05",
+      "TYPE 06",
+      "TYPE 07",
+      "TYPE 08",
+      "TYPE 09",
+      "TYPE 10"
+     ]
     },
     {
      "name": "Booster 3&4",

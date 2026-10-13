@@ -2,16 +2,18 @@
 grows from an ORIGIN (the minimum, or a bipolar parameter's centre).
 
 Signals follow the owner's rule, live UI and MIDI on release: `valueChanged` fires on every step (show it), `sliderReleased` once when a drag ends
-(send it). A change that is not a drag (wheel, arrow keys) is the caller's to commit: `is_dragging()` tells the two apart. There is no click-to-type
-popup here: a knob is paired with a `ValueSpinBox` that takes typed text.
+(send it). A change that is not a drag (wheel, arrow keys) is the caller's to commit: `is_dragging()` tells the two apart.
+
+Click-to-type, as in AKAISDS: clicking a knob only focuses it; typing a character then opens a small box over the knob. The knob does NOT interpret the text (a
+JV parameter is typed the way the unit shows it: a note name, L30, +12, OFF): it emits `text_entered(str)` and its owner sets the value.
 """
 
 import math
 import sys
 
-from PySide6.QtCore import QPointF, Qt
+from PySide6.QtCore import QPointF, Qt, Signal
 from PySide6.QtGui import QCursor, QPainter, QPen, QColor
-from PySide6.QtWidgets import QApplication, QDial
+from PySide6.QtWidgets import QApplication, QDial, QLineEdit
 
 from jv_studio.ui import theme
 
@@ -24,6 +26,31 @@ _FINE_DRAG_DIVISOR = 8  # how much slower a Shift-held drag moves
 _FINE_DRAG_DIVISOR_MACOS = 12  # macOS: no cursor warp (the OS fights it), a plainly larger divisor on the raw delta instead
 _MACOS = sys.platform == "darwin"
 VALUE_ARC_COLOR = "#3aa88a"
+_TYPE_EDIT_SIZE = (64, 24)
+
+
+class _TypeEdit(QLineEdit):
+    """The floating text box a knob opens for click-then-type entry. A real top-level Popup window, not a child: a knob is far too small to hold a legible box, and a
+    Popup grabs the keyboard and closes on a click outside (which is "click away to commit"). Every way it ends (Enter, Esc, a click outside) passes through
+    `hideEvent`, so the commit-or-cancel decision lives in one place."""
+
+    def __init__(self, knob):
+        super().__init__()
+        self._knob = knob
+        self._cancelled = False
+        self.setWindowFlags(Qt.WindowType.Popup)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self._cancelled = True
+            self.close()
+            return
+        super().keyPressEvent(event)
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        self._knob._finish_type_edit(self, self._cancelled)
 
 
 def arc_start_and_span(fraction, origin_fraction=0.0):
@@ -32,8 +59,12 @@ def arc_start_and_span(fraction, origin_fraction=0.0):
 
 
 class Knob(QDial):
+    #: the text typed into the click-to-type box, when it is committed (Enter or a click away); the owner parses it and sets the value
+    text_entered = Signal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._type_edit = None
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._origin_value = None  # None: the arc grows from the minimum
         self._default_value = None
@@ -73,6 +104,38 @@ class Knob(QDial):
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_anchor_y = event.position().y()
             self._drag_fraction = self._fraction(self.value())
+
+    def keyPressEvent(self, event):
+        # click once to focus, then just type: a printable character that can start a value (a digit, a sign, a letter for a note or L/R/OFF) opens the box
+        text = event.text()
+        if self._type_edit is None and not (event.modifiers() & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.MetaModifier)) \
+                and len(text) == 1 and (text.isalnum() or text in "+-#."):
+            self._begin_type_edit(text)
+            return
+        super().keyPressEvent(event)
+
+    def _begin_type_edit(self, initial_text):
+        if self._type_edit is not None:
+            return
+        edit = _TypeEdit(self)
+        edit.setText(initial_text)
+        edit.returnPressed.connect(edit.close)
+        width, height = _TYPE_EDIT_SIZE
+        edit.resize(width, height)
+        centre = self.mapToGlobal(self.rect().center())
+        edit.move(centre.x() - width // 2, centre.y() - height // 2)
+        self._type_edit = edit
+        edit.show()
+        edit.setFocus(Qt.FocusReason.MouseFocusReason)
+
+    def _finish_type_edit(self, edit, cancelled):
+        if self._type_edit is not edit:
+            return
+        self._type_edit = None
+        text = edit.text().strip()
+        edit.deleteLater()
+        if not cancelled and text:
+            self.text_entered.emit(text)
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:

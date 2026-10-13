@@ -322,6 +322,10 @@ def main():
         for param in data["blocks"][block]["params"]:
             if param["key"] == "efx_type" and param["max"] == 39:
                 param["labels"] = names
+    # the ten structure types are a 0-9 number that the manual shows as 1-10: name them TYPE 01..TYPE 10 (core/friendly.py has the readable names and descriptions)
+    for param in data["blocks"]["patch_common"]["params"]:
+        if param["key"] in ("structure_type_1and2", "structure_type_3and4") and (param["min"], param["max"]) == (0, 9):
+            param["labels"] = [f"TYPE {n:02d}" for n in range(1, 11)]
     if problems:
         sys.exit(f"{problems} block(s) failed their self-check: not writing")
     if check_only:
