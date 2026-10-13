@@ -21,7 +21,7 @@ wheels = [
 ]
 
 [[package]]
-name = "jv1010editor"
+name = "jv-studio"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

@@ -1,4 +1,4 @@
-# JV-1010 Editor
+# JV Studio
 
 A free, open-source patch editor for the **Roland JV-1010** sound module, in the spirit of [AKAISDS](https://github.com/martincurkovic/AKAISDS).
 Built with PySide6 (Qt) and python-rtmidi. GPL-3.0-or-later.
@@ -19,13 +19,13 @@ Needs [uv](https://docs.astral.sh/uv/) and Python 3.12.
 
 ```sh
 uv sync
-uv run jv1010editor      # the app: pick your MIDI ports in Settings, then Settings > Troubleshooting
+uv run jv-studio      # the app: pick your MIDI ports in Settings, then Settings > Troubleshooting
 uv run pytest            # the tests
 ```
 
 ## The parameter table
 
-`src/jv1010editor/data/parameters.json` is generated from the JV-1010 Owner's Manual by `tools/extract_params.py` (needs `pdftotext` from
+`src/jv_studio/data/parameters.json` is generated from the JV-1010 Owner's Manual by `tools/extract_params.py` (needs `pdftotext` from
 poppler). The manual is Roland's and is not in this repository; put your copy at `manual/JV-1010_OM.pdf` (git-ignored) to regenerate.
 
 ## Credits and notes

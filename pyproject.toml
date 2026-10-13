@@ -1,5 +1,5 @@
 [project]
-name = "jv1010editor"
+name = "jv-studio"
 version = "0.1.0"
 description = "A free, open-source patch editor for the Roland JV-1010 sound module. Built with PySide6 (Qt) and python-rtmidi."
 readme = "README.md"
@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-jv1010editor = "jv1010editor.main:main"
+jv-studio = "jv_studio.main:main"
 
 [dependency-groups]
 dev = ["pytest>=9"]
@@ -23,7 +23,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/jv1010editor"]
+packages = ["src/jv_studio"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

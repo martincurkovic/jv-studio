@@ -2,8 +2,8 @@
 
 from PySide6.QtWidgets import QApplication
 
-from jv1010editor import main as app_main
-from jv1010editor.core import midi
+from jv_studio import main as app_main
+from jv_studio.core import midi
 
 
 def test_main_builds_and_shows_the_window_without_touching_real_midi(monkeypatch):
@@ -18,4 +18,4 @@ def test_main_builds_and_shows_the_window_without_touching_real_midi(monkeypatch
     real = app_main.MainWindow
     monkeypatch.setattr(app_main, "MainWindow", lambda: real(start_worker=False))
     assert app_main.main() == 0 and shown
-    assert QApplication.instance().applicationName() == "JV-1010 Editor"
+    assert QApplication.instance().applicationName() == "JV Studio"

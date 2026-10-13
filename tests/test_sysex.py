@@ -3,7 +3,7 @@
 
 import pytest
 
-from jv1010editor.core import sysex
+from jv_studio.core import sysex
 
 
 def test_the_manuals_dt1_example_sets_performance_reverb_type_to_delay():

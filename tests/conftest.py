@@ -10,13 +10,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # for fakes
 # Forced, not setdefault: a desktop that exports QT_QPA_PLATFORM would otherwise run the tests on a real display.
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
-# No test may touch the user's real ~/.jv1010editor (config, log). Redirect them before anything creates the logger.
-_TMP = Path(tempfile.mkdtemp(prefix="jv1010editor-tests-"))
+# No test may touch the user's real ~/.jv-studio (config, log). Redirect them before anything creates the logger.
+_TMP = Path(tempfile.mkdtemp(prefix="jv-studio-tests-"))
 atexit.register(shutil.rmtree, _TMP, ignore_errors=True)
 
-from jv1010editor.core import app_config, debug_log, diagnostics  # noqa: E402
+from jv_studio.core import app_config, debug_log, diagnostics  # noqa: E402
 
-debug_log.LOG_PATH = _TMP / "jv1010editor.log"
+debug_log.LOG_PATH = _TMP / "jv-studio.log"
 diagnostics.CRASH_PATH = _TMP / "crash.log"
 app_config.CONFIG_PATH = _TMP / "config.json"
 

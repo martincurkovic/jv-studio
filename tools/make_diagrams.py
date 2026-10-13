@@ -1,6 +1,6 @@
 """Draws the MIDI cabling diagrams used by the Settings > Troubleshooting cards.
 
-    uv run python tools/make_diagrams.py            # writes src/jv1010editor/ui/help/diagrams/*.png
+    uv run python tools/make_diagrams.py            # writes src/jv_studio/ui/help/diagrams/*.png
     uv run python tools/make_diagrams.py --svg      # also keeps the .svg sources next to them
 
 Two pictures: how to plug in the loopback cable and how to connect the JV-1010. Deliberately plain (no captions, step
@@ -15,7 +15,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-OUT_DIR = Path(__file__).resolve().parent.parent / "src" / "jv1010editor" / "ui" / "help" / "diagrams"
+OUT_DIR = Path(__file__).resolve().parent.parent / "src" / "jv_studio" / "ui" / "help" / "diagrams"
 
 # shown at this fraction of the 720-unit drawing below (so 0.44 -> a picture about 320 px wide)
 SCALE = 0.44

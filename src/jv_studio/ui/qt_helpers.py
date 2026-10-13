@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jv1010editor.ui.section_card import SectionCard
+from jv_studio.ui.section_card import SectionCard
 
 
 class FullWidthTabBar(QTabBar):

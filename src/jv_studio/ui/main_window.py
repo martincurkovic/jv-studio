@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence
+from PySide6.QtGui import QAction, QBrush, QColor, QFont, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -22,16 +22,17 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jv1010editor.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, stock, sysex, validate
-from jv1010editor.ui import theme
-from jv1010editor.ui.about_dialog import AboutDialog
-from jv1010editor.ui.diagnostics_ui import add_open_log_folder_action
-from jv1010editor.ui.midi_session import MidiSession
-from jv1010editor.ui.patch_editor import PatchEditor
-from jv1010editor.ui.qt_helpers import build_scroll_area, build_section_card, set_enabled_without_scrolling
-from jv1010editor.ui.settings_dialog import SettingsDialog
-from jv1010editor.ui.unit_dialogs import RestoreDialog, WriteUserDialog
-from jv1010editor.ui.unit_worker import UnitWorker
+from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, stock, sysex, validate
+from jv_studio.ui import theme
+from jv_studio.ui.about_dialog import AboutDialog
+from jv_studio.ui.ascii_logo import LOGO
+from jv_studio.ui.diagnostics_ui import add_open_log_folder_action
+from jv_studio.ui.midi_session import MidiSession
+from jv_studio.ui.patch_editor import PatchEditor
+from jv_studio.ui.qt_helpers import build_scroll_area, build_section_card, set_enabled_without_scrolling
+from jv_studio.ui.settings_dialog import SettingsDialog
+from jv_studio.ui.unit_dialogs import RestoreDialog, WriteUserDialog
+from jv_studio.ui.unit_worker import UnitWorker
 
 
 class MainWindow(QMainWindow):
@@ -41,7 +42,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self, session=None, worker=None, start_worker=True):
         super().__init__()
-        self.setWindowTitle("JV-1010 Editor")
+        self.setWindowTitle("JV Studio")
         self.setMinimumSize(820, 640)
         app_config.ensure_defaults_saved()
         self.session = session if session is not None else MidiSession()
@@ -126,7 +127,7 @@ class MainWindow(QMainWindow):
 
         help_menu = self.menuBar().addMenu("&Help")
         add_open_log_folder_action(help_menu, self)
-        about_action = QAction("About JV-1010 Editor...", self)
+        about_action = QAction("About JV Studio...", self)
         about_action.setMenuRole(QAction.MenuRole.AboutRole)
         about_action.triggered.connect(lambda: AboutDialog(self).exec())
         help_menu.addAction(about_action)
@@ -257,7 +258,27 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.raw_card)
         layout.addWidget(build_section_card("USER Patches", library))
         layout.addStretch()
-        self.setCentralWidget(build_scroll_area(page))
+
+        # the logo sits top left above the scrolling pages, like AKAISDS's Dashboard
+        top_bar = QHBoxLayout()
+        top_bar.setContentsMargins(15, 12, 15, 0)
+        self.lbl_logo = QLabel(LOGO.strip("\n"))
+        logo_font = QFont("Menlo")
+        logo_font.setStyleHint(QFont.StyleHint.Monospace)
+        logo_font.setPointSize(8)
+        self.lbl_logo.setFont(logo_font)
+        self.lbl_logo.setTextFormat(Qt.TextFormat.PlainText)
+        self.lbl_logo.setWordWrap(False)
+        self.lbl_logo.setStyleSheet("background: transparent;")
+        top_bar.addWidget(self.lbl_logo)
+        top_bar.addStretch()
+        central = QWidget()
+        central_layout = QVBoxLayout(central)
+        central_layout.setContentsMargins(0, 0, 0, 0)
+        central_layout.setSpacing(0)
+        central_layout.addLayout(top_bar)
+        central_layout.addWidget(build_scroll_area(page), 1)
+        self.setCentralWidget(central)
 
     # -- connection --------------------------------------------------------------------------------------------------------
 

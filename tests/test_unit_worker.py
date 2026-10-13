@@ -4,9 +4,9 @@ import pytest
 from PySide6.QtWidgets import QApplication
 
 from fakes import FakeJV1010, FakePorts
-from jv1010editor.core import midi, patch
-from jv1010editor.ui.midi_session import MidiSession
-from jv1010editor.ui.unit_worker import UnitWorker
+from jv_studio.core import midi, patch
+from jv_studio.ui.midi_session import MidiSession
+from jv_studio.ui.unit_worker import UnitWorker
 
 
 @pytest.fixture(scope="session")
@@ -145,7 +145,7 @@ def test_a_unit_that_stores_nothing_fails_the_send(qapp):
 
 
 def test_write_user_saves_the_old_patch_first(qapp, tmp_path, monkeypatch):
-    from jv1010editor.core import app_config
+    from jv_studio.core import app_config
 
     monkeypatch.setattr(app_config, "CONFIG_PATH", tmp_path / "config.json")
     worker, fake, events = rig()
@@ -162,7 +162,7 @@ def test_write_user_saves_the_old_patch_first(qapp, tmp_path, monkeypatch):
 
 
 def test_write_user_writes_nothing_if_the_backup_cannot_be_saved(qapp, tmp_path, monkeypatch):
-    from jv1010editor.core import app_config, backup
+    from jv_studio.core import app_config, backup
 
     monkeypatch.setattr(app_config, "CONFIG_PATH", tmp_path / "config.json")
     monkeypatch.setattr(backup, "write_file", lambda *a: (_ for _ in ()).throw(OSError("disk full")))
@@ -173,7 +173,7 @@ def test_write_user_writes_nothing_if_the_backup_cannot_be_saved(qapp, tmp_path,
 
 
 def test_write_user_writes_nothing_if_the_old_patch_cannot_be_read(qapp, tmp_path, monkeypatch):
-    from jv1010editor.core import app_config
+    from jv_studio.core import app_config
 
     monkeypatch.setattr(app_config, "CONFIG_PATH", tmp_path / "config.json")
     worker, fake, events = rig(FakeJV1010(gm_mode=True))
@@ -183,7 +183,7 @@ def test_write_user_writes_nothing_if_the_old_patch_cannot_be_read(qapp, tmp_pat
 
 
 def test_backup_then_restore_roundtrip_through_a_file(qapp, tmp_path):
-    from jv1010editor.core import backup, memory
+    from jv_studio.core import backup, memory
 
     worker, fake, events = rig()
     more = extra_events(worker)
@@ -200,7 +200,7 @@ def test_backup_then_restore_roundtrip_through_a_file(qapp, tmp_path):
 
 
 def test_cancelling_a_backup_saves_nothing_and_is_not_an_error(qapp, tmp_path):
-    from jv1010editor.core import memory
+    from jv_studio.core import memory
 
     worker, _, events = rig()
     more = extra_events(worker)
@@ -212,7 +212,7 @@ def test_cancelling_a_backup_saves_nothing_and_is_not_an_error(qapp, tmp_path):
 
 
 def test_restoring_an_incomplete_backup_fails_before_writing(qapp, tmp_path):
-    from jv1010editor.core import backup, memory
+    from jv_studio.core import backup, memory
 
     worker, fake, events = rig()
     worker.submit("restore", backup.Backup(), [memory.PATCHES])

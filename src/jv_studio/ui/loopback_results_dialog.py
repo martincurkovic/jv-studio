@@ -11,9 +11,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from jv1010editor.core import debug_log, loopback_report
+from jv_studio.core import debug_log, loopback_report
 
-from jv1010editor.ui._version import APP_VERSION
+from jv_studio.ui._version import APP_VERSION
 
 # same green as the knob arcs; the red reads on both the light and dark theme
 _PASS_COLOR = "#3aa88a"

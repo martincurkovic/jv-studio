@@ -3,8 +3,8 @@
 import pytest
 from PySide6.QtWidgets import QApplication, QComboBox, QLineEdit
 
-from jv1010editor.core import groups, params, patch
-from jv1010editor.ui.patch_editor import ChoiceCombo, PatchEditor, ValueSpinBox
+from jv_studio.core import groups, params, patch
+from jv_studio.ui.patch_editor import ChoiceCombo, PatchEditor, ValueSpinBox
 
 
 @pytest.fixture(scope="session")

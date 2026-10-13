@@ -19,7 +19,7 @@ build/
 .ruff_cache/
 .mypy_cache/
 
-# logs a run might drop next to the code (the app's own logs live in ~/.jv1010editor)
+# logs a run might drop next to the code (the app's own logs live in ~/.jv-studio)
 *.log
 
 # SysEx captured from a unit or saved while testing is the owner's own data: keep it out unless it is a deliberate test fixture

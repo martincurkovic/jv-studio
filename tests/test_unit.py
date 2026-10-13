@@ -3,7 +3,7 @@
 import pytest
 
 from fakes import FakeJV1010, FakePorts
-from jv1010editor.core import midi, params, patch, sysex, unit, validate
+from jv_studio.core import midi, params, patch, sysex, unit, validate
 
 
 def connect(fake, **kwargs):

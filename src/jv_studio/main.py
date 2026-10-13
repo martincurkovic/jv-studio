@@ -3,10 +3,10 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
-from jv1010editor.core import debug_log, diagnostics, midi
-from jv1010editor.ui import diagnostics_ui, theme
-from jv1010editor.ui._version import APP_VERSION
-from jv1010editor.ui.main_window import MainWindow
+from jv_studio.core import debug_log, diagnostics, midi
+from jv_studio.ui import diagnostics_ui, theme
+from jv_studio.ui._version import APP_VERSION
+from jv_studio.ui.main_window import MainWindow
 
 
 def _log_startup():
@@ -16,7 +16,7 @@ def _log_startup():
         import PySide6
         from PySide6.QtCore import qVersion
 
-        log.info(f"=== JV-1010 Editor {APP_VERSION} on {platform.platform()}, python {platform.python_version()}")
+        log.info(f"=== JV Studio {APP_VERSION} on {platform.platform()}, python {platform.python_version()}")
         log.info(f"PySide6 {PySide6.__version__}, Qt {qVersion()}")
         log.info(f"MIDI inputs: {midi.list_input_names()}")
         log.info(f"MIDI outputs: {midi.list_output_names()}")
@@ -29,7 +29,7 @@ def main():
     diagnostics.install_crash_handlers()
     _log_startup()
     app = QApplication.instance() or QApplication(sys.argv)
-    app.setApplicationName("JV-1010 Editor")
+    app.setApplicationName("JV Studio")
     diagnostics_ui.install_dialog_logging()
     theme.apply_to_app(app)
     window = MainWindow()

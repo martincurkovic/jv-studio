@@ -1,9 +1,9 @@
 import pytest
 
 from fakes import FakePorts, FakeJV1010
-from jv1010editor.core import backup, memory, patch, sysex
-from jv1010editor.core.midi import MidiConnection
-from jv1010editor.core.unit import JV1010Unit, UnitError
+from jv_studio.core import backup, memory, patch, sysex
+from jv_studio.core.midi import MidiConnection
+from jv_studio.core.unit import JV1010Unit, UnitError
 
 
 class Clock:

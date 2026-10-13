@@ -4,7 +4,7 @@ from PySide6.QtCore import QUrl
 from PySide6.QtGui import QAction, QDesktopServices
 from PySide6.QtWidgets import QMessageBox
 
-from jv1010editor.core import debug_log
+from jv_studio.core import debug_log
 
 _KINDS = ("warning", "critical", "information", "question")
 _MAX_TEXT = 500

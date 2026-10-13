@@ -1,6 +1,6 @@
 # The memory plan: every block of the unit's user memory, against the manual's map.
 
-from jv1010editor.core import memory, params, patch, sysex
+from jv_studio.core import memory, params, patch, sysex
 
 
 def test_the_plan_counts_match_the_manual():

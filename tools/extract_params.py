@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild src/jv1010editor/data/parameters.json from the JV-1010 Owner's Manual.
+"""Rebuild src/jv_studio/data/parameters.json from the JV-1010 Owner's Manual.
 
 The manual's "Parameter Address Map" (MIDI Implementation chapter) is a set of regular text tables. This reads the PDF with `pdftotext -layout`
 (poppler: `brew install poppler`), parses them and writes the machine-readable table the editor uses. The PDF is Roland's and is NOT in the
@@ -19,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_PDF = ROOT / "manual" / "JV-1010_OM.pdf"
-OUTPUT = ROOT / "src" / "jv1010editor" / "data" / "parameters.json"
+OUTPUT = ROOT / "src" / "jv_studio" / "data" / "parameters.json"
 
 # (block key, heading as printed in the manual, what a "name" row run collapses into)
 BLOCKS = [

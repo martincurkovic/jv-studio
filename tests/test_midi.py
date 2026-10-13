@@ -6,7 +6,7 @@ import time
 import pytest
 
 from fakes import FakePorts, loopback, silent
-from jv1010editor.core import midi, sysex
+from jv_studio.core import midi, sysex
 
 
 def open_connection(respond=None):

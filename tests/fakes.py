@@ -1,6 +1,6 @@
 """Pretend MIDI ports and a pretend JV-1010, so MIDI code is tested without a backend or hardware."""
 
-from jv1010editor.core import memory, patch, sysex
+from jv_studio.core import memory, patch, sysex
 
 
 class FakePorts:

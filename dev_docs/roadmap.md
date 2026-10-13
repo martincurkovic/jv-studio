@@ -15,7 +15,7 @@ record what they find in `AGENTS.md` (measured vs. guessed, dated).
 
 - [x] Theme (dark/light/system) and QSS, adapted from AKAISDS.
 - [x] Main window (connection card, Detect JV-1010), About dialog, Help > Open Log Folder. (A quick-start guide waits for a real editor.)
-- [x] Config (`~/.jv1010editor/config.json`), debug log (`~/.jv1010editor/jv1010editor.log`), crash handlers, dialog logging.
+- [x] Config (`~/.jv-studio/config.json`), debug log (`~/.jv-studio/jv-studio.log`), crash handlers, dialog logging.
 - [x] Settings window: MIDI input/output port, theme.
 - [x] Diagnostics in Settings: **loopback test** (cables, ports) and **hardware detection** (Identity Request, then one read of the temporary patch's name).
 - [x] MIDI transport with SysEx in/out (`core/midi.py`): thread-safe close, split-SysEx reassembly, one request at a time.
@@ -33,7 +33,7 @@ record what they find in `AGENTS.md` (measured vs. guessed, dated).
 - [x] Stock check: the USER patch names/key assign against the manual's factory list (a hint, not proof).
 - [ ] **Hardware, in this order:** (1) Back Up Unit and keep the file; (2) read the names, look at the stock check; (3) Send to Temporary Patch; (4) Write to USER on a slot you can spare, power-cycle, read it back; (5) Restore of USER patches only; (6) only then, System settings. Record each result in AGENTS.md.
 - [ ] Verify on hardware: the 129-byte tone as 128 + 1; the 20 ms gap; what happens in GM mode (the unit ignores RQ1/DT1 there); the identity reply's revision bytes.
-- [x] Backup before every USER write (`~/.jv1010editor/backups/`), and an offer of a whole-unit backup before the first change of a session.
+- [x] Backup before every USER write (`~/.jv-studio/backups/`), and an offer of a whole-unit backup before the first change of a session.
 
 ## Phase 3 - Patch editor
 

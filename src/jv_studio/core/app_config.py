@@ -1,11 +1,11 @@
-"""Saved settings (`~/.jv1010editor/config.json`): the MIDI ports, the theme, and which section cards are collapsed (Qt-free)."""
+"""Saved settings (`~/.jv-studio/config.json`): the MIDI ports, the theme, and which section cards are collapsed (Qt-free)."""
 
 import json
 from pathlib import Path
 
 from . import debug_log
 
-CONFIG_PATH = Path.home() / ".jv1010editor" / "config.json"
+CONFIG_PATH = Path.home() / ".jv-studio" / "config.json"
 
 THEME_SYSTEM = "system"
 THEME_LIGHT = "light"

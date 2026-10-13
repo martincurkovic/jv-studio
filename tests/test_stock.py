@@ -1,5 +1,5 @@
-from jv1010editor.core import params, stock
-from jv1010editor.core.unit import PatchSummary
+from jv_studio.core import params, stock
+from jv_studio.core.unit import PatchSummary
 
 
 def factory_summaries():

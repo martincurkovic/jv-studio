@@ -1,14 +1,23 @@
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout
 
-from jv1010editor.ui._version import APP_VERSION
+from jv_studio.ui.ascii_logo import LOGO
+
+from jv_studio.ui._version import APP_VERSION
 
 
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("About JV-1010 Editor")
-        title = QLabel(f"<h2>JV-1010 Editor</h2>Version {APP_VERSION}")
+        self.setWindowTitle("About JV Studio")
+        logo = QLabel(LOGO.strip("\n"))
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        logo_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+        logo_font.setPointSize(8)
+        logo.setFont(logo_font)
+        title = QLabel(f"Version {APP_VERSION}")
+        title.setObjectName("mutedLabel")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         body = QLabel(
             "A free, open-source patch editor for the Roland JV-1010.<br>"
@@ -22,6 +31,8 @@ class AboutDialog(QDialog):
         close.setDefault(True)
         close.clicked.connect(self.accept)
         layout = QVBoxLayout(self)
+        layout.addSpacing(12)
+        layout.addWidget(logo)
         layout.addWidget(title)
         layout.addWidget(body)
         layout.addWidget(close, alignment=Qt.AlignmentFlag.AlignCenter)

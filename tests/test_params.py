@@ -5,7 +5,7 @@ from importlib import resources
 
 import pytest
 
-from jv1010editor.core import params
+from jv_studio.core import params
 
 # the sizes the manual prints on each "Total size" line
 MANUAL_SIZES = {
@@ -81,7 +81,7 @@ def test_every_parameters_range_is_sane(table):
 
 
 def test_the_json_file_and_the_loader_agree_on_the_number_of_parameters(table):
-    raw = json.loads(resources.files("jv1010editor").joinpath("data/parameters.json").read_text(encoding="utf-8"))
+    raw = json.loads(resources.files("jv_studio").joinpath("data/parameters.json").read_text(encoding="utf-8"))
     assert {k: len(v["params"]) for k, v in raw["blocks"].items()} == {k: len(b.params) for k, b in table.blocks.items()}
 
 

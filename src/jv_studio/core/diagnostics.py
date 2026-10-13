@@ -1,7 +1,7 @@
 """What a bug report needs beyond the per-action log lines: crash capture, and a one-line picture of how the app is configured.
 
 An exception raised inside a Qt slot goes to stderr (nowhere, in a packaged app) and a native crash leaves no trace at all, so
-`install_crash_handlers()` sends both to the log: Python exceptions to `jv1010editor.log`, native crashes (faulthandler) to `crash.log` beside it.
+`install_crash_handlers()` sends both to the log: Python exceptions to `jv-studio.log`, native crashes (faulthandler) to `crash.log` beside it.
 """
 
 import faulthandler

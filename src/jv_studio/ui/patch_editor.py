@@ -17,8 +17,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jv1010editor.core import groups, params, patch
-from jv1010editor.ui.qt_helpers import FullWidthTabBar, build_editor_card, build_scroll_area
+from jv_studio.core import groups, params, patch
+from jv_studio.ui.qt_helpers import FullWidthTabBar, build_editor_card, build_scroll_area
 
 
 @lru_cache(maxsize=None)

@@ -4,9 +4,9 @@ import pytest
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from fakes import FakeJV1010, FakePorts, corrupting_loopback, loopback, silent
-from jv1010editor.core import app_config, midi, midi_diagnostics
-from jv1010editor.ui import loopback_results_dialog, settings_dialog, theme
-from jv1010editor.ui.midi_session import MidiSession
+from jv_studio.core import app_config, midi, midi_diagnostics
+from jv_studio.ui import loopback_results_dialog, settings_dialog, theme
+from jv_studio.ui.midi_session import MidiSession
 
 
 @pytest.fixture(scope="session")

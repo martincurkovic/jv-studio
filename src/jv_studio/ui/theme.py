@@ -20,7 +20,7 @@ from string import Template
 
 from PySide6.QtCore import QObject, Qt, Signal
 
-from jv1010editor.core import app_config
+from jv_studio.core import app_config
 
 DARK_PALETTE = {
     "bg": "#1e1e24",
@@ -95,7 +95,7 @@ _ICONS_DIR = os.path.join(os.path.dirname(__file__), "icons")
 
 
 def _generated_icons_dir():
-    # runtime-generated files go beside the config (~/.jv1010editor), never inside the app bundle: writing there is fragile on macOS and
+    # runtime-generated files go beside the config (~/.jv-studio), never inside the app bundle: writing there is fragile on macOS and
     # breaks code signing. Evaluated when used, so tests that redirect the config folder redirect this too.
     return str(app_config.CONFIG_PATH.parent / "generated_icons")
 
@@ -254,7 +254,7 @@ def _render_for_current_scheme():
         # GUI app with no attached console - print() alone would be
         # invisible exactly like core/debug_log.py's own docstring
         # describes for every other unhandled failure here
-        from jv1010editor.core import debug_log
+        from jv_studio.core import debug_log
 
         debug_log.get_logger().error(
             "theme: couldn't apply stylesheet", exc_info=True

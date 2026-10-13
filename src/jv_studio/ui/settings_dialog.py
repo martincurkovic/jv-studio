@@ -19,10 +19,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jv1010editor.core import app_config, debug_log, midi, midi_diagnostics
-from jv1010editor.ui import theme, tooltips
-from jv1010editor.ui.loopback_results_dialog import LoopbackResultsDialog
-from jv1010editor.ui.qt_helpers import (
+from jv_studio.core import app_config, debug_log, midi, midi_diagnostics
+from jv_studio.ui import theme, tooltips
+from jv_studio.ui.loopback_results_dialog import LoopbackResultsDialog
+from jv_studio.ui.qt_helpers import (
     FullWidthTabBar,
     align_form_label_columns,
     build_scroll_area,

@@ -120,7 +120,7 @@ def _param(raw):
 
 @lru_cache(maxsize=1)
 def load_table():
-    raw = json.loads(resources.files("jv1010editor").joinpath("data/parameters.json").read_text(encoding="utf-8"))
+    raw = json.loads(resources.files("jv_studio").joinpath("data/parameters.json").read_text(encoding="utf-8"))
     blocks = {
         key: Block(key, b["section"], b["size"], tuple(_param(p) for p in b["params"]), {int(n): t for n, t in b["footnotes"].items()})
         for key, b in raw["blocks"].items()

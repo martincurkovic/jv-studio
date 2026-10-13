@@ -4,10 +4,10 @@ import pytest
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from fakes import FakeJV1010, FakePorts, silent
-from jv1010editor.core import app_config, midi, midi_diagnostics
-from jv1010editor.ui.main_window import MainWindow
-from jv1010editor.ui.midi_session import MidiSession
-from jv1010editor.ui.unit_worker import UnitWorker
+from jv_studio.core import app_config, midi, midi_diagnostics
+from jv_studio.ui.main_window import MainWindow
+from jv_studio.ui.midi_session import MidiSession
+from jv_studio.ui.unit_worker import UnitWorker
 
 
 @pytest.fixture(scope="session")
@@ -170,7 +170,7 @@ def test_a_failed_read_is_reported_and_leaves_the_window_usable(env, monkeypatch
 def test_saving_writes_a_syx_that_reads_back_as_the_same_patch(env, monkeypatch, tmp_path):
     from PySide6.QtWidgets import QFileDialog
 
-    from jv1010editor.core import patch
+    from jv_studio.core import patch
 
     w, ports = connected(env)
     w.read_temporary()
@@ -193,7 +193,7 @@ def test_settings_and_reads_are_off_while_the_worker_is_busy(env, monkeypatch):
     w._refresh_connection()
     assert not w.btn_settings.isEnabled() and not w.btn_read_temporary.isEnabled() and not w.settings_action.isEnabled()
     opened = []
-    monkeypatch.setattr("jv1010editor.ui.main_window.SettingsDialog", lambda *a: opened.append(a))
+    monkeypatch.setattr("jv_studio.ui.main_window.SettingsDialog", lambda *a: opened.append(a))
     w.open_settings()
     assert opened == [] and "Wait" in w.statusBar().currentMessage()
 
@@ -232,7 +232,7 @@ def test_send_to_temporary_patch_writes_and_reads_back(writable):
 
 
 def test_write_to_user_confirms_backs_up_and_updates_the_list(writable, monkeypatch):
-    from jv1010editor.ui import main_window as mw
+    from jv_studio.ui import main_window as mw
 
     w, ports, answers, tmp_path, _ = writable
     w.read_temporary()
@@ -247,7 +247,7 @@ def test_write_to_user_confirms_backs_up_and_updates_the_list(writable, monkeypa
 
 
 def test_cancelling_the_slot_dialog_writes_nothing(writable, monkeypatch):
-    from jv1010editor.ui import main_window as mw
+    from jv_studio.ui import main_window as mw
 
     w, ports, *_ = writable
     w.read_temporary()
@@ -259,7 +259,7 @@ def test_cancelling_the_slot_dialog_writes_nothing(writable, monkeypatch):
 
 
 def test_the_first_write_offers_a_whole_unit_backup_and_cancel_stops_it(writable, monkeypatch):
-    from jv1010editor.ui import main_window as mw
+    from jv_studio.ui import main_window as mw
 
     w, ports, answers, *_ = writable
     answers["backup_first"] = QMessageBox.StandardButton.Cancel
@@ -279,8 +279,8 @@ def test_back_up_then_restore_through_the_window(writable, monkeypatch):
     w.worker.process_pending()
     assert target.exists() and w._backed_up and "Backup saved" in w.statusBar().currentMessage()
     ports.respond.user[0].name = "Changed"
-    from jv1010editor.core import memory
-    from jv1010editor.ui import main_window as mw
+    from jv_studio.core import memory
+    from jv_studio.ui import main_window as mw
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(target), ""))
     monkeypatch.setattr(mw.RestoreDialog, "exec", lambda self: self.DialogCode.Accepted)
@@ -291,8 +291,8 @@ def test_back_up_then_restore_through_the_window(writable, monkeypatch):
 
 
 def test_restore_dialog_leaves_system_unchecked_and_disables_missing_sections(qapp):
-    from jv1010editor.core import memory
-    from jv1010editor.ui.unit_dialogs import RestoreDialog
+    from jv_studio.core import memory
+    from jv_studio.ui.unit_dialogs import RestoreDialog
 
     summary = {memory.SYSTEM: (18, 18), memory.PERFORMANCES: (0, 544), memory.RHYTHM: (130, 130), memory.PATCHES: (640, 640)}
     d = RestoreDialog(summary)
@@ -301,7 +301,7 @@ def test_restore_dialog_leaves_system_unchecked_and_disables_missing_sections(qa
 
 
 def test_the_stock_check_counts_factory_matches_and_flags_the_rest(env):
-    from jv1010editor.core import params
+    from jv_studio.core import params
 
     w, ports = connected(env)
     factory = params.load_table().factory_user_patches
@@ -318,7 +318,7 @@ def test_the_stock_check_counts_factory_matches_and_flags_the_rest(env):
 def test_opening_a_syx_shows_the_patch_and_a_write_needs_no_unit_read(writable, monkeypatch, tmp_path):
     from PySide6.QtWidgets import QFileDialog
 
-    from jv1010editor.core import patch
+    from jv_studio.core import patch
 
     w, ports, *_ = writable
     p = patch.Patch.minimum()
@@ -436,7 +436,7 @@ def test_reading_another_patch_over_edits_asks_first(env, monkeypatch):
 
 
 def test_writing_to_user_saves_the_edited_copy(writable, monkeypatch):
-    from jv1010editor.ui import main_window as mw
+    from jv_studio.ui import main_window as mw
 
     w, ports, answers, tmp_path, _ = writable
     w.read_temporary()
@@ -448,3 +448,12 @@ def test_writing_to_user_saves_the_edited_copy(writable, monkeypatch):
     w.write_user()
     w.worker.process_pending()
     assert ports.respond.user[2].get("patch_common", "patch_tempo") == 111 and not w._is_dirty()
+
+
+def test_the_logo_is_top_left_and_matches_appheader_txt(env):
+    from pathlib import Path
+
+    _, session, _ = env
+    w = window(session)
+    art = (Path(__file__).resolve().parent.parent / "appheader.txt").read_text(encoding="utf-8")
+    assert w.lbl_logo.text() == art.strip("\n") and w.lbl_logo.text().startswith("     ██╗██╗")

@@ -14,7 +14,7 @@ from collections import deque
 
 from PySide6.QtCore import QThread, Signal
 
-from jv1010editor.core import app_config, backup, debug_log, memory, patch, unit, validate
+from jv_studio.core import app_config, backup, debug_log, memory, patch, unit, validate
 
 
 class UnitWorker(QThread):

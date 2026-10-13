@@ -1,6 +1,6 @@
 import json
 
-from jv1010editor.core import app_config
+from jv_studio.core import app_config
 
 
 def test_nothing_saved_reads_as_defaults():

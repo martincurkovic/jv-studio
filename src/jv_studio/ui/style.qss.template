@@ -1,5 +1,5 @@
 /* ============================================================
-   JV-1010 Editor - stylesheet TEMPLATE
+   JV Studio - stylesheet TEMPLATE
    ------------------------------------------------------------
    This is not a plain .qss file - it's a template. Every color
    is a dollar-brace placeholder instead of a literal hex code, filled in

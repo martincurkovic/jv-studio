@@ -26,8 +26,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jv1010editor.core import app_config
-from jv1010editor.ui import theme
+from jv_studio.core import app_config
+from jv_studio.ui import theme
 
 # the keys of the collapsed cards, read from config.json once per process and kept in step with it
 _collapsed_keys = None

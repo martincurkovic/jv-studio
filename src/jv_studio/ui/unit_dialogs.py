@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from jv1010editor.core import memory, patch
+from jv_studio.core import memory, patch
 
 
 class WriteUserDialog(QDialog):

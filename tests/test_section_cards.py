@@ -5,10 +5,10 @@ import json
 import pytest
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QVBoxLayout
 
-from jv1010editor.core import app_config
-from jv1010editor.ui import section_card
-from jv1010editor.ui.qt_helpers import build_editor_card, build_section_card
-from jv1010editor.ui.section_card import SectionCard
+from jv_studio.core import app_config
+from jv_studio.ui import section_card
+from jv_studio.ui.qt_helpers import build_editor_card, build_section_card
+from jv_studio.ui.section_card import SectionCard
 
 
 @pytest.fixture(scope="session")

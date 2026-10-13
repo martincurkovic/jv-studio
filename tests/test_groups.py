@@ -1,4 +1,4 @@
-from jv1010editor.core import groups, params, patch
+from jv_studio.core import groups, params, patch
 
 
 def test_every_shown_parameter_has_a_real_card():

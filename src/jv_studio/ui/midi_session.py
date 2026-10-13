@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from PySide6.QtCore import QObject, Signal
 
-from jv1010editor.core import debug_log, midi
+from jv_studio.core import debug_log, midi
 
 
 class MidiSession(QObject):

@@ -29,7 +29,7 @@ def _port_text(input_name, output_name):
 
 
 def header_lines(input_name, output_name, os_name, app_version):
-    return [*_port_text(input_name, output_name), f"Operating system: {os_name}", f"JV-1010 Editor version: {app_version}"]
+    return [*_port_text(input_name, output_name), f"Operating system: {os_name}", f"JV Studio version: {app_version}"]
 
 
 def result_lines(results):
@@ -57,5 +57,5 @@ def issue_url(results, input_name, output_name, os_name, app_version):
     if not ISSUES_URL:
         return None
     interface = input_name if input_name == output_name else f"{input_name} / {output_name}"
-    body = "Loopback test results from JV-1010 Editor:\n\n```\n" + report_text(results, input_name, output_name, os_name, app_version) + "\n```\n"
+    body = "Loopback test results from JV Studio:\n\n```\n" + report_text(results, input_name, output_name, os_name, app_version) + "\n```\n"
     return f"{ISSUES_URL}?title={quote('MIDI interface test: ' + interface)}&body={quote(body)}"
