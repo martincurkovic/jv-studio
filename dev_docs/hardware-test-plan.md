@@ -44,6 +44,11 @@ Keep the log (`~/.jv-studio/jv-studio.log`) from the session. If anything surpri
 - [ ] Do the patch's apostrophe names (e.g. "Player's EP") read back exactly? (The manual prints typographic quotes; the unit stores ASCII.)
 - [ ] The identity reply's software revision is `00 00 00 00`; if the unit's service-mode version display is ever checked, note it.
 
+## 6a. System settings (a write, but a small one)
+- [ ] Hardware > System Settings...: it reads; the line at the top matches the unit's display (mode and patch). The values match the unit's SYSTEM menu (master tune, receive channel).
+- [ ] Change **Master Tune** by one step and **Apply**: the confirmation lists it, `~/.jv-studio/backups/SYSTEM-*.syx` appears, the status bar says "read back", and the unit's tuning screen agrees. Then change it back.
+- [ ] Optional: Receive Program Change off and on again, and check the audition bar's patch box stops and starts working. Never try GM mode from here (it is refused: the unit would stop answering).
+
 ## 6b. Audition keyboard (reads and plain notes, nothing stored)
 - [ ] Open the bar (View > Audition Keyboard, Cmd+K). **From Unit**: the channel fills in and the note says Patch mode (or what is wrong).
 - [ ] Click a key and type A S D F: the unit plays; C/V change how hard. Panic silences a hung note.
