@@ -15,6 +15,7 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
 - Don't commit, branch, tag or push unless asked. The owner handles git. Ask before anything outward-facing.
 - **Real hardware:** read "Hardware safety" first. Back up before writing. Close DAWs and MIDI monitors.
 - Keep user-facing text short (a line or two). Detail goes in the log.
+- **Everything the app writes is unverified on the unit except the original patch reads** (and the owner reports reads and writes "seem to work" without detail). The ordered checklist for a real session is `dev_docs/hardware-test-plan.md`.
 - **Record findings here, tagged by how you know them:** `[manual p.N]` read from the Owner's Manual, `[hardware YYYY-MM-DD]` measured on the owner's
   JV-1010, `[guess]` neither. Dated. Move a `[guess]` to a measured tag when it is proven; delete it if it is disproven.
 - Tests: `uv run pytest` (fast). Never let a test touch real MIDI ports or the user's `~/.jv-studio`.
