@@ -1,8 +1,7 @@
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout
 
-from jv_studio.ui.ascii_logo import LOGO
+from jv_studio.ui.ascii_logo import LOGO, logo_font
 
 from jv_studio.ui._version import APP_VERSION
 
@@ -12,10 +11,8 @@ class AboutDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("About JV Studio")
         logo = QLabel(LOGO.strip("\n"))
-        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        logo_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-        logo_font.setPointSize(8)
-        logo.setFont(logo_font)
+        logo.setTextFormat(Qt.TextFormat.PlainText)
+        logo.setFont(logo_font())  # left-aligned inside the label: a centred QLabel centres every LINE on its own, and the art's lines differ in length
         title = QLabel(f"Version {APP_VERSION}")
         title.setObjectName("mutedLabel")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -43,9 +40,9 @@ class AboutDialog(QDialog):
         close.clicked.connect(self.accept)
         layout = QVBoxLayout(self)
         layout.addSpacing(12)
-        layout.addWidget(logo)
+        layout.addWidget(logo, alignment=Qt.AlignmentFlag.AlignHCenter)  # the label is centred, not its lines
         layout.addWidget(title)
         layout.addWidget(body)
         layout.addWidget(credits)
         layout.addWidget(close, alignment=Qt.AlignmentFlag.AlignCenter)
-        self.setMinimumWidth(420)
+        self.setMinimumWidth(max(420, logo.sizeHint().width() + 48))  # wide enough for the logo in whatever fixed font the machine has

@@ -15,3 +15,14 @@ LOGO = r"""
  ╚════╝   ╚═══╝      ╚══════╝   ╚═╝    ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ 
                                                                    
 """
+
+
+def logo_font():
+    """The font the logo is drawn in, everywhere (the main window and About). Menlo is what the art was designed in; a different fixed font changes its line spacing
+    and the art looks squashed or stretched (the About window once used the system fixed font and looked different from the main window)."""
+    from PySide6.QtGui import QFont
+
+    font = QFont("Menlo")
+    font.setStyleHint(QFont.StyleHint.Monospace)
+    font.setPointSize(8)
+    return font
