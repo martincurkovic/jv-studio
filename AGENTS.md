@@ -266,6 +266,19 @@ Adapted from akaiutil-gui (same owner, same Nuitka / pyside6-deploy approach). *
 - Tap: cask `Casks/jv-studio.rb` in `martincurkovic/homebrew-tap` (renamed from `homebrew-akaisds`); `update-homebrew-tap.yml` bumps the version and both sha256 lines (placeholders until the first release) when a release is
   PUBLISHED, using the `TAP_REPO_TOKEN` secret. The tap repo name is `TAP_REPO` at the top of that workflow.
 
+## The audition bar (written 2026-10-14, NOT tried on a unit)
+
+`ui/audition_bar.py` + `ui/keyboard.py` + `core/audition.py`, along the bottom of the main window; **View > Audition Keyboard (Cmd/Ctrl+K)** shows or hides it (hidden = releases every note and plays nothing; the open state is saved in `config.json` as `audition_open`).
+- **Plain channel messages only** (notes, Bank Select CC0/CC32 + Program Change, Panic = CC64/120/123): nothing is stored on the unit. The bar emits `midi_out`; `MainWindow._send_midi` sends via `MidiConnection.send` and drops everything while `_firmware_running`.
+  It is disabled without ports and during any `_long_job` (names, backup, restore, firmware). Notes go out on the bar's channel box (1-16, default 1), remembered per note so a note-off follows its note-on.
+- **Choosing a patch changes the unit's CURRENT patch**, so `_on_audition_patch` sets `_temp_synced = False` (a lone live edit would otherwise make a hybrid) and says "Read Temporary Patch to edit what you hear". USER list: right-click > Play on Unit.
+  Bank table `[manual p.68]`: User 80/0, PR-A..PR-E 81/0..4 (PR-D = GM = 81/3), Session 84/0 (patches 1-128) and 84/1 (129-255). The unit acts on it only in Patch mode with Receive Program Change/Bank Select ON, on the Patch Receive Channel.
+- **From Unit** (`system_midi` job, one RQ1 of the System common block, a read) fills the channel and says what would stop it working (Performance or GM mode, receive switches OFF): `audition.SystemMidi.problems()`.
+- **Keyboard** (`PianoKeyboard`, C2-C7, scales to the width): mouse click/drag (glissando); computer keys ONLY while it has focus (so typing in a text box never plays): A W S E D F T G Y H U J K O L P ; = C4.., Z/X octave, **C/V velocity -10/+10** (Ableton's layout; C = down, V = up is an assumption about what the owner meant).
+  Held notes are shown live as a read-out (`C4   E4   G4`), pressed keys light up, and while focused the key letters are drawn on the keys. Losing focus, being disabled or hiding releases everything.
+- `SimulatedUnit` ignores (and records in `channel_messages`) any non-SysEx message, and its System block now says Patch mode, channel 1, program change and bank select ON. New palette keys `key_white/key_black/key_edge` (both palettes).
+- **Not known on the unit** `[guess]`: that Program Change on the Patch Receive Channel selects the temporary patch as the manual implies, that the unit's own display follows it, and that note velocity maps as expected.
+
 ## Firmware update player (written 2026-10-14, NEVER SENT TO A UNIT)
 
 Hardware > Update Firmware... (`core/firmware.py`, `ui/firmware_dialog.py`, the `"firmware"` job in `UnitWorker`). The layout it relies on is in the findings log ("Layout of the update"); tests build made-up sets with the same structure (`tests/firmware_files.py`).
