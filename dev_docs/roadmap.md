@@ -62,7 +62,24 @@ record what they find in `AGENTS.md` (measured vs. guessed, dated).
 - [ ] A fake JV-1010 over fake MIDI ports for demos and tests (as AKAISDS does for the S1000/A4000/S950).
 - [ ] Packaging (Nuitka, as AKAISDS), CI (GitHub Actions), screenshots, the manual.
 
+## Phase 7 - Firmware and the rest of the manual (surveyed 2026-10-14)
+
+Found by reading the Owner's Manual's MIDI Implementation chapter against what the app exposes. None of it needs new protocol knowledge unless noted.
+
+- [x] **Firmware update player** (`core/firmware.py`, `ui/firmware_dialog.py`, Hardware > Update Firmware...): reads Roland's System Update 1.02 SMFs, verifies them (Roland checksums, addresses, block checksums, the whole-image
+  marker, "RolandJV1010", and a content fingerprint of the known release), then plays them as a sequencer would. **Written without a unit: UNVERIFIED, at the owner's risk**, and the dialog says so. Output only.
+- [ ] **Hardware, firmware (only if the owner decides to try it):** check the unit's current version first (service test mode); back up; check the interface passes a 265-byte loopback (the Midiplus 2x2 stops at 256, so it will probably NOT);
+  play the set; Factory Reset; restore. Record everything in AGENTS.md. Open: does the unit answer in update mode, what does it do with the header message, does it check the block checksums and the `F0 3D` marker.
+- [ ] **Audition from the app** (no new write path): a note keyboard and Bank Select + Program Change (the manual's bank table: User `80/0`, PR-A..PR-E `81/0-4`, GM `81/3`, Session `84/0`) so a patch can be heard from its list row.
+- [ ] **System settings editor**: about 100 parameters (master tune, receive switches, controller assignments, bank-select map, arpeggio, preview notes). Backed up and restored today, never edited.
+- [ ] **Scale tune** (12 notes per part and for Patch mode; the manual's address map has it, `scale_tune` in the table) for alternate temperaments.
+- [ ] **Rhythm set editor** (2 USER sets x 64 notes; `rhythm_note` is in the table; already listed under phase 5).
+- [ ] **Library**: open/save a bank of 128 `.syx`, initialise a slot, edit USER patches in place from the list, compare a patch with the unit's; rename/copy/swap performances.
+- [ ] Smaller: Universal SysEx (master volume, GM On/Off), the unit's own Data Transfer (performance dump), per-effect display mapping, an interface check ("can this port pass a 265-byte message?") before any long write.
+
 ## Open questions
+
+- Firmware: see the hardware item above. Nothing about update mode is documented beyond Roland's README (message formats were decoded from the files, 2026-10-14; AGENTS.md).
 
 - Does the unit accept a single 129-byte DT1 for a tone, or only the manual's 128-byte packets? (The 2015 `jv1010tool` sends one message.)
 - How soon after an RQ1 does the unit answer, and in what order/spacing do the five blocks of a patch arrive?

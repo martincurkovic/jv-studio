@@ -44,6 +44,10 @@ Keep the log (`~/.jv-studio/jv-studio.log`) from the session. If anything surpri
 - [ ] Do the patch's apostrophe names (e.g. "Player's EP") read back exactly? (The manual prints typographic quotes; the unit stores ASCII.)
 - [ ] The identity reply's software revision is `00 00 00 00`; if the unit's service-mode version display is ever checked, note it.
 
+## 7. Firmware (optional, and the riskiest thing in the app: NEVER TRIED)
+Hardware > Update Firmware... exists, but nobody has run it on a unit. You do not have to. If you decide to: first note the unit's current version (service test mode shows it; the identity reply does not), back the unit up, run the loopback test in Settings
+with a MIDI cable from OUT to IN and see the **265-byte** row pass (the Midiplus 2x2 stopped at 256, so probably use a different interface), close everything else, then follow the dialog. Keep the log. Afterwards: Factory Reset, restore the backup.
+
 ## If something goes wrong
-Stop, don't retry blindly, and keep the log. Nothing in the app can brick the unit (it never writes the firmware area), but a failed write to a USER slot is why every write
+Stop, don't retry blindly, and keep the log. Nothing in the app can brick the unit apart from Update Firmware (step 7), but a failed write to a USER slot is why every write
 saves the old contents first: they are the `.syx` files in `~/.jv-studio/backups/`, and File > Open Patch .syx (or Restore Unit) puts them back.
