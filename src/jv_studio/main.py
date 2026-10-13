@@ -4,6 +4,7 @@ import sys
 from PySide6.QtWidgets import QApplication
 
 from jv_studio.core import debug_log, diagnostics, midi
+from jv_studio.ui import demo as demo_mode
 from jv_studio.ui import diagnostics_ui, theme
 from jv_studio.ui._version import APP_VERSION
 from jv_studio.ui.main_window import MainWindow
@@ -33,12 +34,20 @@ def main(argv=None):
 
         return smoke_test.run(smoke.partition("=")[2] or None)
     diagnostics.install_crash_handlers()
-    _log_startup()
+    demo = demo_mode.wanted(argv)
+    if demo:
+        debug_log.get_logger().info("=== demo mode: a simulated JV-1010, no MIDI ports")
+    else:
+        _log_startup()  # (lists the real MIDI ports: not in demo mode, which never touches them)
     app = QApplication.instance() or QApplication(sys.argv)
     app.setApplicationName("JV Studio")
     diagnostics_ui.install_dialog_logging()
     theme.apply_to_app(app)
-    window = MainWindow()
+    if demo:
+        session, _unit = demo_mode.build_demo()
+        window = MainWindow(session=session, demo=True)
+    else:
+        window = MainWindow()
     window.show()
     return app.exec()
 

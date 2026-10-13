@@ -79,6 +79,19 @@ def run(report_path=None):
                 assert apis, "python-rtmidi has no MIDI API compiled in"
                 return f"python-rtmidi, {len(apis)} backend(s)"
 
+            def demo_unit():
+                from jv_studio.core import demo_unit as demo
+                from jv_studio.core.unit import JV1010Unit
+                from jv_studio.ui import demo as demo_mode
+
+                session, _unit = demo_mode.build_demo(0)
+                try:
+                    name = JV1010Unit(session.connection, timeout=2.0).read_temporary_patch().name
+                    assert name == "St.Concert", name
+                finally:
+                    session.close()
+                return f"the simulated unit answers ({len(demo.make_demo_unit().user)} USER patches)"
+
             def main_window_and_editor():
                 from jv_studio.core import patch, performance
                 from jv_studio.ui.about_dialog import AboutDialog
@@ -104,6 +117,7 @@ def run(report_path=None):
                 ("wave names", wave_names),
                 ("diagrams", diagrams),
                 ("midi backend", midi_backend),
+                ("demo unit", demo_unit),
                 ("windows", main_window_and_editor),
             ):
                 check(name, fn)

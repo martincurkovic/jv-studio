@@ -10,7 +10,7 @@ def test_the_smoke_test_passes_and_reports_each_check(tmp_path):
     config, log = app_config.CONFIG_PATH, debug_log.LOG_PATH
     assert smoke_test.run(str(report)) == 0
     text = report.read_text()
-    for name in ("stylesheets", "svg images", "parameter table", "wave names", "diagrams", "midi backend", "windows"):
+    for name in ("stylesheets", "svg images", "parameter table", "wave names", "diagrams", "midi backend", "demo unit", "windows"):
         assert f"ok    {name}:" in text, text
     assert text.rstrip().endswith("smoke test passed") and "FAIL" not in text
     assert (app_config.CONFIG_PATH, debug_log.LOG_PATH) == (config, log)  # the scratch settings are put back

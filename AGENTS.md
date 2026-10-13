@@ -223,6 +223,18 @@ A performance is a common block (66 bytes: name, tempo, the performance's own ef
   the temporary performance address `01 00 00 00` for RQ1/DT1, single-parameter DT1 on performance parameters, and what part 10 plays.
 - The extractor now marks an angle bracket that spans several items (`<LAYER, SINGLE>`) correctly, so `keyboard_mode` and the JV-1080-only system choices are no longer offered; `groups.supported()` also hides a parameter whose choices are ALL unsupported.
 
+## Demo mode and the simulated unit (2026-10-13)
+
+`uv run jv-studio --demo` (or `JV_STUDIO_DEMO=1`) runs the app on a simulated JV-1010: no MIDI port is listed, chosen or opened, Settings just says so, the title says "(demo)" and the status bar says changes are forgotten.
+- `core/simulated_unit.py` is the unit's side of the SysEx conversation in memory (identity, RQ1 and DT1 for patches, performances, system and rhythm blocks; options `gm_mode`, `ignore_writes`, `drop_first_replies` for the safety-net tests).
+  The tests' `FakeJV1010` is a thin subclass with minimal contents ("User 001", "Perf 01"). **Change the protocol behaviour in `SimulatedUnit` and both the tests and the demo follow.**
+- `core/demo_unit.py` fills it: the 128 USER patches have the factory names/voices/key assign from the manual (USER:005 and USER:077 are renamed so the factory comparison has something to highlight) and PLAYABLE settings (tones on,
+  full velocity and key ranges, a low-pass filter, a level envelope, reverb); 32 performances (eight parts on channels 1-8 playing preset patches, names of at most 12 characters); the temporary patch is "St.Concert" like the owner's unit.
+  Built from cached neutral blocks (building 128 patches value by value took seconds). `DemoPorts` adds a few ms per request (`JV_STUDIO_DEMO_INSTANT=1` removes it) so progress bars are visible. Nothing here was read from hardware.
+- `ui/demo.py` builds the session; `MainWindow(demo=True)` skips `_restore_saved_ports` (which lists real ports) and blocks Settings (it would close the demo connection). The smoke test checks the demo unit answers.
+- `tools/make_screenshots.py` regenerates `docs/screenshots/` (offscreen at 2x, dark and light) from the demo unit; the README shows them.
+- Fixed on the way: the pitch envelope's neutral level is raw 63 (levels run 0-126 for -63..+63), not 64.
+
 ## Packaging and CI (written 2026-10-13, NOT run yet)
 
 Adapted from akaiutil-gui (same owner, same Nuitka / pyside6-deploy approach). **None of it has been run: the first tag build is the test.** Likely trouble spots, in order: Nuitka finding `importlib.resources` data

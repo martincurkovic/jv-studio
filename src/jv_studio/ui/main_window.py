@@ -48,9 +48,10 @@ class MainWindow(QMainWindow):
     that write to the unit: Send to Temporary Patch and Write to USER (both read back; the second saves the slot's old patch first).
     The editor itself arrives in phase 3 (dev_docs/roadmap.md)."""
 
-    def __init__(self, session=None, worker=None, start_worker=True):
+    def __init__(self, session=None, worker=None, start_worker=True, demo=False):
         super().__init__()
-        self.setWindowTitle("JV Studio")
+        self.demo = demo  # a simulated unit on a fake connection (`--demo`): no real ports are listed, chosen or opened
+        self.setWindowTitle("JV Studio (demo)" if demo else "JV Studio")
         self.setMinimumSize(1100, 700)
         self.resize(1260, 880)  # wide enough that the editor's pages need no horizontal scroll bar
         app_config.ensure_defaults_saved()
@@ -83,7 +84,12 @@ class MainWindow(QMainWindow):
         self._build_menus()
         self._build_central()
         self.statusBar()
-        self._restore_saved_ports()
+        if demo:
+            note = QLabel("Demo: a simulated JV-1010. Changes are forgotten when you quit.")
+            note.setObjectName("mutedLabel")
+            self.statusBar().addPermanentWidget(note)
+        else:
+            self._restore_saved_ports()
         self._refresh_connection()
         if start_worker:
             self.worker.start()
@@ -424,6 +430,9 @@ class MainWindow(QMainWindow):
             self.perf_list.item(number).setText(f"{number + 1:02d}  {name}")
 
     def open_settings(self):
+        if self.demo:
+            QMessageBox.information(self, "Settings", "Demo mode uses a simulated JV-1010, so there are no MIDI ports to choose. Start JV Studio without --demo to use a real unit.")
+            return
         if not self.worker.is_idle():
             self.statusBar().showMessage("Wait for the read to finish first")
             return

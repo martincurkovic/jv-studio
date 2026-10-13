@@ -430,7 +430,7 @@ class JVEnvelopeGraph(_EditableGraph):
 
     TIME_KEYS = ()
     LEVEL_KEYS = ()  # three or four: a level envelope has no level 4 (it ends at silence)
-    START_LEVEL = 0  # where the envelope starts: 0, or 64 (no pitch offset) for the pitch envelope
+    START_LEVEL = 0  # where the envelope starts: 0, or 63 (no pitch offset: the levels run 0-126 for -63..+63) for the pitch envelope
     CURVE_INDEX_OF_HANDLE = (1, 2, 3, 5)
     SEGMENT_POINTS = ((3, 4),)
 
@@ -481,7 +481,7 @@ class JVEnvelopeGraph(_EditableGraph):
 class PitchEnvelopeGraph(JVEnvelopeGraph):
     TIME_KEYS = tuple(f"pitch_envelope_time_{n}" for n in range(1, 5))
     LEVEL_KEYS = tuple(f"pitch_envelope_level_{n}" for n in range(1, 5))
-    START_LEVEL = 64  # raw 64 = no pitch change
+    START_LEVEL = 63  # raw 63 = no pitch change (the pitch envelope's levels run 0-126 for -63..+63)
 
     def __init__(self, parent=None):
         super().__init__("#d97757", parent)
