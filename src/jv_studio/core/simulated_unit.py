@@ -8,7 +8,7 @@ Options for testing the app's safety nets: `gm_mode` (the unit ignores RQ1/DT1 i
 check) and `drop_first_replies=n` (the first n RQ1s get no answer, to test retries).
 """
 
-from . import memory, patch, performance, sysex
+from . import memory, params, patch, performance, sysex
 
 IDENTITY_REPLY = bytes.fromhex("F0 7E 10 06 02 41 6A 00 05 00 00 00 00 00 F7")
 
@@ -34,6 +34,11 @@ class SimulatedUnit:
         self.drop_first_replies = drop_first_replies
         self.requests = []  # (address, size) of every RQ1
         self.writes = []  # every DT1 received, parsed
+        self.channel_messages = []  # every non-SysEx message received (notes, Bank Select, Program Change...): the unit would play or switch, here they are just kept
+        system = self.other[0]  # a plausible System block (the rest stays the recognisable pattern): Patch mode, channel 1, program change and bank select ON
+        table = params.load_table().block("system_common")
+        for key, value in (("sound_mode", 1), ("patch_receive_channel", 0), ("receive_program_change", 1), ("receive_bank_select", 1)):
+            params.write(system, table.param(key), value)
 
     @property
     def patch(self):  # (the temporary patch: what older tests call "the patch")
@@ -52,6 +57,9 @@ class SimulatedUnit:
         return None
 
     def __call__(self, message):
+        if message and message[0] != 0xF0:
+            self.channel_messages.append(bytes(message))
+            return []
         if message == sysex.IDENTITY_REQUEST:
             return [self.identity]
         parsed = sysex.parse(message)

@@ -52,6 +52,10 @@ DARK_PALETTE = {
     "warning_tint": "#26d9a94a",
     # a faint alternating-row tint for grids (the controller matrix); close to bg_panel so it reads as banding, not a selection
     "bg_zebra": "#25252d",
+    # the audition keyboard (ui/keyboard.py)
+    "key_white": "#d8d8e0",
+    "key_black": "#14141a",
+    "key_edge": "#0c0c10",
 }
 
 LIGHT_PALETTE = {
@@ -87,6 +91,9 @@ LIGHT_PALETTE = {
     "critical": "#d54439",
     "warning_tint": "#26f57927",
     "bg_zebra": "#f6f3fb",
+    "key_white": "#ffffff",
+    "key_black": "#2a2438",
+    "key_edge": "#8f86a6",
 }
 
 

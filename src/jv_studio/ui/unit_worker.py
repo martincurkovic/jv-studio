@@ -3,7 +3,7 @@
 Request/reply code must never run twice at once on one connection (interleaved requests and replies corrupt each other), and a thread per action
 crashed AKAISDS when a stale thread was garbage-collected mid-call. So: one `QThread` for the window's lifetime, a FIFO of jobs, results as signals.
 
-Reads: "temporary", "user" n (0-based), "names" (the 128 USER patch summaries), "backup" path [sections] (the whole user memory into a .syx).
+Reads: "system_midi" (the receive channel and sound mode, for the audition keyboard), "temporary", "user" n (0-based), "names" (the 128 USER patch summaries), "backup" path [sections] (the whole user memory into a .syx).
 Performances: "perf_temporary", "perf_user" n, "perf_names" (reads); "perf_send_temporary" perf, "perf_write_user" n perf (the slot's old performance is saved to a `.syx` first, the write
 read back), "perf_write_param" block key part value (one parameter of the TEMPORARY performance, verified).
 "firmware" set: play Roland's System Update files (`core/firmware.py`: UNVERIFIED on a unit; output only, nothing is read back). `cancel()` stops it between messages.
@@ -19,7 +19,7 @@ from collections import deque
 
 from PySide6.QtCore import QThread, Signal
 
-from jv_studio.core import app_config, backup, debug_log, firmware, memory, patch, performance, unit, validate
+from jv_studio.core import app_config, audition, backup, debug_log, firmware, memory, patch, performance, unit, validate
 
 
 class UnitWorker(QThread):
@@ -29,6 +29,7 @@ class UnitWorker(QThread):
     names_read = Signal(list)  # [unit.PatchSummary] x 128 (fewer when cancelled)
     backup_done = Signal(str, int)  # path, bytes written
     restore_done = Signal(int)  # blocks written
+    system_midi_read = Signal(object)  # an audition.SystemMidi
     firmware_done = Signal(int, int)  # blocks, messages sent
     firmware_status = Signal(str)  # which block is being sent
     write_done = Signal(str, str, str)  # label ("temporary" or "user:N"), the patch name, the path of the automatic backup ("" for temporary)
@@ -147,6 +148,8 @@ class UnitWorker(QThread):
             self._backup(job[1], job[2] if len(job) > 2 else memory.SECTIONS)
         elif kind == "restore":
             self._restore(job[1], job[2])
+        elif kind == "system_midi":
+            self.system_midi_read.emit(audition.parse_system_common(self._unit().read_system_common()))
         elif kind == "firmware":
             self._firmware(job[1])
         elif kind == "write_param":

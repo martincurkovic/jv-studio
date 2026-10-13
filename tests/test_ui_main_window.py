@@ -98,7 +98,7 @@ def test_the_menus_exist(env):
     _, session, _ = env
     w = window(session)
     titles = [a.text() for a in w.menuBar().actions()]
-    assert titles == ["&File", "&Edit", "&Hardware", "&Help"]
+    assert titles == ["&File", "&Edit", "&Hardware", "&View", "&Help"]
 
 
 # -- the read-only viewer ----------------------------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-"""Saved settings (`~/.jv-studio/config.json`): the MIDI ports, the theme, and which section cards are collapsed (Qt-free)."""
+"""Saved settings (`~/.jv-studio/config.json`): the MIDI ports, the theme, which section cards are collapsed, and whether the audition bar is open (Qt-free)."""
 
 import json
 from pathlib import Path
@@ -88,6 +88,19 @@ def get_collapsed_cards():
 def save_collapsed_cards(keys):
     config = load_config()
     config["collapsed_cards"] = sorted(set(keys))
+    save_config(config)
+
+
+# -- the audition bar (ui/audition_bar.py) ----------------------------------------------------------------------------------
+
+
+def get_audition_open():
+    return load_config().get("audition_open", True) is not False
+
+
+def save_audition_open(opened):
+    config = load_config()
+    config["audition_open"] = bool(opened)
     save_config(config)
 
 

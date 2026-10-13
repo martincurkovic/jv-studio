@@ -71,6 +71,10 @@ class JV1010Unit:
                 return sysex.parse(raw).data
         raise UnitError(f"no reply to a request for {size} bytes at {' '.join(f'{b:02X}' for b in address)} (the unit ignores data requests in GM mode)")
 
+    def read_system_common(self):
+        """The System common block (settings such as the receive channel and the sound mode): one request, nothing is written."""
+        return self.read_block((0, 0, 0, 0), params.load_table().block("system_common").size)
+
     # -- patches ---------------------------------------------------------------------------------------------------------
 
     def read_patch(self, base):

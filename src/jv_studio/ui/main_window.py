@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
 from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, stock, sysex, unit, validate
 from jv_studio.ui import theme
 from jv_studio.ui.about_dialog import AboutDialog
+from jv_studio.ui.audition_bar import AuditionBar
 from jv_studio.ui.ascii_logo import LOGO, logo_font
 from jv_studio.ui.diagnostics_ui import add_open_log_folder_action
 from jv_studio.ui.firmware_dialog import FirmwareDialog
@@ -65,6 +66,7 @@ class MainWindow(QMainWindow):
         self.worker.backup_done.connect(self._on_backup_done)
         self.worker.restore_done.connect(self._on_restore_done)
         self.worker.firmware_done.connect(self._on_firmware_done)
+        self.worker.system_midi_read.connect(self._on_system_midi)
         self.worker.firmware_status.connect(self.statusBar().showMessage)
         self.worker.write_done.connect(self._on_write_done)
         self.worker.cancelled.connect(self._on_cancelled)
@@ -167,6 +169,14 @@ class MainWindow(QMainWindow):
         self.firmware_action.setToolTip("Plays Roland's System Update files to a unit in update mode. Never tried on a real JV-1010: use at your own risk.")
         self.firmware_action.triggered.connect(self.update_firmware)
         hardware_menu.addAction(self.firmware_action)
+
+        view_menu = self.menuBar().addMenu("&View")
+        self.audition_action = QAction("Audition Keyboard", self)
+        self.audition_action.setCheckable(True)
+        self.audition_action.setShortcut("Ctrl+K")  # (Cmd+K on a Mac)
+        self.audition_action.setToolTip("Show or hide the keyboard along the bottom. Hidden, it plays nothing.")
+        self.audition_action.triggered.connect(lambda checked: self.audition.set_open(checked, focus=checked))
+        view_menu.addAction(self.audition_action)
 
         help_menu = self.menuBar().addMenu("&Help")
         add_open_log_folder_action(help_menu, self)
@@ -319,6 +329,14 @@ class MainWindow(QMainWindow):
         mode_row.addStretch()
         central_layout.addLayout(mode_row)
         central_layout.addWidget(splitter, 1)
+        self.audition = AuditionBar()  # the keyboard and patch browser along the bottom
+        self.audition.set_demo(self.demo)
+        self.audition.midi_out.connect(self._send_midi)
+        self.audition.patch_chosen.connect(self._on_audition_patch)
+        self.audition.unit_settings_requested.connect(self._read_unit_midi_settings)
+        central_layout.addWidget(self.audition)
+        self.audition_action.setChecked(self.audition.is_open())
+        self.audition.open_changed.connect(self.audition_action.setChecked)
         self.setCentralWidget(central)
 
         # progress of a long job (names, backup, restore) lives in the status bar, where it is visible from any page
@@ -377,6 +395,10 @@ class MainWindow(QMainWindow):
         self.redo_action.setEnabled(self.performance_panel.can_redo() if perf else bool(self._redo))
         for control in (self.btn_settings, self.settings_action):
             control.setEnabled(idle)  # Settings closes and reopens the connection: never under a running job
+        self.audition.set_available(
+            self.session.is_open and not self._long_job,
+            "Open the MIDI ports in Settings to play the unit." if not self.session.is_open else "Busy: the keyboard is off until the job is done.",
+        )
         self.btn_cancel.setVisible(self._long_job and not idle)
         self.names_progress.setVisible(self._long_job)
         self.save_action.setEnabled(shown)
@@ -500,6 +522,7 @@ class MainWindow(QMainWindow):
         self._long_job = False
         self._summaries = list(summaries)
         self.performance_panel.set_user_patch_names([s.name for s in summaries])
+        self.audition.set_user_names([s.name for s in summaries])
         self.names_list.clear()
         for number in range(len(summaries)):
             item = QListWidgetItem()
@@ -882,6 +905,7 @@ class MainWindow(QMainWindow):
         if number < len(self._summaries):
             self._summaries[number] = unit.PatchSummary(name, self._summaries[number].key_assign)
             self.performance_panel.set_user_patch_names(self._names())
+            self.audition.set_user_names(self._names())
         if number < self.names_list.count():
             self._style_name_row(self.names_list.item(number), number)
 
@@ -908,6 +932,9 @@ class MainWindow(QMainWindow):
         ready = self.session.is_open and self.worker.is_idle()
         menu = QMenu(self)
         menu.addAction("Open", lambda: self._read_user_from_item(item))
+        play = menu.addAction("Play on Unit", lambda n=number: self.audition.choose("USER", n))
+        play.setToolTip("Choose this patch on the unit (Bank Select + Program Change) so it can be played from the keyboard below. The unit's current patch changes.")
+        play.setEnabled(self.session.is_open and not self._long_job)
         menu.addSeparator()
         for text, handler in (("Rename...", self.rename_user), ("Copy To...", self.copy_user), ("Swap With...", self.swap_user)):
             action = menu.addAction(text, lambda h=handler, n=number: h(n))
@@ -972,6 +999,33 @@ class MainWindow(QMainWindow):
             return
         self.statusBar().showMessage(f"Swapping USER:{number + 1:03d} and USER:{other + 1:03d}...")
         self.worker.submit("swap_user", number, other)
+
+    # -- the audition keyboard -------------------------------------------------------------------------------------------
+
+    def _send_midi(self, message):
+        """Notes and patch choices from the audition bar. Never during a firmware update: the unit is in update mode and only the update's own messages belong on the wire."""
+        connection = self.session.connection
+        if self._firmware_running or connection is None or not connection.is_open:
+            return
+        try:
+            connection.send(message)
+        except Exception:
+            debug_log.get_logger().error("audition: couldn't send a MIDI message", exc_info=True)
+
+    def _on_audition_patch(self, group, number):
+        """A patch was chosen on the unit by Program Change: the unit's current patch is no longer what the editor last sent or read."""
+        self._temp_synced = False
+        self.statusBar().showMessage(f"Chose {self.audition.current_label()} on the unit. Read Temporary Patch to edit what you hear.", 8000)
+        self._refresh_connection()
+
+    def _on_system_midi(self, info):
+        self.audition.show_system(info)  # (a bound method, so the worker's signal is delivered on the GUI thread)
+
+    def _read_unit_midi_settings(self):
+        if not self.session.is_open or not self.worker.is_idle():
+            self.statusBar().showMessage("Wait for the current job to finish first")
+            return
+        self.worker.submit("system_midi")
 
     def _on_cancelled(self, label, message):
         self._long_job = False
