@@ -27,12 +27,15 @@ Built with PySide6 (Qt) and python-rtmidi. GPL-3.0-or-later.
 > **Status: early development.** You can read the unit's patches, edit any patch parameter on knobs and draggable envelope graphs (heard live on the unit's temporary patch, with undo), write to USER
 > slots, edit performances (16 parts, effects, the patch each part plays), open and save `.syx` files, and back up and restore the whole unit. It has been tried on one JV-1010 (its author's); the performance editor has not been tried on a unit yet. **Back the unit up before
 > writing to it** (File > Back Up Unit). The rhythm setups and a fuller librarian are still to come: see [`dev_docs/roadmap.md`](dev_docs/roadmap.md).
+>
+> **Hardware > Update Firmware... is unverified.** It checks Roland's System Update files and plays them to a unit in update mode the way a sequencer would, but it has never been tried on a real JV-1010, the unit sends no
+> reply that could confirm it worked, and an interrupted or corrupted update may leave a unit unable to start. Use it at your own risk, and back the unit up first.
 
 ## Goals
 
 - Edit the JV-1010's patches visually: knobs, draggable envelope graphs, every parameter in the manual's MIDI Implementation.
 - Read and write the 128 user patches, load and save `.syx` files, and back up / restore the whole unit.
-- Be careful with the hardware: edits go to the temporary patch first, every USER write saves the old patch to a file first, and nothing is written without a read-back.
+- Be careful with the hardware: edits go to the temporary patch first, every USER write saves the old patch to a file first, and nothing is written without a read-back (the one exception is the firmware updater below, which cannot read back).
 
 ## Download & Installation
 
