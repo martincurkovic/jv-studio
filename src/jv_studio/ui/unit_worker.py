@@ -6,6 +6,7 @@ crashed AKAISDS when a stale thread was garbage-collected mid-call. So: one `QTh
 Reads: "temporary", "user" n (0-based), "names" (the 128 USER patch summaries), "backup" path [sections] (the whole user memory into a .syx).
 Performances: "perf_temporary", "perf_user" n, "perf_names" (reads); "perf_send_temporary" perf, "perf_write_user" n perf (the slot's old performance is saved to a `.syx` first, the write
 read back), "perf_write_param" block key part value (one parameter of the TEMPORARY performance, verified).
+"firmware" set: play Roland's System Update files (`core/firmware.py`: UNVERIFIED on a unit; output only, nothing is read back). `cancel()` stops it between messages.
 Slot jobs (each overwritten slot is saved to a `.syx` first and the write read back): "write_user" n patch, "rename_user" n name, "copy_user" src dst,
 "swap_user" a b.
 Writes (each verified by a read-back): "write_param" block key tone value (one parameter of the TEMPORARY patch: the live-edit path), "send_temporary" patch, "write_user" n patch (the slot's old contents are saved to `app_config.backups_dir()` FIRST and
@@ -18,7 +19,7 @@ from collections import deque
 
 from PySide6.QtCore import QThread, Signal
 
-from jv_studio.core import app_config, backup, debug_log, memory, patch, performance, unit, validate
+from jv_studio.core import app_config, backup, debug_log, firmware, memory, patch, performance, unit, validate
 
 
 class UnitWorker(QThread):
@@ -28,6 +29,8 @@ class UnitWorker(QThread):
     names_read = Signal(list)  # [unit.PatchSummary] x 128 (fewer when cancelled)
     backup_done = Signal(str, int)  # path, bytes written
     restore_done = Signal(int)  # blocks written
+    firmware_done = Signal(int, int)  # blocks, messages sent
+    firmware_status = Signal(str)  # which block is being sent
     write_done = Signal(str, str, str)  # label ("temporary" or "user:N"), the patch name, the path of the automatic backup ("" for temporary)
     param_written = Signal(str, str, int, object)  # block, key, tone (-1 for the common block), the value the unit holds
     cancelled = Signal(str, str)  # job label, what happened
@@ -118,7 +121,7 @@ class UnitWorker(QThread):
         except backup.Cancelled as e:
             debug_log.get_logger().warning(f"UnitWorker: {label} cancelled: {e}")
             self.cancelled.emit(label, str(e))
-        except (unit.UnitError, backup.BackupError) as e:
+        except (unit.UnitError, backup.BackupError, firmware.FirmwareError) as e:
             debug_log.get_logger().warning(f"UnitWorker: {label} failed: {e}")
             self.failed.emit(label, str(e))
         except Exception as e:
@@ -144,6 +147,8 @@ class UnitWorker(QThread):
             self._backup(job[1], job[2] if len(job) > 2 else memory.SECTIONS)
         elif kind == "restore":
             self._restore(job[1], job[2])
+        elif kind == "firmware":
+            self._firmware(job[1])
         elif kind == "write_param":
             _, block, key, tone, value = job
             sent = self._unit().write_param(patch.TEMPORARY_BASE, block, key, value, tone=tone, verify=True)
@@ -201,6 +206,17 @@ class UnitWorker(QThread):
         count = backup.restore(self._unit(), saved, sections, progress=self.progress.emit, cancelled=lambda: self._cancel)
         log.info(f"UnitWorker: restore wrote and verified {count} blocks")
         self.restore_done.emit(count)
+
+    def _firmware(self, update):
+        self._cancel = False
+        connection = self._session.connection
+        if connection is None or not connection.is_open:
+            raise unit.UnitError("No MIDI ports are open: choose them in Settings.")
+        log = debug_log.get_logger()
+        log.warning(f"UnitWorker: playing the firmware update {update.release or '(unrecognised release)'}: {len(update.blocks)} blocks, {update.total_frames} messages")
+        result = firmware.play(connection, update, progress=self.progress.emit, status=self.firmware_status.emit, cancelled=lambda: self._cancel)
+        log.warning(f"UnitWorker: firmware update sent: {result.blocks} blocks, {result.messages} messages in {result.seconds:.0f} s")
+        self.firmware_done.emit(result.blocks, result.messages)
 
     def _save_slot_backup(self, number, old):
         """Write USER:number's current patch to a `.syx` in the backups folder. Raises (so nothing is written) if that fails."""

@@ -30,6 +30,7 @@ from jv_studio.ui import theme
 from jv_studio.ui.about_dialog import AboutDialog
 from jv_studio.ui.ascii_logo import LOGO, logo_font
 from jv_studio.ui.diagnostics_ui import add_open_log_folder_action
+from jv_studio.ui.firmware_dialog import FirmwareDialog
 from jv_studio.ui.midi_session import MidiSession
 from jv_studio.ui.patch_editor import PatchEditor
 from jv_studio.ui.performance_panel import PerformancePanel
@@ -63,6 +64,8 @@ class MainWindow(QMainWindow):
         self.worker.performance_names_read.connect(self._on_performance_names_read)
         self.worker.backup_done.connect(self._on_backup_done)
         self.worker.restore_done.connect(self._on_restore_done)
+        self.worker.firmware_done.connect(self._on_firmware_done)
+        self.worker.firmware_status.connect(self.statusBar().showMessage)
         self.worker.write_done.connect(self._on_write_done)
         self.worker.cancelled.connect(self._on_cancelled)
         self.worker.param_written.connect(self._on_param_written)
@@ -78,6 +81,7 @@ class MainWindow(QMainWindow):
         self._long_job = False  # a job with a progress bar is running (names, backup, restore)
         self._summaries = []  # unit.PatchSummary of the USER patches read so far
         self._backed_up = False  # a whole-unit backup was saved in this session
+        self._firmware_running = False  # Roland's update files are being played to the unit: closing the window or cancelling mid-way needs a second thought
         self._writing_shown_to = None  # the USER slot the shown (edited) patch is being written to, so its write_done marks it as stored
         self._undo = []  # steps of the shown patch's edits, each [(block, key, tone, old, new)]; cleared when another patch is shown
         self._redo = []
@@ -158,6 +162,11 @@ class MainWindow(QMainWindow):
         self.write_action = QAction("Write to USER...", self)
         self.write_action.triggered.connect(self.write_user)
         hardware_menu.addAction(self.write_action)
+        hardware_menu.addSeparator()
+        self.firmware_action = QAction("Update Firmware... (unverified)", self)
+        self.firmware_action.setToolTip("Plays Roland's System Update files to a unit in update mode. Never tried on a real JV-1010: use at your own risk.")
+        self.firmware_action.triggered.connect(self.update_firmware)
+        hardware_menu.addAction(self.firmware_action)
 
         help_menu = self.menuBar().addMenu("&Help")
         add_open_log_folder_action(help_menu, self)
@@ -315,7 +324,7 @@ class MainWindow(QMainWindow):
         # progress of a long job (names, backup, restore) lives in the status bar, where it is visible from any page
         self.btn_cancel = QPushButton("Cancel")
         self.btn_cancel.setToolTip("Stop after the current step. A cancelled backup saves nothing; a cancelled restore leaves the unit part way through.")
-        self.btn_cancel.clicked.connect(self.worker.cancel)
+        self.btn_cancel.clicked.connect(self._cancel_job)
         self.names_progress = QProgressBar()
         self.names_progress.setMaximumWidth(220)
         self.btn_cancel.setVisible(False)
@@ -352,6 +361,7 @@ class MainWindow(QMainWindow):
             control.setEnabled(ready)
         for control in (self.backup_action, self.restore_action):
             control.setEnabled(ready)
+        self.firmware_action.setEnabled(ready and not self.demo)  # (a simulated unit has no update mode)
         for control in (self.btn_send, self.send_action, self.btn_write, self.write_action):
             control.setEnabled(ready and self._shown is not None)
         self.open_action.setEnabled(idle)
@@ -503,6 +513,8 @@ class MainWindow(QMainWindow):
 
     def _on_failed(self, label, message):
         self._long_job = False
+        if label == "firmware":
+            self._firmware_running = False
         if label == "perf_write_param":
             self.performance_panel.on_live_failed(message)
             return
@@ -801,6 +813,46 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"Backup saved: {Path(path).name} ({size // 1024} KB)", 8000)
         self._refresh_connection()
 
+    def update_firmware(self):
+        if self.demo or not self.session.is_open or not self.worker.is_idle():
+            return
+        dialog = FirmwareDialog(self)
+        if dialog.exec() != FirmwareDialog.DialogCode.Accepted:
+            return
+        update = dialog.firmware()
+        if update is None or not update.ok:
+            return
+        debug_log.get_logger().warning(f"firmware update confirmed by the user: {update.release or 'unrecognised release'} from {update.folder}")
+        self._firmware_running = True
+        self._start_progress("Updating the firmware...")
+        self.worker.submit("firmware", update)
+
+    def _cancel_job(self):
+        if self._firmware_running:
+            answer = QMessageBox.warning(
+                self,
+                "Stop the firmware update?",
+                "The unit is part-way through an update. Stopping now may leave it unable to start; you would have to play the update again from the first block.\n\nStop anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if answer != QMessageBox.StandardButton.Yes:
+                return
+        self.worker.cancel()
+
+    def _on_firmware_done(self, blocks, messages):
+        self._long_job = False
+        self._firmware_running = False
+        self.statusBar().showMessage(f"Firmware sent: {blocks} files, {messages:,} messages", 10000)
+        QMessageBox.information(
+            self,
+            "Firmware sent",
+            f"All {blocks} files ({messages:,} messages) were sent. The unit sends no reply, so this app can't tell whether it was accepted.\n\n"
+            "Switch the unit off and on. If it starts, do a Factory Reset (all user data is erased), then restore your backup. "
+            "Record what happened in AGENTS.md: this has never been tried on a real unit.",
+        )
+        self._refresh_connection()
+
     def _on_restore_done(self, count):
         self._long_job = False
         self.statusBar().showMessage(f"Restored {count} blocks, each read back", 8000)
@@ -924,6 +976,9 @@ class MainWindow(QMainWindow):
     def _on_cancelled(self, label, message):
         self._long_job = False
         self.statusBar().showMessage(message, 8000)
+        if label == "firmware":
+            self._firmware_running = False
+            QMessageBox.warning(self, "Firmware update stopped", message)
         self._refresh_connection()
 
     def showEvent(self, event):
@@ -934,6 +989,17 @@ class MainWindow(QMainWindow):
             self.splitter.setSizes([left, max(1, self.splitter.width() - left)])
 
     def closeEvent(self, event):
+        if self._firmware_running:
+            answer = QMessageBox.warning(
+                self,
+                "Firmware update running",
+                "The unit is part-way through a firmware update. Quitting now stops it and may leave the unit unable to start.\n\nQuit anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if answer != QMessageBox.StandardButton.Yes:
+                event.ignore()
+                return
         self.worker.cancel()
         self.worker.stop()
         self.worker.wait(3000)

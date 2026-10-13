@@ -10,7 +10,8 @@ from dataclasses import dataclass, field
 
 from . import patch, sysex
 
-LOOPBACK_SIZES = [8, 32, 64, 127, 256, 512, 1024, 1536, 2048, 2560, 3072]
+# (265 = the data bytes of a firmware update message, the longest the app ever sends: an interface that stops at 256 would corrupt an update)
+LOOPBACK_SIZES = [8, 32, 64, 127, 256, 265, 512, 1024, 1536, 2048, 2560, 3072]
 RECEIVE_TIMEOUT = 1.5  # seconds to wait for each reply
 
 
