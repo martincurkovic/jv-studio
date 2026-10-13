@@ -10,7 +10,7 @@ Rules that come from the manual and from AKAISDS's hardware lessons:
 import time
 from dataclasses import dataclass
 
-from . import params, patch, performance, sysex
+from . import params, patch, performance, sysex, system
 
 DEFAULT_TIMEOUT = 1.0  # seconds to wait for one reply
 DEFAULT_RETRIES = 1  # extra attempts after a timeout (so two requests at most per block)
@@ -70,6 +70,28 @@ class JV1010Unit:
             if raw is not None:
                 return sysex.parse(raw).data
         raise UnitError(f"no reply to a request for {size} bytes at {' '.join(f'{b:02X}' for b in address)} (the unit ignores data requests in GM mode)")
+
+    def read_system(self):
+        """The System settings as a `system.System`."""
+        return system.System(bytearray(self.read_system_common()))
+
+    def write_system_params(self, changes):
+        """Set the System parameters in `changes` [(key, value)]: one small DT1 each (>= 20 ms apart), then read the block back and check every one of them. Returns the
+        System as read back. Callers decide what may be changed and save what was there first (`UnitWorker`); this raises `UnitError` if the unit did not take a value."""
+        table = params.load_table().block(system.COMMON)
+        wanted = {}
+        for key, value in changes:
+            param = table.param(key)
+            buffer = bytearray(table.size)
+            params.write(buffer, param, value)
+            wanted[key] = params.param_bytes(buffer, param)
+            self._send_dt1(sysex.dt1(sysex.add_to_address(system.BASE, param.offset), wanted[key]))
+        self._wait(sysex.PACKET_GAP_MS / 1000)
+        read = self.read_system()
+        refused = [table.param(key).name for key, raw in wanted.items() if params.param_bytes(read.common, table.param(key)) != raw]
+        if refused:
+            raise UnitError(f"the unit did not take: {', '.join(refused)} (the read-back differs)")
+        return read
 
     def read_system_common(self):
         """The System common block (settings such as the receive channel and the sound mode): one request, nothing is written."""

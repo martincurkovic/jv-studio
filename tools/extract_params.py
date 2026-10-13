@@ -161,6 +161,9 @@ def build_params(rows, footnotes, block):
             p["footnote"] = note
             if "display_text" not in p and re.fullmatch(r"C-1-Upper|Lower-G9", footnotes.get(note, "")):
                 p["display_text"] = "C-1 - G9"  # a keyboard range end: the footnote only says which other end bounds it, but the values are notes
+            whole = footnotes.get(note, "")
+            if whole.startswith("<") and whole.endswith(">") and whole.count("<") == 1:
+                p["jv1080_only"] = True  # a footnote whose whole value list is one angle-bracket group: the JV-1080 family's, ignored by the JV-1010
             choices = parse_footnote_choices(footnotes.get(note, ""), lo, hi)
             if choices:
                 p["choices"] = choices

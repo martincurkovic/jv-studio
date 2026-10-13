@@ -112,6 +112,12 @@ BY_KEY = {
     "structure_type_1and2": {k: v[0] for k, v in _STRUCTURE.items()},
     "structure_type_3and4": {k: v[0] for k, v in _STRUCTURE.items()},
 }
+BY_KEY["sound_mode"] = {"PERFORMANCE": "Performance", "PATCH": "Patch", "GM": "General MIDI"}
+BY_KEY["clock_source"] = {"INT": "Internal", "MIDI": "MIDI"}
+BY_KEY["volume_control_source"] = {"VOLUME": "Volume", "VOLUME&EXPRESSION": "Volume & Expression"}
+BY_KEY["aftertouch_source"] = {"CHANNEL": "Channel", "POLY": "Polyphonic", "CH&POLY": "Channel & Polyphonic"}
+for _key in ("tap_control_source", "hold_control_source", "peak_control_source"):
+    BY_KEY[_key] = {"HOLD-1": "Hold-1", "HOLD-2": "Hold-2"}
 for _n in (1, 2, 3):
     for _m in (1, 2, 3, 4):
         BY_KEY[f"controller_{_n}_destination_{_m}"] = _DESTINATIONS

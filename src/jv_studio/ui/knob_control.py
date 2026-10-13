@@ -25,7 +25,10 @@ COMMIT_DELAY_MS = 150  # a wheel or arrow-key step commits this long after the l
 @lru_cache(maxsize=None)
 def _text_to_value(param):
     """{displayed text, lower case: raw value} for every value of a parameter."""
-    return {params.format_value(param, v).lower(): v for v in range(param.min, param.max + 1)}
+    table = {params.format_value(param, v).lower(): v for v in range(param.min, param.max + 1)}
+    for shown, v in list(table.items()):
+        table.setdefault(shown.removesuffix(" hz"), v)  # a tuning typed without its unit: 440.0
+    return table
 
 
 def parse_display_text(param, text):
@@ -33,7 +36,7 @@ def parse_display_text(param, text):
     would show), so `30` on a -63..+63 pan means +30; where the display is the raw value that is the same thing."""
     table = _text_to_value(param)
     text = text.strip().lower()
-    for candidate in (text, "+" + text, text.replace(" ", "")):
+    for candidate in (text, "+" + text, text.replace(" ", ""), text + ".0"):
         if candidate in table:
             return table[candidate]
     return None
@@ -157,4 +160,6 @@ def origin_value(param):
         return round(param.min + (0 - param.display_min) * (param.max - param.min) / (param.display_max - param.display_min))
     if text in ("L64 - 63R", "L63 - 63R"):
         return 64
+    if param.key == "master_tune":
+        return 63  # A = 440.0 Hz
     return None

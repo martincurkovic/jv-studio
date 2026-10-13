@@ -1,7 +1,7 @@
 """Which card a parameter sits on in the patch editor (Qt-free). Rules by key prefix; the first match wins, and every shown parameter must match one
 (`tests/test_groups.py`), so a new parameter in the table can't silently disappear from the editor."""
 
-from . import params, patch, performance
+from . import params, patch, performance, system
 
 _COMMON = [
     ("Patch", ("patch_name", "patch_category", "patch_level", "patch_pan", "analog_feel", "patch_tempo", "clock_source", "octave_shift", "stretch_tune_depth", "voice_priority")),
@@ -40,7 +40,22 @@ _PERFORMANCE_PART = [
     ("Keyboard", ("keyboard_range_",)),
 ]
 
-RULES = {patch.COMMON: _COMMON, patch.TONE: _TONE, performance.COMMON: _PERFORMANCE_COMMON, performance.PART: _PERFORMANCE_PART}
+_SYSTEM = [
+    ("Sound", ("sound_mode", "patch_remain")),
+    ("Tuning & Clock", ("master_tune", "scale_tune_switch", "clock_source", "system_tempo")),
+    ("Effects", ("efx_switch", "chorus_switch", "reverb_switch")),
+    ("MIDI Receive", ("receive_", "control_channel", "patch_receive_channel", "aftertouch_source", "volume_control_source")),
+    ("Controllers", ("tap_control_source", "hold_control_source", "peak_control_source", "system_control_source_")),
+    ("Preview", ("preview_",)),
+]
+
+RULES = {
+    patch.COMMON: _COMMON,
+    patch.TONE: _TONE,
+    performance.COMMON: _PERFORMANCE_COMMON,
+    performance.PART: _PERFORMANCE_PART,
+    system.COMMON: _SYSTEM,
+}
 
 #: parameters the editor does not show as controls: a tone's wave is chosen BY NAME (the Wave card's Choose... button sets all three together), and the raw numbers stay
 #: visible in the Raw Values tab and in the wave label when the group is not one we have names for
@@ -55,7 +70,18 @@ HIDDEN = {
     # the MIDI transmit settings follow the JV-1080-family-only ones (<Local Switch>, <Transmit Switch>) in the manual; the JV-1010 has no keyboard to transmit from
     (performance.PART, "transmit_bank_select_group"),
     (performance.PART, "transmit_volume"),
+    # what the unit has selected right now (mode, patch, performance) is shown as one line of text, not as controls: choosing a patch or a performance is what the unit's own
+    # dials, a Program Change (the audition bar) or a performance part do
+    (system.COMMON, "performance_number"),
+    (system.COMMON, "patch_group_type"),
+    (system.COMMON, "patch_group_id"),
+    (system.COMMON, "patch_number"),
+    (system.COMMON, "arpeggio_octave_range"),
 }
+
+#: parameters that are shown nowhere AND not checked against their range: the JV-1010 has no arpeggiator, and this is the one Arpeggio parameter the manual forgot to put in
+#: angle brackets [guess]
+UNUSED = {(system.COMMON, "arpeggio_octave_range")}
 
 
 def supported(param):

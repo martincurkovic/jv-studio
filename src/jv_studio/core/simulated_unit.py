@@ -8,7 +8,7 @@ Options for testing the app's safety nets: `gm_mode` (the unit ignores RQ1/DT1 i
 check) and `drop_first_replies=n` (the first n RQ1s get no answer, to test retries).
 """
 
-from . import memory, params, patch, performance, sysex
+from . import memory, patch, performance, sysex, system
 
 IDENTITY_REPLY = bytes.fromhex("F0 7E 10 06 02 41 6A 00 05 00 00 00 00 00 F7")
 
@@ -35,10 +35,12 @@ class SimulatedUnit:
         self.requests = []  # (address, size) of every RQ1
         self.writes = []  # every DT1 received, parsed
         self.channel_messages = []  # every non-SysEx message received (notes, Bank Select, Program Change...): the unit would play or switch, here they are just kept
-        system = self.other[0]  # a plausible System block (the rest stays the recognisable pattern): Patch mode, channel 1, program change and bank select ON
-        table = params.load_table().block("system_common")
-        for key, value in (("sound_mode", 1), ("patch_receive_channel", 0), ("receive_program_change", 1), ("receive_bank_select", 1)):
-            params.write(system, table.param(key), value)
+        # the System settings: VALID ones (a block of the pattern would hold values outside every range): Patch mode on USER 001, A = 440.0 Hz, channel 1, program change and bank select ON
+        initial = system.System.minimum()
+        for key, value in (("sound_mode", 1), ("patch_group_id", 1), ("master_tune", 63), ("patch_receive_channel", 0), ("receive_program_change", 1),
+                           ("receive_bank_select", 1), ("efx_switch", 1), ("chorus_switch", 1), ("reverb_switch", 1), ("system_tempo", 120)):
+            initial.set(key, value)
+        self.other[0] = bytearray(initial.common)
 
     @property
     def patch(self):  # (the temporary patch: what older tests call "the patch")

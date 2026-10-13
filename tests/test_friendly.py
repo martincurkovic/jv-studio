@@ -1,8 +1,8 @@
-from jv_studio.core import friendly, groups, params, patch, performance
+from jv_studio.core import friendly, groups, params, patch, performance, system
 
 
 def shown_choice_params():
-    for block in (patch.COMMON, patch.TONE, performance.COMMON, performance.PART):
+    for block in (patch.COMMON, patch.TONE, performance.COMMON, performance.PART, system.COMMON):
         for _, members in groups.groups(block):
             for param in members:
                 if param.has_choices():
@@ -37,7 +37,7 @@ def test_every_option_of_every_shown_list_has_a_readable_and_distinct_name():
         for text, name in zip(labels, names):
             # nothing is left shouting: an all-caps word (other than the genuine abbreviations) means a missing entry
             words = [w for w in name.replace("→", " ").replace("/", " ").split() if w.isalpha() and w.isupper() and len(w) > 2]
-            assert not [w for w in words if w not in {"LFO", "SAX", "VOX", "EFX"}], (param.key, text, name)
+            assert not [w for w in words if w not in {"LFO", "SAX", "VOX", "EFX", "MIDI"}], (param.key, text, name)
 
 
 def test_performance_option_names():

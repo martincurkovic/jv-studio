@@ -38,6 +38,7 @@ from jv_studio.ui.performance_panel import PerformancePanel
 from jv_studio.ui.qt_helpers import item_heading, set_enabled_without_scrolling
 from jv_studio.ui.segmented import SegmentedControl
 from jv_studio.ui.settings_dialog import SettingsDialog
+from jv_studio.ui.system_dialog import SystemDialog
 from jv_studio.ui.unit_dialogs import RenameDialog, RestoreDialog, SlotDialog, WriteUserDialog
 from jv_studio.ui.unit_worker import UnitWorker
 
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow):
         self._long_job = False  # a job with a progress bar is running (names, backup, restore)
         self._summaries = []  # unit.PatchSummary of the USER patches read so far
         self._backed_up = False  # a whole-unit backup was saved in this session
+        self.system_dialog = None  # built the first time System Settings is opened
         self._firmware_running = False  # Roland's update files are being played to the unit: closing the window or cancelling mid-way needs a second thought
         self._writing_shown_to = None  # the USER slot the shown (edited) patch is being written to, so its write_done marks it as stored
         self._undo = []  # steps of the shown patch's edits, each [(block, key, tone, old, new)]; cleared when another patch is shown
@@ -164,6 +166,11 @@ class MainWindow(QMainWindow):
         self.write_action = QAction("Write to USER...", self)
         self.write_action.triggered.connect(self.write_user)
         hardware_menu.addAction(self.write_action)
+        hardware_menu.addSeparator()
+        self.system_action = QAction("System Settings...", self)
+        self.system_action.setToolTip("The unit's global settings: master tune, MIDI receive, controller sources, effect switches.")
+        self.system_action.triggered.connect(self.open_system_settings)
+        hardware_menu.addAction(self.system_action)
         hardware_menu.addSeparator()
         self.firmware_action = QAction("Update Firmware... (unverified)", self)
         self.firmware_action.setToolTip("Plays Roland's System Update files to a unit in update mode. Never tried on a real JV-1010: use at your own risk.")
@@ -380,6 +387,8 @@ class MainWindow(QMainWindow):
         for control in (self.backup_action, self.restore_action):
             control.setEnabled(ready)
         self.firmware_action.setEnabled(ready and not self.demo)  # (a simulated unit has no update mode)
+        if self.system_dialog is not None:
+            self.system_dialog.refresh_state(ready)
         for control in (self.btn_send, self.send_action, self.btn_write, self.write_action):
             control.setEnabled(ready and self._shown is not None)
         self.open_action.setEnabled(idle)
@@ -835,6 +844,16 @@ class MainWindow(QMainWindow):
         self._backed_up = True
         self.statusBar().showMessage(f"Backup saved: {Path(path).name} ({size // 1024} KB)", 8000)
         self._refresh_connection()
+
+    def open_system_settings(self):
+        if self.system_dialog is None:
+            self.system_dialog = SystemDialog(self)
+        self.system_dialog.show()
+        self.system_dialog.raise_()
+        self.system_dialog.activateWindow()
+        self.system_dialog.refresh_state(self.session.is_open and self.worker.is_idle())
+        if not self.system_dialog.has_shown() and self.session.is_open and self.worker.is_idle():
+            self.system_dialog.read()  # (a read: the first look at what the unit holds)
 
     def update_firmware(self):
         if self.demo or not self.session.is_open or not self.worker.is_idle():

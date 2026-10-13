@@ -218,6 +218,10 @@ def format_value(param, value):
         return param.choices[value - param.min].label
     if param.labels and 0 <= value - param.min < len(param.labels):
         return param.labels[value - param.min]
+    if param.key == "master_tune":  # the manual's range 427.4-452.6 Hz over 0-126, in steps of 0.2 Hz: 63 is A = 440.0
+        return f"{427.4 + 0.2 * value:.1f} Hz"
+    if param.key.startswith("preview_velocity_set_") and value == 0:  # "OFF, 1-127"
+        return "OFF"
     text = param.display_text or ""
     if re.fullmatch(r"L6[34] - 6[34]R", text):  # pan: centre is 64 on a 0-127 scale, 63 on 1-127 ("L63 - 63R" is 1-127, centre 64)
         centre = 64

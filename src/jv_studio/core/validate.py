@@ -5,7 +5,7 @@ real hardware are a free test of the whole generated table. Strings are checked 
 
 from dataclasses import dataclass
 
-from . import params, patch, performance
+from . import groups, params, patch, performance, system
 
 
 @dataclass(frozen=True)
@@ -47,6 +47,13 @@ def out_of_range(p):
     for i, tone in enumerate(p.tones):
         problems += _check(table.block(patch.TONE), tone, i)
     return problems
+
+
+def out_of_range_system(s):
+    """Every System parameter whose stored value is outside the manual's range (the block is reported as `tone` None)."""
+    block = params.load_table().block(system.COMMON)
+    flagged = _check(block, s.common, None)
+    return [p for p in flagged if groups.supported(block.param(p.key)) and (system.COMMON, p.key) not in groups.UNUSED]  # (the JV-1080 family's parameters, which the JV-1010 ignores, are not its business)
 
 
 def out_of_range_performance(p):

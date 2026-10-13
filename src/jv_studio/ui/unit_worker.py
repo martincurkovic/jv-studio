@@ -3,6 +3,8 @@
 Request/reply code must never run twice at once on one connection (interleaved requests and replies corrupt each other), and a thread per action
 crashed AKAISDS when a stale thread was garbage-collected mid-call. So: one `QThread` for the window's lifetime, a FIFO of jobs, results as signals.
 
+System settings: "system_read" (read-only), "system_apply" changes [(key, value)] (the block as it is NOW is saved to `app_config.backups_dir()` FIRST and nothing is written if that
+fails; only keys the editor shows are accepted; each is written as one small DT1, then the block is read back and checked).
 Reads: "system_midi" (the receive channel and sound mode, for the audition keyboard), "temporary", "user" n (0-based), "names" (the 128 USER patch summaries), "backup" path [sections] (the whole user memory into a .syx).
 Performances: "perf_temporary", "perf_user" n, "perf_names" (reads); "perf_send_temporary" perf, "perf_write_user" n perf (the slot's old performance is saved to a `.syx` first, the write
 read back), "perf_write_param" block key part value (one parameter of the TEMPORARY performance, verified).
@@ -19,7 +21,7 @@ from collections import deque
 
 from PySide6.QtCore import QThread, Signal
 
-from jv_studio.core import app_config, audition, backup, debug_log, firmware, memory, patch, performance, unit, validate
+from jv_studio.core import app_config, audition, backup, debug_log, firmware, groups, memory, patch, performance, system, unit, validate
 
 
 class UnitWorker(QThread):
@@ -29,6 +31,8 @@ class UnitWorker(QThread):
     names_read = Signal(list)  # [unit.PatchSummary] x 128 (fewer when cancelled)
     backup_done = Signal(str, int)  # path, bytes written
     restore_done = Signal(int)  # blocks written
+    system_read = Signal(object, list)  # the System settings, their validate.Problems
+    system_applied = Signal(str, int)  # the path of the automatic backup, how many settings were changed
     system_midi_read = Signal(object)  # an audition.SystemMidi
     firmware_done = Signal(int, int)  # blocks, messages sent
     firmware_status = Signal(str)  # which block is being sent
@@ -148,6 +152,10 @@ class UnitWorker(QThread):
             self._backup(job[1], job[2] if len(job) > 2 else memory.SECTIONS)
         elif kind == "restore":
             self._restore(job[1], job[2])
+        elif kind == "system_read":
+            self._finish_system(self._unit().read_system())
+        elif kind == "system_apply":
+            self._apply_system(job[1])
         elif kind == "system_midi":
             self.system_midi_read.emit(audition.parse_system_common(self._unit().read_system_common()))
         elif kind == "firmware":
@@ -209,6 +217,38 @@ class UnitWorker(QThread):
         count = backup.restore(self._unit(), saved, sections, progress=self.progress.emit, cancelled=lambda: self._cancel)
         log.info(f"UnitWorker: restore wrote and verified {count} blocks")
         self.restore_done.emit(count)
+
+    def _finish_system(self, read):
+        problems = validate.out_of_range_system(read)
+        log = debug_log.get_logger()
+        log.info(f"UnitWorker: read the system settings ({read.selection_text()}): {len(problems)} value(s) outside the table's ranges")
+        for problem in problems[:40]:
+            log.warning(f"UnitWorker: system: {problem}")
+        self.system_read.emit(read, problems)
+
+    def _apply_system(self, changes):
+        """Change System settings. The block as it is now goes to a `.syx` first (no file, nothing written); only settings the editor shows may be changed, and never to GM mode:
+        the unit ignores SysEx there, so the app could neither verify the write nor change it back."""
+        log = debug_log.get_logger()
+        allowed = {p.key for _, members in groups.groups(system.COMMON) for p in members}
+        for key, value in changes:
+            if key not in allowed:
+                raise unit.UnitError(f"{key!r} is not a System setting this app changes.")
+            if key == "sound_mode" and value == system.GM_MODE:
+                raise unit.UnitError("The unit ignores SysEx in GM mode, so this app can't switch it there: use the unit's own buttons.")
+        unit_ = self._unit()
+        old = unit_.read_system()
+        path = backup.system_backup_path(app_config.backups_dir())
+        try:
+            backup.write_file(path, old.to_syx())
+        except OSError as e:
+            log.error(f"UnitWorker: couldn't back up the system settings to {path}", exc_info=True)
+            raise unit.UnitError(f"Couldn't save a backup of the System settings first ({e}); nothing was written.") from e
+        log.warning(f"UnitWorker: changing {len(changes)} system setting(s): {', '.join(f'{k}={v}' for k, v in changes)} (backup {path})")
+        new = unit_.write_system_params(changes)
+        log.info("UnitWorker: system settings written and read back")
+        self.system_applied.emit(str(path), len(changes))
+        self._finish_system(new)
 
     def _firmware(self, update):
         self._cancel = False

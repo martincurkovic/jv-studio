@@ -28,6 +28,8 @@ Built with PySide6 (Qt) and python-rtmidi. GPL-3.0-or-later.
 > slots, edit performances (16 parts, effects, the patch each part plays), open and save `.syx` files, and back up and restore the whole unit. It has been tried on one JV-1010 (its author's); the performance editor has not been tried on a unit yet. **Back the unit up before
 > writing to it** (File > Back Up Unit). The rhythm setups and a fuller librarian are still to come: see [`dev_docs/roadmap.md`](dev_docs/roadmap.md).
 >
+> **Hardware > System Settings...** edits the unit's global settings (tuning, MIDI receive, controller sources, effect switches): changes are shown as a diff, the old settings saved to a file first, only the changes sent and read back. Not tried on a unit yet.
+>
 > An **audition keyboard** along the bottom (View > Audition Keyboard, Cmd/Ctrl+K) plays the unit from the mouse or the computer keyboard and chooses its patches; it has not been tried on a unit yet.
 >
 > **Hardware > Update Firmware... is unverified.** It checks Roland's System Update files and plays them to a unit in update mode the way a sequencer would, but it has never been tried on a real JV-1010, the unit sends no

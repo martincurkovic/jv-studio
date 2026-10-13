@@ -142,6 +142,34 @@ PERFORMANCE_COMMON = {
     "keyboard_range_switch": "When on, each part only plays within its own keyboard range.",
     "efx_source": "Where the effect settings come from: this performance's own, or the patch playing on one part (part 10, the rhythm part, can't be the source).",
 }
+#: the unit's System settings: general synth/MIDI knowledge plus the manual's footnotes, not measured on the unit
+SYSTEM = {
+    "sound_mode": "Which of the unit's three modes it is in: Performance (16 parts), Patch (one patch, played on the Patch Receive Channel) or General MIDI.",
+    "patch_remain": "When on, the sound of a patch keeps ringing out after you switch to another patch.",
+    "master_tune": "Tunes the whole unit: the frequency of the A above middle C (note 69), from 427.4 to 452.6 Hz in steps of 0.2. 440.0 is the standard.",
+    "scale_tune_switch": "Whether the unit uses its per-note scale tuning (an alternative temperament) instead of equal temperament.",
+    "clock_source": "Where tempo-synced effects and LFOs get their tempo: the unit's own system tempo (Internal) or MIDI Clock from outside.",
+    "system_tempo": "The unit's own tempo in beats per minute, used when the clock source is Internal.",
+    "efx_switch": "Switches the EFX (multi-effect) off or on for the whole unit.",
+    "chorus_switch": "Switches the chorus off or on for the whole unit.",
+    "reverb_switch": "Switches the reverb (and delay) off or on for the whole unit.",
+    "volume_control_source": "Which MIDI messages set a patch's volume: Volume (CC 7) only, or Volume and Expression (CC 11) together.",
+    "aftertouch_source": "Which kind of aftertouch the unit listens to: channel pressure, polyphonic key pressure, or both.",
+    "receive_program_change": "Whether the unit follows Program Change messages (switching patches or performances).",
+    "receive_bank_select": "Whether the unit follows Bank Select messages (which choose the bank a Program Change picks from).",
+    "control_channel": "The MIDI channel on which Program Change switches PERFORMANCES (Performance Control Channel); Off disables it.",
+    "patch_receive_channel": "The MIDI channel the unit receives on in Patch mode (the channel the audition keyboard plays).",
+    "tap_control_source": "Which pedal message (Hold-1, Sostenuto, Soft, Hold-2) taps the tempo for tempo-synced items; Off ignores them.",
+    "hold_control_source": "Which pedal message acts as the hold control for patches that use it.",
+    "peak_control_source": "Which pedal message acts as the peak control for patches that use it.",
+    "system_control_source_1": "The MIDI controller that patches reach as System Control 1. The manual lists CC01-CC05, CC07-CC31, CC64-CC95, Pitch Bend and Aftertouch without numbering them, so it is shown raw.",
+    "system_control_source_2": "The MIDI controller that patches reach as System Control 2. The manual lists CC01-CC05, CC07-CC31, CC64-CC95, Pitch Bend and Aftertouch without numbering them, so it is shown raw.",
+    "preview_sound_mode": "What the Phrase Preview button plays: a single note, a chord, or a phrase.",
+}
+for _n in (1, 2, 3, 4):
+    SYSTEM[f"preview_note_set_{_n}"] = "A note that Phrase Preview plays (note set " + str(_n) + ")."
+    SYSTEM[f"preview_velocity_set_{_n}"] = "How hard that preview note is played (note set " + str(_n) + "); Off skips it."
+
 PERFORMANCE_PART = {
     "receive_switch": "Whether this part plays. Off silences it without losing its settings.",
     "midi_channel": "The MIDI channel this part listens to. Parts on the same channel play together (layering).",
@@ -179,6 +207,8 @@ def hint(block_key, key):
         return None
     if block_key == "performance_part":
         return PERFORMANCE_PART.get(key)
+    if block_key == "system_common":
+        return SYSTEM.get(key)
     table = COMMON if block_key == "patch_common" else TONE if block_key == "patch_tone" else {}
     if key in table:
         return table[key]
