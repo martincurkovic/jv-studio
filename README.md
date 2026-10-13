@@ -1,7 +1,28 @@
 # JV Studio
 
-A free, open-source **editor and librarian for the Roland JV-1010** sound module, in the spirit of [AKAISDS](https://github.com/martincurkovic/AKAISDS).
+[![Build](https://github.com/martincurkovic/jv-studio/actions/workflows/build.yml/badge.svg)](https://github.com/martincurkovic/jv-studio/actions/workflows/build.yml)
+[![Tests](https://github.com/martincurkovic/jv-studio/actions/workflows/test.yml/badge.svg)](https://github.com/martincurkovic/jv-studio/actions/workflows/test.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Qt 6.12 LTS](https://img.shields.io/badge/Qt-6.12%20LTS-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Platforms: macOS, Windows, Linux](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](#download--installation)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
+
+A free, open-source **editor and librarian for the Roland JV-1010** sound module.
 Built with PySide6 (Qt) and python-rtmidi. GPL-3.0-or-later.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/patch-editor-dark.png">
+    <img alt="JV Studio editing a patch: the USER patch list, the tone's filter with a draggable envelope, and knobs for every parameter" src="docs/screenshots/patch-editor-light.png" width="860">
+  </picture>
+</p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/performance-dark.png">
+    <img alt="JV Studio's performance editor: the 16 parts as a mixer, each with its patch chosen by name" src="docs/screenshots/performance-light.png" width="860">
+  </picture>
+</p>
 
 > **Status: early development.** You can read the unit's patches, edit any patch parameter on knobs and draggable envelope graphs (heard live on the unit's temporary patch, with undo), write to USER
 > slots, edit performances (16 parts, effects, the patch each part plays), open and save `.syx` files, and back up and restore the whole unit. It has been tried on one JV-1010 (its author's); the performance editor has not been tried on a unit yet. **Back the unit up before
@@ -19,9 +40,14 @@ Builds for each release are on the [Releases](https://github.com/martincurkovic/
 
 **macOS** (14 or newer, Apple Silicon or Intel): open the `.dmg` and drag JV-Studio to Applications. Or install with [Homebrew](https://brew.sh): `brew install --cask martincurkovic/tap/jv-studio`. The app is not code-signed or notarized, so Gatekeeper blocks it the first time: open System Settings > Privacy & Security and click "Open Anyway", or run `xattr -dr com.apple.quarantine /Applications/JV-Studio.app`.
 
-**Windows**: run `JV-Studio-Setup.exe`. **Linux**: unzip `JV-Studio-linux.zip` and run the `.AppImage` (it needs ALSA, which every desktop distribution has).
+**Windows**: run `JV-Studio-Setup.exe`. **Linux**: unzip `JV-Studio-linux.zip` and run the `.AppImage` (it needs ALSA, which basically every desktop distribution should have).
 
 To build it yourself, see [`BUILDING.md`](BUILDING.md).
+
+## Try it without a unit
+
+`uv run jv-studio --demo` starts the app on a simulated JV-1010: the factory patch names, 32 performances, a working backup and restore, no MIDI ports and no hardware. Changes are forgotten when you quit.
+(`JV_STUDIO_DEMO=1` does the same; `JV_STUDIO_DEMO_INSTANT=1` removes the simulated reply time.)
 
 ## Running it
 
