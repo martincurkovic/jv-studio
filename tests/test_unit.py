@@ -233,3 +233,15 @@ def test_summaries_carry_name_and_key_assign():
     u, _, _ = connect(fake)
     got = u.read_user_patch_summaries()
     assert len(got) == 128 and got[0] == unit.PatchSummary("User 001", "POLY") and got[1].key_assign == "SOLO"
+
+
+def test_write_param_verify_reads_the_block_back_and_catches_a_unit_that_ignored_it():
+    fake = FakeJV1010()
+    u, ports, _ = connect(fake)
+    assert u.write_param(patch.TEMPORARY_BASE, patch.TONE, "cutoff_frequency", 77, tone=1, verify=True) == 77
+    assert fake.temporary.get(patch.TONE, "cutoff_frequency", tone=1) == 77
+    assert fake.requests[-1][1] == 129  # one request: that tone's block
+    stubborn = FakeJV1010(ignore_writes=True)
+    u2, _, _ = connect(stubborn)
+    with pytest.raises(unit.UnitError):
+        u2.write_param(patch.TEMPORARY_BASE, patch.COMMON, "patch_tempo", 150, verify=True)

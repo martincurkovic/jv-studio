@@ -3605,6 +3605,7 @@
      "max": 127,
      "bits": "0aaa aaaa",
      "footnote": 3,
+     "display_text": "C-1 - G9",
      "key": "keyboard_range_lower"
     },
     {
@@ -3615,6 +3616,7 @@
      "max": 127,
      "bits": "0aaa aaaa",
      "footnote": 4,
+     "display_text": "C-1 - G9",
      "key": "keyboard_range_upper"
     },
     {
@@ -5175,6 +5177,7 @@
      "max": 127,
      "bits": "0aaa aaaa",
      "footnote": 6,
+     "display_text": "C-1 - G9",
      "key": "keyboard_range_lower"
     },
     {
@@ -5185,6 +5188,7 @@
      "max": 127,
      "bits": "0aaa aaaa",
      "footnote": 7,
+     "display_text": "C-1 - G9",
      "key": "keyboard_range_upper"
     },
     {

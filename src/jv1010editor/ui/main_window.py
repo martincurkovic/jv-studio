@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QInputDialog,
     QFileDialog,
     QHBoxLayout,
@@ -26,6 +27,7 @@ from jv1010editor.ui import theme
 from jv1010editor.ui.about_dialog import AboutDialog
 from jv1010editor.ui.diagnostics_ui import add_open_log_folder_action
 from jv1010editor.ui.midi_session import MidiSession
+from jv1010editor.ui.patch_editor import PatchEditor
 from jv1010editor.ui.qt_helpers import build_scroll_area, build_section_card, set_enabled_without_scrolling
 from jv1010editor.ui.settings_dialog import SettingsDialog
 from jv1010editor.ui.unit_dialogs import RestoreDialog, WriteUserDialog
@@ -51,10 +53,15 @@ class MainWindow(QMainWindow):
         self.worker.restore_done.connect(self._on_restore_done)
         self.worker.write_done.connect(self._on_write_done)
         self.worker.cancelled.connect(self._on_cancelled)
+        self.worker.param_written.connect(self._on_param_written)
         self.worker.progress.connect(self._on_progress)
         self.worker.failed.connect(self._on_failed)
         self.worker.busy_changed.connect(self._refresh_connection)
-        self._shown = None  # (label, Patch, base address) in the viewer; label is "temporary", "user:N" or "file"
+        self._shown = None  # (label, working Patch, base address); the patch is the WORKING COPY the editor changes; label is "temporary", "user:N" or "file"
+        self._original = None  # what was read or opened, for Revert and for the "edited" mark
+        self._where = ""  # how the shown patch is described ("USER:005")
+        self._temp_synced = False  # the unit's temporary patch holds the working copy as it was last sent/read: only then can edits be heard live
+        self._sent_snapshot = None  # a copy of the patch at the moment Send to Temporary Patch was queued
         self._long_job = False  # a job with a progress bar is running (names, backup, restore)
         self._summaries = []  # unit.PatchSummary of the USER patches read so far
         self._backed_up = False  # a whole-unit backup was saved in this session
@@ -175,10 +182,34 @@ class MainWindow(QMainWindow):
         self.problems_label.setWordWrap(True)
         self.problems_label.setObjectName("mutedLabel")
         viewer.addWidget(self.problems_label)
+        edit_row = QHBoxLayout()
+        self.live_check = QCheckBox("Hear edits on the unit as I make them")
+        self.live_check.setChecked(True)
+        self.live_check.setToolTip(
+            "Each edit is sent to the unit's temporary patch (not stored) when you finish it, and read back. "
+            "Works once the shown patch is on the unit's temporary patch: read it from there, or use Send to Temporary Patch."
+        )
+        self.live_check.toggled.connect(self._update_edit_hint)
+        self.btn_revert = QPushButton("Revert Edits")
+        self.btn_revert.setToolTip("Go back to the patch as it was read or opened.")
+        self.btn_revert.clicked.connect(self.revert_edits)
+        edit_row.addWidget(self.live_check)
+        edit_row.addWidget(self.btn_revert)
+        edit_row.addStretch()
+        viewer.addLayout(edit_row)
+        self.edit_hint = QLabel()
+        self.edit_hint.setWordWrap(True)
+        self.edit_hint.setObjectName("mutedLabel")
+        viewer.addWidget(self.edit_hint)
+        self.editor = PatchEditor()
+        self.editor.setMinimumHeight(520)
+        self.editor.param_committed.connect(self._on_param_committed)
+        viewer.addWidget(self.editor)
+        raw = QVBoxLayout()
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels(["Parameter", "Value", "Raw"])
         self.tree.setMinimumHeight(260)
-        viewer.addWidget(self.tree)
+        raw.addWidget(self.tree)
 
         library = QVBoxLayout()
         lib_row = QHBoxLayout()
@@ -219,7 +250,11 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(page)
         layout.addWidget(build_section_card("Connection", connection))
         layout.addWidget(build_section_card("Whole Unit", whole))
-        layout.addWidget(build_section_card("Temporary Patch", viewer))
+        layout.addWidget(build_section_card("Patch", viewer))
+        self.raw_card = build_section_card("Raw Values", raw, collapse_key="main_window/Raw Values")
+        self.raw_card.set_collapsed(True, remember=False)
+        self.raw_card.collapsed_changed.connect(lambda collapsed: None if collapsed or self._shown is None else self._fill_tree(self._shown[1], validate.out_of_range(self._shown[1])))
+        layout.addWidget(self.raw_card)
         layout.addWidget(build_section_card("USER Patches", library))
         layout.addStretch()
         self.setCentralWidget(build_scroll_area(page))
@@ -256,6 +291,7 @@ class MainWindow(QMainWindow):
             control.setEnabled(ready and self._shown is not None)
         for control in (self.btn_open, self.open_action):
             control.setEnabled(idle)
+        self.btn_revert.setEnabled(self._shown is not None and self._is_dirty())
         for control in (self.btn_settings, self.settings_action):
             control.setEnabled(idle)  # Settings closes and reopens the connection: never under a running job
         self.btn_cancel.setVisible(self._long_job and not idle)
@@ -295,6 +331,8 @@ class MainWindow(QMainWindow):
     # -- reading (read-only) -----------------------------------------------------------------------------------------------
 
     def read_temporary(self):
+        if not self._confirm_discard():
+            return
         self.statusBar().showMessage("Reading the temporary patch...")
         self.worker.submit("temporary")
 
@@ -312,7 +350,7 @@ class MainWindow(QMainWindow):
 
     def _read_user_from_item(self, item):
         number = item.data(Qt.ItemDataRole.UserRole)
-        if number is not None and self.worker.is_idle():
+        if number is not None and self.worker.is_idle() and self._confirm_discard():
             self.statusBar().showMessage(f"Reading USER:{number + 1:03d}...")
             self.worker.submit("user", number)
 
@@ -342,6 +380,14 @@ class MainWindow(QMainWindow):
 
     def _on_failed(self, label, message):
         self._long_job = False
+        if label == "write_param":  # a live edit the unit didn't take: stop sending live (one message, not one per queued edit)
+            if self.live_check.isChecked():
+                self.live_check.setChecked(False)
+                self._temp_synced = False
+                debug_log.get_logger().warning(f"live edit failed, live sending switched off: {message}")
+                QMessageBox.warning(self, "JV-1010", f"{message}\n\nLive sending is off. Send to Temporary Patch to try again.")
+            self._refresh_connection()
+            return
         self.statusBar().showMessage(message)
         QMessageBox.warning(self, "JV-1010", message)
         self._refresh_connection()
@@ -353,7 +399,12 @@ class MainWindow(QMainWindow):
 
     def _show_patch(self, label, read, base, problems, where):
         self._shown = (label, read, base)
-        self.patch_label.setText(f'{where}: "{read.name}"')
+        self._original = read.copy()
+        self._where = where
+        self._temp_synced = label == "temporary"
+        self.editor.set_patch(read)
+        self._update_patch_label()
+        self._update_edit_hint()
         if problems:
             shown = "; ".join(str(p) for p in problems[:3])
             more = f" (and {len(problems) - 3} more)" if len(problems) > 3 else ""
@@ -362,6 +413,68 @@ class MainWindow(QMainWindow):
             self.problems_label.setText("Every value is inside the manual's ranges.")
         self._fill_tree(read, problems)
         self.statusBar().showMessage(f"Read {where}", 5000)
+        self._refresh_connection()
+
+    # -- editing the shown patch (the working copy) -------------------------------------------------------------------------
+
+    def _is_dirty(self):
+        return self._shown is not None and self._original is not None and self._shown[1] != self._original
+
+    def _update_patch_label(self):
+        if self._shown is None:
+            return
+        edited = "  (edited)" if self._is_dirty() else ""
+        self.patch_label.setText(f'{self._where}: "{self._shown[1].name}"{edited}')
+
+    def _update_edit_hint(self, *_):
+        if self._shown is None:
+            self.edit_hint.clear()
+        elif not self.live_check.isChecked():
+            self.edit_hint.setText("Edits stay in the editor until you send or write the patch.")
+        elif self._temp_synced:
+            self.edit_hint.setText("Edits are sent to the unit's temporary patch as you make them (not stored).")
+        else:
+            self.edit_hint.setText("Send to Temporary Patch to hear your edits: the unit is playing a different patch.")
+
+    def _confirm_discard(self):
+        """Edits would be lost by showing another patch: ask (default No). True to carry on."""
+        if not self._is_dirty():
+            return True
+        answer = QMessageBox.question(
+            self,
+            "Discard edits?",
+            f'"{self._shown[1].name}" has edits that are not written anywhere. Discard them?',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        return answer == QMessageBox.StandardButton.Yes
+
+    def _on_param_committed(self, block, key, tone, value):
+        working = self._shown[1]
+        self._update_patch_label()
+        debug_log.get_logger().info(f"edit: {self._where} {block}{'' if tone < 0 else f' tone {tone + 1}'} {key} = {value!r}")
+        if not self.raw_card.is_collapsed():
+            self._fill_tree(working, validate.out_of_range(working))
+        if self.live_check.isChecked() and self._temp_synced and self.session.is_open:
+            self.worker.submit("write_param", block, key, None if tone < 0 else tone, value)
+        self._update_edit_hint()
+        self._refresh_connection()
+
+    def _on_param_written(self, block, key, tone, value):
+        self.statusBar().showMessage("Sent to the unit", 1500)
+
+    def revert_edits(self):
+        if self._shown is None or not self._is_dirty():
+            return
+        label, _, base = self._shown
+        self._shown = (label, self._original.copy(), base)
+        self.editor.set_patch(self._shown[1])
+        self._update_patch_label()
+        self._fill_tree(self._shown[1], validate.out_of_range(self._shown[1]))
+        if self.live_check.isChecked() and self._temp_synced and self.session.is_open:
+            self.statusBar().showMessage("Reverted. Send to Temporary Patch to put it back on the unit.")
+            self._temp_synced = False  # the unit's temporary patch still holds the edits
+        self._update_edit_hint()
         self._refresh_connection()
 
     def _fill_tree(self, read, problems):
@@ -403,6 +516,8 @@ class MainWindow(QMainWindow):
     # -- opening a file ----------------------------------------------------------------------------------------------------
 
     def open_syx(self):
+        if not self._confirm_discard():
+            return
         path, _ = QFileDialog.getOpenFileName(self, "Open patch .syx", str(Path.home()), "SysEx files (*.syx);;All files (*)")
         if not path:
             return
@@ -459,7 +574,8 @@ class MainWindow(QMainWindow):
             return
         _, shown, _ = self._shown
         self.statusBar().showMessage(f'Sending "{shown.name}" to the temporary patch...')
-        self.worker.submit("send_temporary", shown.copy())
+        self._sent_snapshot = shown.copy()
+        self.worker.submit("send_temporary", self._sent_snapshot)
 
     def write_user(self):
         if self._shown is None or not self.session.is_open or not self.worker.is_idle():
@@ -524,8 +640,14 @@ class MainWindow(QMainWindow):
     def _on_write_done(self, label, name, backup_path):
         if label == "temporary":
             self.statusBar().showMessage(f'"{name}" sent to the temporary patch and read back', 5000)
+            # edits made while it was being sent are not on the unit: only a patch equal to what was sent counts as in step
+            self._temp_synced = self._shown is not None and self._shown[1] == self._sent_snapshot
+            self._update_edit_hint()
         else:
             number = int(label.split(":")[1])
+            if self._shown is not None and self._shown[1].name == name:
+                self._original = self._shown[1].copy()  # what is shown is now what USER:number holds
+                self._update_patch_label()
             self.statusBar().showMessage(f'"{name}" written to USER:{number + 1:03d} and read back; the old patch is in {Path(backup_path).name}', 10000)
             if number < self.names_list.count():
                 item = self.names_list.item(number)

@@ -124,9 +124,9 @@ class JV1010Unit:
             if self.read_block(address, len(data)) != bytes(data):
                 raise UnitError(f"the unit does not hold what was written at {' '.join(f'{b:02X}' for b in address)} (the read-back differs)")
 
-    def write_param(self, base, block, key, value, tone=None):
-        """Set ONE parameter (a DT1 of just its bytes) in the patch at `base`. Returns the value actually sent (clamped to the range).
-        For a tone parameter pass `tone` 0-3. No read-back: this is the live-edit path (use `read_patch` to check)."""
+    def write_param(self, base, block, key, value, tone=None, verify=False):
+        """Set ONE parameter (a DT1 of just its bytes) in the patch at `base`. Returns the value actually sent (clamped to the range; the text for a name).
+        For a tone parameter pass `tone` 0-3. With `verify`, read the parameter's whole block back (one request) and check its bytes."""
         table = params.load_table()
         param = table.block(block).param(key)
         buffer = bytearray(table.block(block).size)
@@ -138,6 +138,12 @@ class JV1010Unit:
         else:
             offset = patch.tone_offset(tone)
         address = sysex.add_to_address(base, offset + param.offset)
-        self._send_dt1(sysex.dt1(address, params.param_bytes(buffer, param)))
+        wanted = params.param_bytes(buffer, param)
+        self._send_dt1(sysex.dt1(address, wanted))
+        if verify:
+            self._wait(sysex.PACKET_GAP_MS / 1000)
+            block_address = sysex.add_to_address(base, offset)
+            if params.param_bytes(self.read_block(block_address, table.block(block).size), param) != wanted:
+                raise UnitError(f"the unit did not take {param.name} (the read-back differs)")
         return sent
 

@@ -150,6 +150,8 @@ def build_params(rows, footnotes, block):
         p.update(parse_display(paren, lo, hi))
         if note is not None:
             p["footnote"] = note
+            if "display_text" not in p and re.fullmatch(r"C-1-Upper|Lower-G9", footnotes.get(note, "")):
+                p["display_text"] = "C-1 - G9"  # a keyboard range end: the footnote only says which other end bounds it, but the values are notes
             choices = parse_footnote_choices(footnotes.get(note, ""), lo, hi)
             if choices:
                 p["choices"] = choices

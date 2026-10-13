@@ -37,12 +37,12 @@ record what they find in `AGENTS.md` (measured vs. guessed, dated).
 
 ## Phase 3 - Patch editor
 
-- [ ] Patch list (USER 001-128 with names) with a working-copy model like AKAISDS: edits are local until sent.
-- [ ] Patch Common page: name, level/pan/analog feel, bend range, key assign/portamento, structure types, category.
-- [ ] Tone pages x4: wave (group/number/gain), FXM, delay, ranges, controller matrix, LFO 1/2, pitch / filter / level envelopes (draggable graphs), pan.
+- [x] Working copy: edits are local until sent/written, Revert Edits, a discard prompt. [ ] Patch list that opens a USER slot in the editor with one click, and Undo.
+- [x] Patch Common page (table-driven cards: Patch, Play, Structure, Controllers, EFX, Chorus, Reverb & Delay). Still plain controls: no knobs yet.
+- [x] Tone pages x4, table-driven (Wave, Ranges, Controllers, LFO 1/2, Pitch, Filter, Level, Pan, Output). [ ] Still to do: draggable pitch / filter / level envelope graphs.
 - [ ] EFX / chorus / reverb pages. **Needs the 40 EFX types' parameter tables** (the manual prints prm1-prm12 names and ranges per type; extend the extractor).
 - [ ] Wave names: the manual's waveform list (INT-A/INT-B, expansion boards) for the wave selector.
-- [ ] Live edit: a changed knob goes to the temporary patch on release (owner's rule from AKAISDS: live UI, MIDI on release).
+- [x] Live edit: each edit goes to the temporary patch on release, verified, when the shown patch is the one the unit is playing. [ ] Confirm single-parameter DT1 on patch parameters on the unit.
 
 ## Phase 4 - Library
 

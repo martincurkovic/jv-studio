@@ -342,3 +342,109 @@ def test_a_file_that_is_not_a_patch_is_refused_politely(writable, monkeypatch, t
     monkeypatch.setattr(QMessageBox, "information", lambda parent, title, text: shown.append(text) or QMessageBox.StandardButton.Ok)
     w.open_syx()
     assert shown == ["That file holds no JV-1010 patch."] and w._shown is None
+
+
+# -- the patch editor in the window ------------------------------------------------------------------------------------------
+
+
+def test_editing_the_temporary_patch_sends_each_edit_live_and_verified(env):
+    w, ports = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    w.editor.widget_for("patch_tone", "cutoff_frequency", 1).setValue(33)
+    w.worker.process_pending()
+    assert ports.respond.temporary.get("patch_tone", "cutoff_frequency", tone=1) == 33
+    assert w._is_dirty() and "(edited)" in w.patch_label.text() and "Sent to the unit" in w.statusBar().currentMessage()
+
+
+def test_a_name_edit_goes_live_too(env):
+    w, ports = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    box = w.editor.widget_for("patch_common", "patch_name")
+    box.setText("Live Name")
+    box.editingFinished.emit()
+    w.worker.process_pending()
+    assert ports.respond.temporary.name == "Live Name"
+
+
+def test_edits_to_a_patch_that_is_not_on_the_unit_stay_local_until_it_is_sent(env):
+    w, ports = connected(env)
+    w._read_user_from_item(type("I", (), {"data": lambda self, role: 4})())
+    w.worker.process_pending()
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(140)
+    w.worker.process_pending()
+    assert ports.respond.writes == [] and "Send to Temporary Patch" in w.edit_hint.text()
+    w.send_temporary()
+    w.worker.process_pending()
+    assert ports.respond.temporary.get("patch_common", "patch_tempo") == 140 and w._temp_synced
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(141)  # now it is in step: live
+    w.worker.process_pending()
+    assert ports.respond.temporary.get("patch_common", "patch_tempo") == 141
+
+
+def test_live_sending_can_be_switched_off(env):
+    w, ports = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    w.live_check.setChecked(False)
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(77)
+    w.worker.process_pending()
+    assert ports.respond.writes == [] and w._is_dirty()
+
+
+def test_a_unit_that_does_not_take_a_live_edit_switches_live_sending_off_once(env, monkeypatch):
+    w, ports = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    ports.respond.ignore_writes = True
+    warnings = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda parent, title, text: warnings.append(text) or QMessageBox.StandardButton.Ok)
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(77)
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(78)
+    w.worker.process_pending()
+    assert len(warnings) == 1 and not w.live_check.isChecked() and "Live sending is off" in warnings[0]
+
+
+def test_revert_goes_back_to_what_was_read(env, monkeypatch):
+    w, ports = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    w.live_check.setChecked(False)
+    original = w.editor.widget_for("patch_common", "patch_tempo").value()
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(original + 5)
+    assert w.btn_revert.isEnabled()
+    w.revert_edits()
+    assert not w._is_dirty() and w.editor.widget_for("patch_common", "patch_tempo").value() == original and "(edited)" not in w.patch_label.text()
+
+
+def test_reading_another_patch_over_edits_asks_first(env, monkeypatch):
+    w, ports = connected(env)
+    w.read_temporary()
+    w.worker.process_pending()
+    w.live_check.setChecked(False)
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(99)
+    asked = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: asked.append(a[2]) or QMessageBox.StandardButton.No)
+    w.read_temporary()
+    w.worker.process_pending()
+    assert asked and w.editor.widget_for("patch_common", "patch_tempo").value() == 99  # declined: still editing
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    w.read_temporary()
+    w.worker.process_pending()
+    assert not w._is_dirty()
+
+
+def test_writing_to_user_saves_the_edited_copy(writable, monkeypatch):
+    from jv1010editor.ui import main_window as mw
+
+    w, ports, answers, tmp_path, _ = writable
+    w.read_temporary()
+    w.worker.process_pending()
+    w.live_check.setChecked(False)
+    w.editor.widget_for("patch_common", "patch_tempo").setValue(111)
+    monkeypatch.setattr(mw.WriteUserDialog, "exec", lambda self: self.DialogCode.Accepted)
+    monkeypatch.setattr(mw.WriteUserDialog, "slot", lambda self: 2)
+    w.write_user()
+    w.worker.process_pending()
+    assert ports.respond.user[2].get("patch_common", "patch_tempo") == 111 and not w._is_dirty()

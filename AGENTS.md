@@ -56,6 +56,22 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
   those log lines: each is either a mistake in the manual-derived table, in the extractor, or a value the manual doesn't describe. Record what you find under "Findings log".**
 - "Share on GitHub" in the loopback results is hidden while `loopback_report.ISSUES_URL` is None (there is no public repository yet).
 
+## The patch editor (phase 3, first cut)
+
+- `ui/patch_editor.py` builds one tab per block (Common, Tone 1-4) FROM THE TABLE: `core/groups.py` says which card a parameter is on (prefix rules; `tests/test_groups.py` fails if a table
+  parameter lands on no card, so a re-extracted table can't silently drop one). A string is a line edit (12 chars), a choice/label list a `ChoiceCombo` (JV-1080-only choices are not offered,
+  but a value the unit holds that isn't offered is shown, never hidden), anything else a `ValueSpinBox` that shows the unit's own text (note names, +12, L30, OFF) via `params.format_value`
+  and parses it back. Wheel events only act with focus. Pages are built when their tab is first shown (building all five cost ~2.5 s per window in tests).
+- **The editor edits a `Patch` IN PLACE (the window's working copy) and never talks to the unit**; it emits `param_committed(block, key, tone, value)` once per user edit (a spin box on a step
+  or Enter, a combo on `activated`, a name on `editingFinished`), never while showing a patch (`_loading`). The window owns the rest.
+- **Live edit rule** (owner's: live UI, MIDI on release): an edit becomes a `write_param` job (a single-parameter DT1 to the TEMPORARY patch, then a read-back of that parameter's block) only
+  when `_temp_synced`: the shown patch was read from the temporary patch, or was sent with Send to Temporary Patch and unchanged since. Otherwise the unit is playing a different patch and a
+  lone parameter would make a hybrid, so the hint says "Send to Temporary Patch to hear your edits". A failed live write switches live sending off with ONE warning (queued edits fail too).
+  **Single-parameter DT1 on a patch parameter is still not proven on the unit** (the manual's own example is a performance parameter); Revert and the working copy mean nothing is lost if it isn't.
+- Edits are not stored anywhere until Write to USER (backup first) or Save as .syx. Reading or opening another patch over edits asks first (default No). "(edited)" marks the label.
+- Not done: draggable envelope graphs, EFX parameter names per type (the 12 `efx_parameter_n` are plain numbers: the manual's per-type tables are not extracted), wave names (Wave Number is a
+  number), Undo (only Revert), a patch list that edits USER slots in place.
+
 ## The parameter table
 
 - `tools/extract_params.py` reads the manual with `pdftotext -layout` (poppler) and self-checks every block: its parameters must cover bytes 0..size-1
@@ -127,6 +143,17 @@ Add dated entries as things are measured. Format: `- [hardware 2026-xx-xx] what 
 
 - [guess 2026-10-13] The owner bought the unit second hand and doesn't know whether the USER patches are the factory ones. The first thing to do on it: Back Up Unit (read-only),
   keep that file, then Read USER Patch Names and look at the stock check. Nothing about backup/restore/write has run on hardware yet.
+
+- [owner 2026-10-13] The unit's memory is battery backed (the manual p.5 says so; the service notes name it as a CR2032 on the main board, "BT1"), so a USER write survives power off.
+  The owner says the USER patches are "basically stock" (the stock check in the app is the way to see which differ). After the backup/restore/write work the owner reports "everything
+  seems to work so far" (no detail given: which of Send to Temporary, Write to USER, Back Up and Restore were tried is NOT recorded; ask before treating restore or system-block writes as proven).
+- [readme 2026-10-13, Roland System Update 1.02 (c)2000, README.TXT + 15 SMFs `_0000001`..`_0000014`, `_0000032`] **Firmware IS updated by SysEx, but not by anything this app does.** The program ROM is flash
+  (service notes, Feb 1999). The update is 15 Standard MIDI Files of Roland-format DT1 frames (`F0 41 11 6A 12 06 xx ..`: **device ID 11H, not the unit's 10H, addresses in an `06..` range
+  the manual's map doesn't list**; ~294 SysEx per file, 79,102 bytes each, checked by reading the files), played from a sequencer into MIDI IN after entering update mode at power-on:
+  Part 14, Category GUITAR/BASS, hold VOLUME+VALUE, release after 3 s, press VOLUME again, display "nid."; play the files in order; power off. Then a Factory Reset, which **erases all user
+  parameters** (so: Back Up Unit first, restore the USER patches after). The update area is not in `parameters.json` and nothing here writes there or should: a half-finished update can leave the
+  unit unbootable and the files are Roland's. The identity reply's software revision is `00 00 00 00`, so the app can't show the firmware version (the service test mode shows it on the 7-segment LED).
+  Not verified: whether the owner's unit is already on 1.02.
 
 ## Open questions
 

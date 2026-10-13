@@ -4,7 +4,7 @@ Request/reply code must never run twice at once on one connection (interleaved r
 crashed AKAISDS when a stale thread was garbage-collected mid-call. So: one `QThread` for the window's lifetime, a FIFO of jobs, results as signals.
 
 Reads: "temporary", "user" n (0-based), "names" (the 128 USER patch summaries), "backup" path [sections] (the whole user memory into a .syx).
-Writes (each verified by a read-back): "send_temporary" patch, "write_user" n patch (the slot's old contents are saved to `app_config.backups_dir()` FIRST and
+Writes (each verified by a read-back): "write_param" block key tone value (one parameter of the TEMPORARY patch: the live-edit path), "send_temporary" patch, "write_user" n patch (the slot's old contents are saved to `app_config.backups_dir()` FIRST and
 the write is abandoned if that fails), "restore" backup sections. `cancel()` stops a names read, a backup or a restore at the next block.
 While `is_idle()` is False the window must not open Settings or run a diagnostic: both close the connection the job is using.
 """
@@ -23,6 +23,7 @@ class UnitWorker(QThread):
     backup_done = Signal(str, int)  # path, bytes written
     restore_done = Signal(int)  # blocks written
     write_done = Signal(str, str, str)  # label ("temporary" or "user:N"), the patch name, the path of the automatic backup ("" for temporary)
+    param_written = Signal(str, str, int, object)  # block, key, tone (-1 for the common block), the value the unit holds
     cancelled = Signal(str, str)  # job label, what happened
     progress = Signal(int, int)
     failed = Signal(str, str)  # job label, a short message for the user
@@ -137,6 +138,10 @@ class UnitWorker(QThread):
             self._backup(job[1], job[2] if len(job) > 2 else memory.SECTIONS)
         elif kind == "restore":
             self._restore(job[1], job[2])
+        elif kind == "write_param":
+            _, block, key, tone, value = job
+            sent = self._unit().write_param(patch.TEMPORARY_BASE, block, key, value, tone=tone, verify=True)
+            self.param_written.emit(block, key, -1 if tone is None else tone, sent)
         elif kind == "send_temporary":
             self._unit().write_patch(patch.TEMPORARY_BASE, job[1])
             debug_log.get_logger().info(f"UnitWorker: wrote {job[1].name!r} to the temporary patch (read back identical)")
