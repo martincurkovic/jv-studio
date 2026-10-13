@@ -32,7 +32,7 @@ record what they find in `AGENTS.md` (measured vs. guessed, dated).
 - [x] Whole-unit Back Up / Restore (`core/memory.py`, `core/backup.py`): one `.syx`, selectable sections on restore, system settings last and off by default, read-back per block.
 - [x] Stock check: the USER patch names/key assign against the manual's factory list (a hint, not proof).
 - [ ] **Hardware, in this order:** (1) Back Up Unit and keep the file; (2) read the names, look at the stock check; (3) Send to Temporary Patch; (4) Write to USER on a slot you can spare, power-cycle, read it back; (5) Restore of USER patches only; (6) only then, System settings. Record each result in AGENTS.md.
-- [ ] Verify on hardware: the 129-byte tone as 128 + 1; the 20 ms gap; what happens in GM mode (the unit ignores RQ1/DT1 there); the identity reply's revision bytes.
+- [ ] Verify on hardware (the full ordered checklist is `hardware-test-plan.md`): the 129-byte tone as 128 + 1; the 20 ms gap; what happens in GM mode (the unit ignores RQ1/DT1 there); the identity reply's revision bytes.
 - [x] Backup before every USER write (`~/.jv-studio/backups/`), and an offer of a whole-unit backup before the first change of a session.
 
 ## Phase 3 - Patch editor
