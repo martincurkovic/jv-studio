@@ -120,7 +120,7 @@ def test_the_demo_window_uses_the_simulated_unit_and_never_lists_real_ports(qapp
     assert "demo" in window.windowTitle() and window.connection_label.isHidden() and window.btn_read_temporary.isEnabled()
     window.read_temporary()
     window.worker.process_pending()
-    assert window.patch_label.text() == 'the temporary patch: "St.Concert"'
+    assert window.patch_label.text() == 'Temporary patch · St.Concert'
     window.open_settings()
     assert told and "simulated" in told[0]
     window.read_names()

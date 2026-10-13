@@ -135,6 +135,18 @@ def test_voice_reserve_is_totalled(editor):
     assert editor.reserve_label.text() == "Total reserved: 30 of 64 voices"
 
 
+def test_the_voice_reserve_is_a_column_of_the_mixer_not_a_card_of_knobs(editor):
+    from jv_studio.ui.section_card import SectionCard
+
+    setup = editor.tabs.widget(3)
+    assert [c.title() for c in setup.findChildren(SectionCard)] == ["Performance"]
+    reserve = editor.widget_for(performance.COMMON, "voice_reserve_3")
+    assert reserve is editor._common["voice_reserve_3"] and isinstance(reserve, KnobControl) and reserve.name_label.isHidden()
+    reserve.setValue(12)
+    assert editor.working.get(performance.COMMON, "voice_reserve_3") == 12 and editor.seen[-1] == (performance.COMMON, "voice_reserve_3", -1, 12)
+    assert editor.reserve_label.text() == "Total reserved: 12 of 64 voices"
+
+
 def test_the_jv1080_only_settings_are_not_there(editor):
     assert "keyboard_mode" not in editor._common and "octave_shift" not in editor._detail and "transmit_volume" not in editor._detail
     assert "patch_number" not in editor._detail and "patch_group_id" not in editor._detail  # chosen by name instead

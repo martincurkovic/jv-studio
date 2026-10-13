@@ -1,6 +1,7 @@
 # The main window: restoring the saved ports, the connection card, and the hardware check.
 
 import pytest
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from fakes import FakeJV1010, FakePorts, silent
@@ -115,7 +116,7 @@ def test_reading_the_temporary_patch_fills_the_viewer(env):
     w.editor.tabs.setCurrentWidget(w.tree)  # the Raw Values tab is only filled while it shows
     w.read_temporary()
     w.worker.process_pending()
-    assert w.patch_label.text() == 'the temporary patch: "Init Patch"' and w.problems_label.isHidden() and w.problems_label.text() == ""
+    assert w.patch_label.text() == 'Temporary patch · Init Patch' and w.problems_label.isHidden() and w.problems_label.text() == ""
     assert [w.tree.topLevelItem(i).text(0) for i in range(w.tree.topLevelItemCount())] == ["Common", "Tone 1", "Tone 2", "Tone 3", "Tone 4"]
     assert w.tree.topLevelItem(0).childCount() == 62 and w.tree.topLevelItem(1).childCount() == 128 and w.save_action.isEnabled()
 
@@ -146,7 +147,7 @@ def test_the_user_names_are_listed_and_a_double_click_reads_that_patch(env):
     assert w.names_list.count() == 128 and w.names_list.item(4).text() == "005  User 005"
     w._read_user_from_item(w.names_list.item(4))
     w.worker.process_pending()
-    assert w.patch_label.text() == 'USER:005: "User 005"'
+    assert w.patch_label.text() == 'USER:005 · User 005'
     assert not w.names_progress.isVisible() and not w.btn_cancel.isVisible()
 
 
@@ -376,7 +377,7 @@ def test_edits_to_a_patch_that_is_not_on_the_unit_stay_local_until_it_is_sent(en
     w.worker.process_pending()
     w.editor.widget_for("patch_common", "patch_tempo").setValue(140)
     w.worker.process_pending()
-    assert ports.respond.writes == [] and "Send to Temporary Patch" in w.edit_hint.text()
+    assert ports.respond.writes == []  # (not on the temporary patch: nothing is sent live)
     w.send_temporary()
     w.worker.process_pending()
     assert ports.respond.temporary.get("patch_common", "patch_tempo") == 140 and w._temp_synced
@@ -564,7 +565,7 @@ def test_renaming_the_open_patch_reloads_it(listed):
     monkeypatch.setattr(mw.RenameDialog, "name", lambda self: "Renamed")
     w.rename_user(5)
     w.worker.process_pending()
-    assert 'USER:006: "Renamed"' in w.patch_label.text() and not w._is_dirty()
+    assert 'USER:006 · Renamed' in w.patch_label.text() and not w._is_dirty()
 
 
 def test_a_slot_with_unsent_edits_is_not_renamed_underneath_them(listed):
@@ -674,7 +675,7 @@ def test_reading_the_temporary_performance_fills_the_editor(env):
     w.read_temporary()  # routed to the performance panel
     w.worker.process_pending()
     panel = w.performance_panel
-    assert panel.label.text() == 'the temporary performance: "Live Rig"' and panel.problems_label.isHidden()
+    assert panel.label.text() == 'Temporary performance · Live Rig' and panel.problems_label.isHidden()
     assert panel.editor.widget_for("performance_part", "part_level", part=3, grid=True).value() == 99
     assert w.patch_label.text().startswith("No patch open")  # the patch side was not touched
     assert ports.respond.writes == []
@@ -687,7 +688,7 @@ def test_the_performance_names_list_and_opening_one(env):
     assert w.perf_list.count() == 32 and w.perf_list.item(4).text() == "05  Perf 05" and "32 USER performance names" in w.statusBar().currentMessage()
     w._open_perf_from_item(w.perf_list.item(4))
     w.worker.process_pending()
-    assert w.performance_panel.label.text() == 'USER performance 05: "Perf 05"' and w.names_list.count() == 0
+    assert w.performance_panel.label.text() == 'USER performance 05 · Perf 05' and w.names_list.count() == 0
 
 
 def test_live_edits_reach_the_temporary_performance_only_when_it_is_the_one_shown(env):
@@ -705,7 +706,7 @@ def test_live_edits_reach_the_temporary_performance_only_when_it_is_the_one_show
     w.worker.process_pending()
     panel.editor.widget_for("performance_common", "performance_tempo").setValue(140)
     w.worker.process_pending()
-    assert ports.respond.writes == [] and "Send to Temporary Performance" in panel.hint.text()  # a USER performance: edits stay local until sent
+    assert ports.respond.writes == []  # a USER performance: edits stay local until sent
     w.send_temporary()
     w.worker.process_pending()
     assert ports.respond.temp_performance.get("performance_common", "performance_tempo") == 140 and panel._temp_synced
@@ -793,7 +794,7 @@ def test_a_performance_write_does_not_look_like_a_patch_write(writable, monkeypa
     w.worker.process_pending()
     w.performance_panel.send_temporary()
     w.worker.process_pending()
-    assert w.patch_label.text().startswith('the temporary patch') and "(edited)" not in w.patch_label.text()
+    assert w.patch_label.text().startswith('Temporary patch') and "(edited)" not in w.patch_label.text()
     assert "temporary performance" in w.statusBar().currentMessage()
 
 
@@ -853,3 +854,43 @@ def test_the_raw_values_tab_shows_the_performance(env):
     w.worker.process_pending()
     panel.editor.tabs.setCurrentWidget(panel.tree)
     assert panel.tree.topLevelItemCount() == 17 and panel.tree.topLevelItem(0).text(0) == "Common" and panel.tree.topLevelItem(1).text(0) == "Part 1"
+
+
+def test_the_about_logo_uses_the_same_font_as_the_main_window_and_fits(env):
+    from PySide6.QtWidgets import QLabel
+
+    from jv_studio.ui.about_dialog import AboutDialog
+    from jv_studio.ui.ascii_logo import logo_font
+
+    _, session, _ = env
+    w = window(session)
+    d = AboutDialog()
+    logo = next(label for label in d.findChildren(QLabel) if label.text().startswith("     ██╗"))
+    assert logo.font().family() == w.lbl_logo.font().family() == logo_font().family() == "Menlo" and logo_font().pointSize() == 8  # (the size is set once, in logo_font)
+    assert d.minimumWidth() >= logo.sizeHint().width()
+    assert logo.alignment() & Qt.AlignmentFlag.AlignLeft and not logo.alignment() & Qt.AlignmentFlag.AlignHCenter  # centred, every line would shift on its own
+
+
+def test_the_mode_switch_is_a_segmented_control(env):
+    from jv_studio.ui.segmented import SegmentedControl
+
+    _, session, _ = env
+    w = window(session)
+    assert isinstance(w.mode_tabs, SegmentedControl) and w.mode_tabs.currentIndex() == 0
+    seen = []
+    w.mode_tabs.currentChanged.connect(seen.append)
+    w.mode_tabs._buttons[1].click()
+    assert w.mode_tabs.currentIndex() == 1 and seen == [1] and w._performance_mode()
+    w.mode_tabs.setCurrentIndex(0)
+    assert w.mode_tabs.currentIndex() == 0 and seen == [1, 0] and not w._performance_mode()
+    assert [b.property("segment") for b in w.mode_tabs._buttons] == ["first", "last"]
+
+
+def test_the_list_starts_as_wide_as_the_mode_switch_and_the_live_checkbox_is_short(env):
+    w, _ports = connected(env)
+    w.show()
+    QApplication.processEvents()
+    assert abs(w.names_list.width() - w.mode_tabs.width()) <= 4  # the list's right edge lines up with the switch's
+    assert w.live_check.text() == "Live edits" and not hasattr(w, "edit_hint")
+    assert abs(w.live_check.geometry().center().y() - w.btn_revert.geometry().center().y()) <= 4 and w.live_check.x() > w.btn_revert.x()  # on the button row, right of Revert Edits
+    assert w.performance_panel.live_check.text() == "Live edits" and not hasattr(w.performance_panel, "hint")
