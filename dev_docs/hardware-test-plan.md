@@ -44,6 +44,11 @@ Keep the log (`~/.jv-studio/jv-studio.log`) from the session. If anything surpri
 - [ ] Do the patch's apostrophe names (e.g. "Player's EP") read back exactly? (The manual prints typographic quotes; the unit stores ASCII.)
 - [ ] The identity reply's software revision is `00 00 00 00`; if the unit's service-mode version display is ever checked, note it.
 
+## 6b. Audition keyboard (reads and plain notes, nothing stored)
+- [ ] Open the bar (View > Audition Keyboard, Cmd+K). **From Unit**: the channel fills in and the note says Patch mode (or what is wrong).
+- [ ] Click a key and type A S D F: the unit plays; C/V change how hard. Panic silences a hung note.
+- [ ] Choose a patch in the box (and the arrows): the unit's display follows. Then **Read Temporary Patch**: it is the patch you just chose.
+
 ## 7. Firmware (optional, and the riskiest thing in the app: NEVER TRIED)
 Hardware > Update Firmware... exists, but nobody has run it on a unit. You do not have to. If you decide to: first note the unit's current version (service test mode shows it; the identity reply does not), back the unit up, run the loopback test in Settings
 with a MIDI cable from OUT to IN and see the **265-byte** row pass (the Midiplus 2x2 stopped at 256, so probably use a different interface), close everything else, then follow the dialog. Keep the log. Afterwards: Factory Reset, restore the backup.
