@@ -996,3 +996,92 @@ def test_refresh_all_needs_open_ports_and_an_idle_worker(env):
     assert not w.refresh_action.isEnabled()
     w.refresh_all()
     assert w.worker.is_idle()  # nothing was queued without ports
+
+
+# -- opening a file that holds many patches, some with wrong checksums -----------------------------------------------------------
+
+
+def a_librarian_bank(tmp_path):
+    from jv_studio.core import patch, sysex
+
+    names = ["Pad One", "Pad Two", "INIT PATCH", "Pad Three"]
+    stream = b""
+    for index, name in enumerate(names):
+        p = patch.Patch.minimum()
+        p.name = name
+        for offset, data in p.blocks():
+            raw = bytearray(sysex.dt1(sysex.add_to_address(patch.TEMPORARY_BASE, offset), bytes(data)))
+            if index >= 1:
+                raw[-2] = (raw[-2] + 2) % 128  # a tool that got the checksums wrong
+            stream += raw
+    path = tmp_path / "bank.syx"
+    path.write_bytes(stream)
+    return path
+
+
+def test_opening_a_bank_file_lists_its_patches_and_opens_the_chosen_one(writable, monkeypatch, tmp_path):
+    from PySide6.QtWidgets import QFileDialog
+
+    from jv_studio.ui import main_window as mw
+
+    w, ports, *_ = writable
+    path = a_librarian_bank(tmp_path)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(path), ""))
+    seen = {}
+
+    def choose(self):
+        seen["rows"] = [self.list.item(i).text() for i in range(self.list.count())]
+        seen["note"] = self.note.text()
+        seen["blank_box"] = (self.blank_check.isHidden(), self.blank_check.text())
+        self.list.setCurrentRow(2)  # "Pad Three"
+        return self.DialogCode.Accepted
+
+    monkeypatch.setattr(mw.PatchCollectionDialog, "exec", choose)
+    w.open_syx()
+    assert [r.split("    ")[0] for r in seen["rows"]] == ["001  Pad One", "002  Pad Two", "004  Pad Three"]  # the blank slot is hidden; numbers are the file's
+    assert "checksum repaired" not in seen["rows"][0] and "checksum repaired" in seen["rows"][1] and seen["blank_box"][0] is False and "1 blank" in seen["blank_box"][1]
+    assert "wrong checksums" in seen["note"] and "2 of the patches" in seen["note"]
+    assert w.patch_label.text().lower().startswith("bank.syx #4") and "Pad Three" in w.patch_label.text() and w._shown[2] == patch_base()
+    assert "wrong checksums" in w.statusBar().currentMessage() and ports.respond.writes == []
+    # what is sent or saved is rebuilt: correct checksums, tones in packets of at most 128 bytes
+    from jv_studio.core import sysex
+
+    assert all(sysex.parse(m) for m in w._shown[1].to_messages(w._shown[2]))
+
+
+def patch_base():
+    from jv_studio.core import patch
+
+    return patch.TEMPORARY_BASE
+
+
+def test_a_dialog_cancelled_opens_nothing(writable, monkeypatch, tmp_path):
+    from PySide6.QtWidgets import QFileDialog
+
+    from jv_studio.ui import main_window as mw
+
+    w, *_ = writable
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(a_librarian_bank(tmp_path)), ""))
+    monkeypatch.setattr(mw.PatchCollectionDialog, "exec", lambda self: self.DialogCode.Rejected)
+    w.open_syx()
+    assert w._shown is None
+
+
+def test_a_single_patch_file_with_a_wrong_checksum_opens_at_once_with_a_notice(writable, monkeypatch, tmp_path):
+    from PySide6.QtWidgets import QFileDialog
+
+    from jv_studio.core import patch, sysex
+
+    w, *_ = writable
+    p = patch.Patch.minimum()
+    p.name = "Slipped"
+    raw = bytearray(p.to_syx(patch.user_base(3)))
+    raw[20] ^= 0  # (unchanged data)
+    messages = sysex.split_messages(bytes(raw))
+    bad = bytearray(messages[0])
+    bad[-2] = (bad[-2] + 1) % 128
+    path = tmp_path / "one.syx"
+    path.write_bytes(bytes(bad) + b"".join(messages[1:]))
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(path), ""))
+    w.open_syx()
+    assert "Slipped" in w.patch_label.text() and "USER:004" in w.patch_label.text() and "wrong checksums" in w.statusBar().currentMessage()

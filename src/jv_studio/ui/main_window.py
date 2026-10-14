@@ -7,7 +7,6 @@ from PySide6.QtWidgets import (
     QApplication,
     QMenu,
     QCheckBox,
-    QInputDialog,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -24,7 +23,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, stock, sysex, unit, validate
+from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, patch_collection, stock, sysex, unit, validate
 from jv_studio.ui import theme
 from jv_studio.ui.about_dialog import AboutDialog
 from jv_studio.ui.audition_bar import AuditionBar
@@ -34,6 +33,7 @@ from jv_studio.ui.firmware_dialog import FirmwareDialog
 from jv_studio.ui.midi_session import MidiSession
 from jv_studio.ui.patch_editor import PatchEditor
 from jv_studio.ui.performance_panel import PerformancePanel
+from jv_studio.ui.patch_collection_dialog import PatchCollectionDialog
 from jv_studio.ui.rhythm_panel import RhythmPanel
 from jv_studio.ui.qt_helpers import item_heading, set_enabled_without_scrolling
 from jv_studio.ui.segmented import SegmentedControl
@@ -876,27 +876,28 @@ class MainWindow(QMainWindow):
         if not path:
             return
         try:
-            found = patch.parse_syx(Path(path).read_bytes())
-        except (OSError, sysex.SysexError) as e:
+            found = patch_collection.parse(Path(path).read_bytes())
+        except OSError as e:
             debug_log.get_logger().error(f"couldn't open {path}", exc_info=True)
             QMessageBox.critical(self, "Open", f"Couldn't read the file: {e}")
             return
-        if not found:
-            QMessageBox.information(self, "Open", "That file holds no JV-1010 patch.")
+        log = debug_log.get_logger()
+        log.info(f"opened {path}: {len(found.entries)} patch(es), {found.repaired} with a wrong checksum used as they are, {found.damaged} damaged, {found.blank} blank, "
+                 f"{found.incomplete} incomplete, {found.ignored} other message(s) ignored, {found.unusable} unusable")
+        if not found.entries or not (found.offered(show_blank=True)):
+            QMessageBox.information(self, "Open", "That file holds no JV-1010 patch." if not found.entries else "The patches in that file look damaged (wrong checksums and values outside the manual's ranges).")
             return
-        bases = list(found)
-        if len(bases) > 1:
-            names = [f"{self._base_title(b)}  {found[b].name}" for b in bases]
-            choice, ok = QInputDialog.getItem(self, "Open", f"The file holds {len(bases)} patches. Show:", names, 0, False)
-            if not ok:
-                return
-            base = bases[names.index(choice)]
+        if len(found.entries) == 1:
+            entry = found.entries[0]
         else:
-            base = bases[0]
-        chosen = found[base]
-        problems = validate.out_of_range(chosen)
-        self._show_patch("file", chosen, base, problems, f"{Path(path).name} ({self._base_title(base)})")
-        debug_log.get_logger().info(f"opened {path}: {len(bases)} patch(es), showing {chosen.name!r}")
+            dialog = PatchCollectionDialog(found, Path(path).name, self)
+            if dialog.exec() != PatchCollectionDialog.DialogCode.Accepted:
+                return
+            entry = dialog.chosen()
+        label = f"{Path(path).name} ({self._base_title(entry.base)})" if len(found.entries) == 1 else f"{Path(path).name} #{entry.index}"
+        self._show_patch("file", entry.patch, entry.base, entry.problems, label)
+        if entry.repaired:
+            self.statusBar().showMessage(f'Opened "{entry.patch.name.strip()}": the file had wrong checksums on it ({entry.repaired} of 5 messages); the values are in range, so it was used as it is.', 12000)
 
     @staticmethod
     def _base_title(base):

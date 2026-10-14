@@ -116,9 +116,10 @@ class IdentityReply:
         return self.is_roland() and self.family == MODEL_ID and self.family_number == 0x05
 
 
-def parse(message):
+def parse(message, check_checksum=True):
     """Parse one complete message (F0 ... F7). Returns a `Message` (RQ1/DT1 for the JV-1010) or an `IdentityReply`.
-    Raises `SysexError` for anything malformed, for another model, and for a bad checksum; `None` for valid sysex we don't handle."""
+    Raises `SysexError` for anything malformed, for another model, and for a bad checksum (unless `check_checksum` is False: for reading a file made by a tool that got the
+    checksums wrong, where the caller says so to the user); `None` for valid sysex we don't handle."""
     message = bytes(message)
     if len(message) < 3 or message[0] != 0xF0 or message[-1] != 0xF7:
         raise SysexError("not a complete sysex message")
@@ -133,7 +134,7 @@ def parse(message):
     if len(payload) < 5:
         raise SysexError("message too short")
     *content, received = payload
-    if checksum(content) != received:
+    if check_checksum and checksum(content) != received:
         raise SysexError("bad checksum")
     address = tuple(content[:4])
     if command == CMD_DT1:
