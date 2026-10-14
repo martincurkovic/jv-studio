@@ -16,6 +16,6 @@ def test_main_builds_and_shows_the_window_without_touching_real_midi(monkeypatch
     monkeypatch.setattr(app_main.diagnostics_ui, "install_dialog_logging", lambda: None)
     # a real MainWindow would start its worker thread, which nothing in a test stops
     real = app_main.MainWindow
-    monkeypatch.setattr(app_main, "MainWindow", lambda: real(start_worker=False))
+    monkeypatch.setattr(app_main, "MainWindow", lambda **kw: real(start_worker=False, **kw))
     assert app_main.main() == 0 and shown
     assert QApplication.instance().applicationName() == "JV Studio"

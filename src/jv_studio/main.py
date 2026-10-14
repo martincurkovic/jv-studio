@@ -45,9 +45,9 @@ def main(argv=None):
     theme.apply_to_app(app)
     if demo:
         session, _unit = demo_mode.build_demo()
-        window = MainWindow(session=session, demo=True)
+        window = MainWindow(session=session, demo=True, autoload=True)
     else:
-        window = MainWindow()
+        window = MainWindow(autoload=True)
     window.show()
     return app.exec()
 

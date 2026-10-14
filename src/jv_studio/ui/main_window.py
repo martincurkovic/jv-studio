@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
-    QSplitter,
     QStackedWidget,
     QTreeWidget,
     QTreeWidgetItem,
@@ -51,8 +50,12 @@ class MainWindow(QMainWindow):
     that write to the unit: Send to Temporary Patch and Write to USER (both read back; the second saves the slot's old patch first).
     The editor itself arrives in phase 3 (dev_docs/roadmap.md)."""
 
-    def __init__(self, session=None, worker=None, start_worker=True, demo=False):
+    def __init__(self, session=None, worker=None, start_worker=True, demo=False, autoload=False):
         super().__init__()
+        self._autoload_enabled = autoload  # read the names and the temporary patch / performance as soon as ports are open (the app turns it on; tests call what they need)
+        self._autoload_ports = None  # the (input, output) the last auto-load ran for: reopening the same ports after a diagnostic does not read again
+        self._autoload_steps = []  # [(job label, function that submits it)]
+        self._autoload_job = None  # the label of the auto-load job in flight: its failure is a status line, not a dialog (a silent unit at startup is not an alarm)
         self.demo = demo  # a simulated unit on a fake connection (`--demo`): no real ports are listed, chosen or opened
         self.setWindowTitle("JV Studio (demo)" if demo else "JV Studio")
         self.setMinimumSize(1100, 700)
@@ -61,6 +64,7 @@ class MainWindow(QMainWindow):
         self.session = session if session is not None else MidiSession()
         self.worker = worker if worker is not None else UnitWorker(self.session)
         self.session.changed.connect(self._refresh_connection)
+        self.session.changed.connect(self._maybe_autoload)
         self.worker.patch_read.connect(self._on_patch_read)
         self.worker.names_read.connect(self._on_names_read)
         self.worker.performance_names_read.connect(self._on_performance_names_read)
@@ -73,8 +77,10 @@ class MainWindow(QMainWindow):
         self.worker.cancelled.connect(self._on_cancelled)
         self.worker.param_written.connect(self._on_param_written)
         self.worker.progress.connect(self._on_progress)
+        self.worker.failed.connect(self._autoload_stop)
         self.worker.failed.connect(self._on_failed)
         self.worker.busy_changed.connect(self._refresh_connection)
+        self.worker.busy_changed.connect(self._autoload_next)
         self._shown = None  # (label, working Patch, base address); the patch is the WORKING COPY the editor changes; label is "temporary", "user:N" or "file"
         self._original = None  # what was read or opened, for Revert and for the "edited" mark
         self._sized_library = False
@@ -102,6 +108,7 @@ class MainWindow(QMainWindow):
         self._refresh_connection()
         if start_worker:
             self.worker.start()
+        self._maybe_autoload()  # (a demo session is open from the start; real ports were opened just above, before the worker existed to queue on)
 
     # -- layout ------------------------------------------------------------------------------------------------------------
 
@@ -259,7 +266,7 @@ class MainWindow(QMainWindow):
         library_layout.addWidget(self.library_header)
         library_layout.addWidget(self.btn_read_names)
         library_layout.addWidget(self.list_stack, 1)
-        library.setMinimumWidth(150)
+        self.library = library  # a fixed width, as wide as the Patches / Performances switch (set when first shown)
 
         patch_panel = QWidget()
         panel = QVBoxLayout(patch_panel)
@@ -312,13 +319,11 @@ class MainWindow(QMainWindow):
         self.right_stack.addWidget(patch_panel)
         self.right_stack.addWidget(self.performance_panel)
 
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.addWidget(library)
-        splitter.addWidget(self.right_stack)
-        splitter.setStretchFactor(1, 1)
-        splitter.setSizes([280, 760])  # (the left column is made as wide as the mode switch when the window is first shown)
-        splitter.setChildrenCollapsible(False)
-        self.splitter = splitter
+        body = QHBoxLayout()
+        body.setContentsMargins(0, 0, 0, 0)
+        body.setSpacing(0)
+        body.addWidget(library)
+        body.addWidget(self.right_stack, 1)
 
         central = QWidget()
         central_layout = QVBoxLayout(central)
@@ -335,7 +340,7 @@ class MainWindow(QMainWindow):
         mode_row.addWidget(self.mode_tabs)
         mode_row.addStretch()
         central_layout.addLayout(mode_row)
-        central_layout.addWidget(splitter, 1)
+        central_layout.addLayout(body, 1)
         self.audition = AuditionBar()  # the keyboard and patch browser along the bottom
         self.audition.set_demo(self.demo)
         self.audition.midi_out.connect(self._send_midi)
@@ -503,13 +508,57 @@ class MainWindow(QMainWindow):
 
     def read_names(self):
         if self._performance_mode():
-            self.perf_list.clear()
-            self._start_progress("Reading the USER performance names...")
-            self.worker.submit("perf_names")
-            return
+            self._read_performance_names()
+        else:
+            self._read_patch_names()
+
+    def _read_performance_names(self):
+        self.perf_list.clear()
+        self._start_progress("Reading the USER performance names...")
+        self.worker.submit("perf_names")
+
+    def _read_patch_names(self):
         self.names_list.clear()
         self._start_progress("Reading the USER patch names...")
         self.worker.submit("names")
+
+    # -- reading everything at startup -------------------------------------------------------------------------------------
+
+    def _maybe_autoload(self, *_):
+        """When ports are open (at startup, or newly chosen in Settings), read what is needed to start editing: the temporary patch, the USER patch and performance
+        names and the temporary performance, one job after another. Reads only; it stops at the first failure (a silent unit is not asked three more times)."""
+        if not self._autoload_enabled or not self.session.is_open:
+            return
+        ports = (self.session.input_name, self.session.output_name)
+        if ports == self._autoload_ports:
+            return
+        self._autoload_ports = ports
+        self._autoload_steps = [("temporary", self._autoload_patch), ("names", self._read_patch_names), ("perf_names", self._read_performance_names), ("perf_temporary", self._autoload_performance)]
+        self._autoload_next()
+
+    def _autoload_next(self, *_):
+        """The worker went idle: start the next step (a step that doesn't apply is skipped)."""
+        while self._autoload_steps and self.worker.is_idle():
+            self._autoload_job, step = self._autoload_steps.pop(0)
+            if step() is not False:
+                return
+        if not self._autoload_steps and self.worker.is_idle():
+            self._autoload_job = None
+
+    def _autoload_stop(self, *_):
+        self._autoload_steps.clear()
+
+    def _autoload_patch(self):
+        if self._shown is not None and self._is_dirty():  # never over someone's edits
+            return False
+        self.statusBar().showMessage("Reading the temporary patch...")
+        self.worker.submit("temporary")
+
+    def _autoload_performance(self):
+        if self.performance_panel.has_shown() and self.performance_panel.is_dirty():
+            return False
+        self.statusBar().showMessage("Reading the temporary performance...")
+        self.worker.submit("perf_temporary")
 
     def _start_progress(self, message):
         self._long_job = True
@@ -556,6 +605,12 @@ class MainWindow(QMainWindow):
                 self._temp_synced = False
                 debug_log.get_logger().warning(f"live edit failed, live sending switched off: {message}")
                 QMessageBox.warning(self, "JV-1010", f"{message}\n\nLive sending is off. Send to Temporary Patch to try again.")
+            self._refresh_connection()
+            return
+        if label == self._autoload_job:
+            self._autoload_job = None
+            debug_log.get_logger().warning(f"auto-load of {label} failed: {message}")
+            self.statusBar().showMessage(f"Couldn't read the unit at startup: {message}", 12000)
             self._refresh_connection()
             return
         self.statusBar().showMessage(message)
@@ -1056,10 +1111,9 @@ class MainWindow(QMainWindow):
 
     def showEvent(self, event):
         super().showEvent(event)
-        if not self._sized_library:  # once: the list starts as wide as the Patches / Performances switch (the user can still drag the divider)
+        if not self._sized_library:  # once: the list is as wide as the Patches / Performances switch
             self._sized_library = True
-            left = self.mode_tabs.sizeHint().width() + 21  # the switch's left margin (15) less the list's (15), plus the list's right margin (6)
-            self.splitter.setSizes([left, max(1, self.splitter.width() - left)])
+            self.library.setFixedWidth(self.mode_tabs.sizeHint().width() + 21)  # the switch's left margin (15) less the list's (15), plus the list's right margin (6)
 
     def closeEvent(self, event):
         if self._firmware_running:

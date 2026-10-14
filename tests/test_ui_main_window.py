@@ -151,6 +151,54 @@ def test_the_user_names_are_listed_and_a_double_click_reads_that_patch(env):
     assert not w.names_progress.isVisible() and not w.btn_cancel.isVisible()
 
 
+def test_opening_the_ports_reads_everything_needed_to_start_editing(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session, autoload=True)
+    w.worker.process_pending()  # the four reads run one after another
+    assert w.patch_label.text() == 'Temporary patch · Init Patch' and w._temp_synced
+    assert w.names_list.count() == 128 and w.perf_list.count() == 32
+    assert w.performance_panel.label.text().startswith("Temporary performance") and ports.respond.writes == []
+    assert not w._autoload_steps and not w._long_job
+
+
+def test_the_auto_load_runs_once_per_set_of_ports_and_never_over_edits(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session, autoload=True)
+    w.worker.process_pending()
+    w._shown[1].name = "Mine"  # an edit the user has not stored
+    w._maybe_autoload()  # same ports (a diagnostic closed and reopened them): nothing is read again
+    assert w.worker.is_idle()
+    w._autoload_ports = None  # new ports: the names are read again, the edited patch is left alone
+    w._maybe_autoload()
+    w.worker.process_pending()
+    assert w._shown[1].name == "Mine" and w.names_list.count() == 128
+
+
+def test_the_auto_load_stops_at_the_first_failure(env):
+    ports, session, _ = env
+    ports.respond.gm_mode = True  # a unit that answers nothing
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session, autoload=True)
+    w.worker.process_pending()
+    assert not w._autoload_steps and w.names_list.count() == 0 and w.worker.is_idle()
+    assert "at startup" in w.statusBar().currentMessage()  # a status line, not a dialog (a dialog would have blocked this test)
+
+
+def test_without_the_switch_nothing_is_read_at_startup(env):
+    _, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session)
+    assert w.worker.is_idle() and w.names_list.count() == 0
+
+
+def test_the_patch_list_has_a_fixed_width_matching_the_mode_switch(env):
+    w, _ = connected(env)
+    w.show()
+    assert w.library.minimumWidth() == w.library.maximumWidth() == w.mode_tabs.sizeHint().width() + 21
+
+
 def test_nothing_is_written_while_looking(env):
     w, ports = connected(env)
     w.read_temporary()
