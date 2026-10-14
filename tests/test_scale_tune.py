@@ -206,8 +206,7 @@ def test_apply_lists_the_scale_changes_warns_when_the_switch_is_off_and_the_unit
 def test_with_the_switch_on_there_is_no_such_warning_and_a_settings_change_goes_with_it(win):
     w, fake, asked = win
     d = w.system_dialog
-    d.editor.widget_for("scale_tune_switch").setCurrentIndex(1)
-    d.editor.widget_for("scale_tune_switch").activated.emit(1)
+    d.editor.widget_for("scale_tune_switch").click()  # the check box: on
     d.scale_editor._knobs[0].setValue(scale_tune.cents_to_raw(5))
     d.apply()
     text = asked[-1][1]

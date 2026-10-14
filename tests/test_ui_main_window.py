@@ -35,14 +35,14 @@ def window(session, **kwargs):
 def test_a_fresh_install_has_no_ports_and_cannot_detect(env):
     _, session, _ = env
     w = window(session)
-    assert "No MIDI ports are open" in w.connection_label.text() and not w.btn_detect.isEnabled() and not w.detect_action.isEnabled()
+    assert "No MIDI ports are open" in w.connection_label.text() and not w.detect_action.isEnabled() and not hasattr(w, "btn_detect")  # (Detect is a menu item only)
 
 
 def test_the_saved_ports_are_reopened_at_startup(env):
     _, session, _ = env
     app_config.save_ports("JV In", "JV Out")
     w = window(session)
-    assert session.is_open and w.connection_label.isHidden() and w.btn_detect.isEnabled()  # the ports are not printed in the window
+    assert session.is_open and w.connection_label.isHidden() and w.detect_action.isEnabled()  # the ports are not printed in the window
 
 
 def test_saved_ports_the_system_no_longer_offers_are_not_opened(env):
@@ -61,12 +61,12 @@ def test_a_saved_port_that_fails_to_open_is_survivable(env):
 
 
 def test_detecting_shows_what_the_unit_said(env):
-    _, session, _ = env
+    _, session, messages = env
     app_config.save_ports("JV In", "JV Out")
     w = window(session)
     w.detect_hardware()
-    assert "Roland JV-1010 found" in w.detect_results_label.text() and 'Temporary patch: "Init Patch"' in w.detect_results_label.text()
-    assert w.btn_detect.isEnabled() and w.btn_detect.text() == "Detect JV-1010" and w.statusBar().currentMessage() == "JV-1010 found"
+    assert "Roland JV-1010 found" in messages[-1][1] and 'Temporary patch: "Init Patch"' in messages[-1][1] and messages[-1][0] == "Detect JV-1010"
+    assert w.detect_action.isEnabled() and w.statusBar().currentMessage() == "JV-1010 found" and not hasattr(w, "detect_results_label")
 
 
 def test_detecting_with_nothing_connected_says_so(env):
@@ -77,13 +77,13 @@ def test_detecting_with_nothing_connected_says_so(env):
 
 
 def test_no_reply_is_reported_in_the_window(env, monkeypatch):
-    ports, session, _ = env
+    ports, session, messages = env
     ports.respond = silent
     monkeypatch.setattr(midi_diagnostics, "RECEIVE_TIMEOUT", 0.05)
     app_config.save_ports("JV In", "JV Out")
     w = window(session)
     w.detect_hardware()
-    assert "No reply" in w.detect_results_label.text() and w.statusBar().currentMessage() == "No JV-1010 found"
+    assert "No reply" in messages[-1][1] and w.statusBar().currentMessage() == "No JV-1010 found"
 
 
 def test_closing_the_window_closes_the_ports(env):
@@ -453,7 +453,7 @@ def test_editing_the_temporary_patch_sends_each_edit_live_and_verified(env):
     w.editor.widget_for("patch_tone", "cutoff_frequency", 1).setValue(33)
     w.worker.process_pending()
     assert ports.respond.temporary.get("patch_tone", "cutoff_frequency", tone=1) == 33
-    assert w._is_dirty() and "(edited)" in w.patch_label.text() and "Sent to the unit" in w.statusBar().currentMessage()
+    assert w._is_dirty() and "● edited" in w.patch_label.text() and "Sent to the unit" in w.statusBar().currentMessage()
 
 
 def test_a_name_edit_goes_live_too(env):
@@ -514,7 +514,7 @@ def test_revert_goes_back_to_what_was_read(env, monkeypatch):
     w.editor.widget_for("patch_common", "patch_tempo").setValue(original + 5)
     assert w.btn_revert.isEnabled()
     w.revert_edits()
-    assert not w._is_dirty() and w.editor.widget_for("patch_common", "patch_tempo").value() == original and "(edited)" not in w.patch_label.text()
+    assert not w._is_dirty() and w.editor.widget_for("patch_common", "patch_tempo").value() == original and "edited" not in w.patch_label.text()
 
 
 def test_reading_another_patch_over_edits_asks_first(env, monkeypatch):
@@ -731,7 +731,7 @@ def test_controls_explain_themselves_in_tooltips(env):
     assert "tempo" in tempo.toolTip().lower() and "Range: 20 to 250" in tempo.toolTip() and "Drag to turn" in tempo.toolTip()
     cutoff = w.editor.widget_for("patch_tone", "cutoff_frequency", 0)
     assert "cutoff" in cutoff.toolTip().lower()
-    assert w.btn_detect.toolTip() and w.btn_settings.toolTip() and w.btn_send.toolTip() and w.btn_write.toolTip()
+    assert w.btn_settings.toolTip() and w.btn_send.toolTip() and w.btn_write.toolTip()
     key_assign = w.editor.widget_for("patch_common", "key_assign_mode")
     assert "POLY" in key_assign.toolTip()
 
@@ -758,7 +758,7 @@ def test_the_mode_tabs_swap_the_list_the_editor_and_the_menu_wording(env):
     assert not w._performance_mode() and w.library_header.text() == "USER Patches" and w.open_action.text() == "Open Patch .syx..."
     w.mode_tabs.setCurrentIndex(1)
     assert w._performance_mode() and w.list_stack.currentWidget() is w.perf_list and w.right_stack.currentWidget() is w.performance_panel
-    assert w.library_header.text() == "USER Performances" and w.btn_read_names.text() == "Read Performance Names"
+    assert w.library_header.text() == "USER Performances" and not hasattr(w, "btn_read_names")
     assert w.open_action.text() == "Open Performance .syx..." and w.read_action.text() == "Read Temporary Performance" and w.send_action.text() == "Send to Temporary Performance"
     w.mode_tabs.setCurrentIndex(0)
     assert w.list_stack.currentWidget() is w.names_list and w.save_action.text() == "Save Patch as .syx..."
@@ -794,7 +794,7 @@ def test_live_edits_reach_the_temporary_performance_only_when_it_is_the_one_show
     panel = w.performance_panel
     panel.editor.widget_for("performance_part", "part_level", part=5, grid=True).setValue(88)
     w.worker.process_pending()
-    assert ports.respond.temp_performance.get("performance_part", "part_level", part=5) == 88 and panel.is_dirty() and "(edited)" in panel.label.text()
+    assert ports.respond.temp_performance.get("performance_part", "part_level", part=5) == 88 and panel.is_dirty() and "● edited" in panel.label.text()
     ports.respond.writes.clear()
     panel.revert_edits()  # (the edit above is on the unit already; reverting only changes what is shown)
     w._open_perf_from_item(type("I", (), {"data": lambda self, role: 6})())
@@ -890,7 +890,7 @@ def test_a_performance_write_does_not_look_like_a_patch_write(writable, monkeypa
     w.worker.process_pending()
     w.performance_panel.send_temporary()
     w.worker.process_pending()
-    assert w.patch_label.text().startswith('Temporary patch') and "(edited)" not in w.patch_label.text()
+    assert w.patch_label.text().startswith('Temporary patch') and "edited" not in w.patch_label.text()
     assert "temporary performance" in w.statusBar().currentMessage()
 
 

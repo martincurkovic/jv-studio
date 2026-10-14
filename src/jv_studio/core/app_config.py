@@ -105,6 +105,17 @@ def save_middle_c(octave):
     save_config(config)
 
 
+def get_show_raw_values():
+    """Whether the Raw Values tabs (every value as the unit holds it: a developer's view) are shown. Off unless asked for."""
+    return load_config().get("show_raw_values") is True
+
+
+def save_show_raw_values(shown):
+    config = load_config()
+    config["show_raw_values"] = bool(shown)
+    save_config(config)
+
+
 def demo_backup_path():
     """Where `--demo` looks for a whole-unit backup (`.syx` from File > Back Up Unit) to fill the simulated unit with: the owner's own unit, for realism. It stays on the machine (it is
     Roland's factory sounds plus whatever the owner stored), never in the repo or an app bundle. Absent = the built-in demo contents. Read at call time so tests can redirect it."""

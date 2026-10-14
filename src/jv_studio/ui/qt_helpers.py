@@ -158,6 +158,19 @@ def build_two_column_page(cards, weights):
 
 
 def item_heading(where, name, edited):
-    """The line over an open patch or performance: 'Temporary patch · St.Concert', 'USER:005 · My Lead  (edited)'."""
+    """The line over an open patch or performance: 'Temporary patch · St.Concert', 'USER:005 · My Lead  ● edited'."""
     where = where.removeprefix("the ")
-    return f"{where[:1].upper()}{where[1:]} · {name}" + ("  (edited)" if edited else "")
+    return f"{where[:1].upper()}{where[1:]} · {name}" + ("  ● edited" if edited else "")
+
+
+def set_style_property(widget, name, value):
+    """Set a dynamic property a stylesheet rule keys on (`QPushButton[primary="true"]`) and restyle the widget, only when it changed."""
+    if widget.property(name) != value:
+        widget.setProperty(name, value)
+        widget.style().unpolish(widget)
+        widget.style().polish(widget)
+
+
+def set_primary(button, on):
+    """The accent colour for the one button that is the likely next step (Write to USER while there are unsent edits)."""
+    set_style_property(button, "primary", "true" if on else "false")

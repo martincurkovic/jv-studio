@@ -26,7 +26,8 @@ from PySide6.QtWidgets import (
 from jv_studio.core import groups, params, patch_groups, performance
 from jv_studio.ui.efx import apply_efx_meanings
 from jv_studio.ui.knob_control import KnobControl
-from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, ChoiceCombo, PatchEditor
+from jv_studio.ui.choice_controls import ChoiceCombo, SwitchBox, check_grid, make_choice_control
+from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, PatchEditor
 from jv_studio.ui.patch_picker import PatchPickerDialog
 from jv_studio.ui.qt_helpers import FullWidthTabBar, build_editor_card, build_scroll_area, build_two_column_page
 
@@ -78,10 +79,11 @@ class PerformanceEditor(QWidget):
             control.editingFinished.connect(lambda w=control, p=param: self._name_edited(w, p))
             is_knob = False
         elif param.has_choices():
-            control = ChoiceCombo(param)
-            control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-            control.setMinimumContentsLength(4 if param.key == "midi_channel" else 7)
-            control.activated.connect(lambda _i, w=control, b=block_key, pt=part, p=param: self._edited(b, pt, p, w.currentData()))
+            control = make_choice_control(param, allow_toggle=show_name)  # (the Parts grid's small output box stays a box)
+            if isinstance(control, ChoiceCombo):
+                control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+                control.setMinimumContentsLength(4 if param.key == "midi_channel" else 7)
+            control.edited.connect(lambda v, b=block_key, pt=part, p=param: self._edited(b, pt, p, v))
             is_knob = False
         else:
             control = KnobControl(param, compact=compact, show_name=show_name, knob_size=knob_size)
@@ -100,17 +102,21 @@ class PerformanceEditor(QWidget):
         grid.setVerticalSpacing(6)
         compact = sum(1 for p in members if not p.string and not p.has_choices()) >= COMPACT_FROM
         knobs = 0
+        checks = []  # the card's ON/OFF parameters
         for param in members:
             control, is_knob = self._make_control(block_key, part, param, compact=compact)
             register[param.key] = control
+            if isinstance(control, SwitchBox):
+                checks.append(control)
+                continue
             if is_knob:
                 grid.addWidget(control, knobs // KNOBS_PER_ROW, knobs % KNOBS_PER_ROW, Qt.AlignmentFlag.AlignTop)
                 knobs += 1
             else:
                 form.addRow(param.name.replace("&", "&&"), control)
                 form.labelForField(control).setToolTip(control.toolTip())
-        rows = [layout_ for layout_, used in ((form, form.rowCount()), (grid, knobs)) if used] + list(extra_rows)
-        weight = form.rowCount() + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2
+        rows = [layout_ for layout_, used in ((check_grid(checks), checks), (form, form.rowCount()), (grid, knobs)) if used] + list(extra_rows)
+        weight = form.rowCount() + -(-len(checks) // 2) + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2
         return build_editor_card(scope, title, *rows, key=title), weight
 
     def _cards_page(self, block_key, titles, scope, extra_rows=None):
@@ -219,6 +225,13 @@ class PerformanceEditor(QWidget):
         outer.addWidget(area, 1)
         return holder
 
+    def set_extra_tab_visible(self, widget, visible):
+        index = self.tabs.indexOf(widget)
+        if index >= 0:
+            if not visible and self.tabs.currentIndex() == index:
+                self.tabs.setCurrentIndex(0)
+            self.tabs.setTabVisible(index, visible)
+
     def add_extra_tab(self, widget, title):
         """Add a tab after the editor's own pages (the window's raw-values view)."""
         self.tabs.addTab(widget, title)
@@ -259,7 +272,7 @@ class PerformanceEditor(QWidget):
         value = self._perf.get(block_key, key, part=part)
         if isinstance(control, QLineEdit):
             control.setText(value)
-        elif isinstance(control, ChoiceCombo):
+        elif hasattr(control, "set_raw"):  # a check box, two buttons or a drop-down
             control.set_raw(value)
         elif isinstance(control, QCheckBox):
             control.setChecked(bool(value))

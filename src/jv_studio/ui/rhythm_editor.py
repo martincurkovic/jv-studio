@@ -25,7 +25,8 @@ from jv_studio.core import groups, params, rhythm, waves
 from jv_studio.ui.envelope_graph import GRAPH_FOR_CARD
 from jv_studio.ui.keyboard import KeySelector
 from jv_studio.ui.knob_control import KnobControl, origin_value
-from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, ChoiceCombo, PatchEditor, SwitchBox
+from jv_studio.ui.choice_controls import ChoiceCombo, SwitchBox, check_grid, make_choice_control
+from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, PatchEditor
 from jv_studio.ui.qt_helpers import FullWidthTabBar, build_editor_card, build_two_column_page
 from jv_studio.ui.wave_picker import WavePickerDialog
 
@@ -110,6 +111,13 @@ class RhythmEditor(QWidget):
 
     # -- building --------------------------------------------------------------------------------------------------------
 
+    def set_extra_tab_visible(self, widget, visible):
+        index = self.tabs.indexOf(widget)
+        if index >= 0:
+            if not visible and self.tabs.currentIndex() == index:
+                self.tabs.setCurrentIndex(0)
+            self.tabs.setTabVisible(index, visible)
+
     def add_extra_tab(self, widget, title):
         self.tabs.addTab(widget, title)
 
@@ -128,13 +136,19 @@ class RhythmEditor(QWidget):
             compact = sum(1 for p in members if not p.string and not p.has_choices()) >= COMPACT_FROM
             knobs = 0
             header = []
+            checks = []
             if title == "Wave":
                 form.addRow("Wave", self._wave_row())
             for param in members:
                 control, is_knob = self._make_control(param, compact)
                 self._widgets[param.key] = control
                 if param.key == "tone_switch":  # on/off in the card's heading, as on a patch's tones
+                    control.setText("On")
+                    control.setToolTip(control.toolTip() + "\nOff: this key makes no sound (its wave and settings are kept).")
                     header.append(control)
+                    continue
+                if isinstance(control, SwitchBox):
+                    checks.append(control)
                     continue
                 if is_knob:
                     grid.addWidget(control, knobs // KNOBS_PER_ROW, knobs % KNOBS_PER_ROW, Qt.AlignmentFlag.AlignTop)
@@ -142,7 +156,7 @@ class RhythmEditor(QWidget):
                 else:
                     form.addRow(param.name.replace("&", "&&"), control)
                     form.labelForField(control).setToolTip(control.toolTip())
-            rows = [layout_ for layout_, used in ((form, form.rowCount()), (grid, knobs)) if used]
+            rows = [layout_ for layout_, used in ((check_grid(checks), checks), (form, form.rowCount()), (grid, knobs)) if used]
             if title in GRAPH_FOR_CARD:
                 rows.insert(0, self._graph_row(GRAPH_FOR_CARD[title]))
             cards.append(build_editor_card("rhythm_editor", title, *rows, header_widgets=header))
@@ -184,16 +198,12 @@ class RhythmEditor(QWidget):
         return row
 
     def _make_control(self, param, compact):
-        if param.key == "tone_switch":
-            control = SwitchBox(param)
-            control.clicked.connect(lambda checked, p=param: self._edited(p, 1 if checked else 0))
-            control.setToolTip(PatchEditor._tooltip(rhythm.NOTE, param, False) + "\nOff: this key makes no sound (its wave and settings are kept).")
-            return control, False
         if param.has_choices():
-            control = ChoiceCombo(param)
-            control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-            control.setMinimumContentsLength(7)
-            control.activated.connect(lambda _i, w=control, p=param: self._edited(p, w.currentData()))
+            control = make_choice_control(param)
+            if isinstance(control, ChoiceCombo):
+                control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+                control.setMinimumContentsLength(7)
+            control.edited.connect(lambda v, p=param: self._edited(p, v))
             is_knob = False
         else:
             control = KnobControl(param, compact=compact)
@@ -243,7 +253,7 @@ class RhythmEditor(QWidget):
             self.name_edit.setText(self._set.name)
             for key, widget in self._widgets.items():
                 value = self._set.get(rhythm.NOTE, key, key=self._key)
-                if isinstance(widget, ChoiceCombo):
+                if hasattr(widget, "set_raw"):
                     widget.set_raw(value)
                 else:
                     widget.set_value(value)

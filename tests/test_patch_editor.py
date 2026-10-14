@@ -62,15 +62,17 @@ def test_the_common_block_reports_tone_minus_one(editor):
 
 
 def test_a_combo_edit_stores_the_raw_value(editor):
-    combo = editor.widget_for(patch.COMMON, "key_assign_mode")
-    assert isinstance(combo, ChoiceCombo) and [combo.itemText(i) for i in range(combo.count())] == ["Poly", "Solo"]
-    combo.setCurrentIndex(1)
-    combo.activated.emit(1)
-    assert editor.working.get(patch.COMMON, "key_assign_mode") == 1 and editor.seen[-1][3] == 1
+    combo = editor.widget_for(patch.COMMON, "voice_priority")
+    assert isinstance(combo, ChoiceCombo) is False  # (two options: two buttons)
+    combo = editor.widget_for(patch.COMMON, "patch_category")
+    assert isinstance(combo, ChoiceCombo) and combo.itemText(0) == "No Assign" and combo.count() == 39
+    combo.setCurrentIndex(5)
+    combo.activated.emit(5)
+    assert editor.working.get(patch.COMMON, "patch_category") == 5 and editor.seen[-1][3] == 5
 
 
 def test_programmatic_selection_in_a_combo_is_not_an_edit(editor):
-    editor.widget_for(patch.COMMON, "key_assign_mode").setCurrentIndex(1)
+    editor.widget_for(patch.COMMON, "patch_category").setCurrentIndex(1)
     assert editor.seen == []
 
 

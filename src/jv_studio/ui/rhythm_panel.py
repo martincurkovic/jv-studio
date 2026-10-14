@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
 
 from jv_studio.core import app_config, audition, debug_log, params, rhythm, sysex, validate
 from jv_studio.ui import theme
-from jv_studio.ui.qt_helpers import item_heading
+from jv_studio.ui.qt_helpers import item_heading, set_primary
 from jv_studio.ui.rhythm_editor import RhythmEditor
 from jv_studio.ui.unit_dialogs import SlotDialog
 
@@ -120,6 +120,7 @@ class RhythmPanel(QWidget):
             self.tree = QTreeWidget()  # the editor's last tab: every value of the shown key and the common block, as the unit holds them
             self.tree.setHeaderLabels(["Parameter", "Value", "Raw"])
             self.editor.add_extra_tab(self.tree, "Raw Values")
+            self.editor.set_extra_tab_visible(self.tree, self.host.show_raw_values())
             self.editor.tabs.currentChanged.connect(lambda _i: self._refresh_tree_if_shown())
             self.editor.key_changed.connect(lambda _k: self._refresh_tree_if_shown())
             self._layout.addWidget(self.editor, 1)
@@ -132,6 +133,10 @@ class RhythmPanel(QWidget):
         super().showEvent(event)
 
     # -- state the window needs --------------------------------------------------------------------------------------------
+
+    def apply_raw_visibility(self):
+        if self.editor is not None:
+            self.editor.set_extra_tab_visible(self.tree, self.host.show_raw_values())
 
     def has_shown(self):
         return self._shown is not None
@@ -438,3 +443,4 @@ class RhythmPanel(QWidget):
         self.btn_send.setEnabled(ready and self._shown is not None)
         self.btn_write.setEnabled(ready and self._shown is not None)
         self.btn_revert.setEnabled(self._shown is not None and self.is_dirty())
+        set_primary(self.btn_write, self.is_dirty())

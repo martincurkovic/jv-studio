@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QTimer, Qt
-from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence
+from PySide6.QtGui import QAction, QBrush, QColor, QIcon, QKeySequence, QPixmap, QPainter
 from PySide6.QtWidgets import (
     QApplication,
     QMenu,
@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QListWidget,
     QListWidgetItem,
     QMainWindow,
@@ -34,6 +35,7 @@ from jv_studio.ui.midi_session import MidiSession
 from jv_studio.ui.patch_editor import PatchEditor
 from jv_studio.ui.performance_panel import PerformancePanel
 from jv_studio.ui.patch_collection_dialog import PatchCollectionDialog
+from jv_studio.ui.qt_helpers import set_primary, set_style_property
 from jv_studio.ui.rhythm_panel import RhythmPanel
 from jv_studio.ui.qt_helpers import item_heading, set_enabled_without_scrolling
 from jv_studio.ui.segmented import SegmentedControl
@@ -43,6 +45,7 @@ from jv_studio.ui.unit_dialogs import RenameDialog, RestoreDialog, SlotDialog, W
 from jv_studio.ui.unit_worker import UnitWorker
 
 
+LOGO_PIXELS = 10  # the logo's text size in the window (About shows it at full size, 13 px): smaller leaves the editor more of the height
 STATUS_BAR_MARGIN = 12  # px: the status bar's text keeps this far from the window's sides (and so from its rounded corners)
 
 
@@ -56,6 +59,8 @@ class MainWindow(QMainWindow):
         self._autoload_enabled = autoload  # read the names and the temporary patch / performance as soon as ports are open (the app turns it on; tests call what they need)
         self._autoload_ports = None  # the (input, output) the last auto-load ran for: reopening the same ports after a diagnostic does not read again
         self._autoload_steps = []  # [(job label, function that submits it)]
+        self._unit_silent = False  # the last read got no answer at all (the connection pill says so)
+        self._playing_user = None  # the USER patch (0-127) the unit is known to be playing: marked in the list
         self._sound_mode = None  # the unit's sound mode (0 performance, 1 patch, 2 GM) as of the last System read; None until one
         self._audition_timer = QTimer(self)  # a patch chosen in the audition bar is read back this long after the LAST choice (scrubbing with , and . must not read every patch)
         self._audition_timer.setSingleShot(True)
@@ -220,6 +225,12 @@ class MainWindow(QMainWindow):
         self.audition_action.setToolTip("Show or hide the keyboard along the bottom. Hidden, it plays nothing.")
         self.audition_action.triggered.connect(lambda checked: self.audition.set_open(checked, focus=checked))
         view_menu.addAction(self.audition_action)
+        self.raw_action = QAction("Show Raw Values", self)
+        self.raw_action.setCheckable(True)
+        self.raw_action.setChecked(app_config.get_show_raw_values())
+        self.raw_action.setToolTip("A tab with every value as the unit holds it, for checking the numbers (hidden unless you want it).")
+        self.raw_action.triggered.connect(self._set_raw_values)
+        view_menu.addAction(self.raw_action)
 
         help_menu = self.menuBar().addMenu("&Help")
         add_open_log_folder_action(help_menu, self)
@@ -236,31 +247,26 @@ class MainWindow(QMainWindow):
         self.lbl_logo.setFont(logo_font())
         self.lbl_logo.setTextFormat(Qt.TextFormat.PlainText)
         self.lbl_logo.setWordWrap(False)
-        self.lbl_logo.setStyleSheet("background: transparent;")
+        self.lbl_logo.setStyleSheet(f"background: transparent; font-size: {LOGO_PIXELS}px;")  # (the app stylesheet fixes every font at 13 px: only a rule on the label itself can change it)
         top_bar.addWidget(self.lbl_logo)
         top_bar.addStretch()
         connection = QVBoxLayout()
         connection.setSpacing(4)
+        self.status_pill = QLabel()  # what the app knows about the unit: "● JV-1010 · Patch mode" (green), GM mode (amber), no answer (red)
+        self.status_pill.setObjectName("statusPill")
+        self.status_pill.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.status_pill.setVisible(False)
         self.connection_label = QLabel()
         self.connection_label.setObjectName("mutedLabel")
         self.connection_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.detect_results_label = QLabel()
-        self.detect_results_label.setObjectName("mutedLabel")
-        self.detect_results_label.setWordWrap(True)
-        self.detect_results_label.setMaximumWidth(380)
-        self.detect_results_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         buttons = QHBoxLayout()
         buttons.addStretch()
-        self.btn_detect = QPushButton("Detect JV-1010")
-        self.btn_detect.setToolTip("Asks the unit who it is and reads the name of its temporary patch. Nothing is written.")
-        self.btn_detect.clicked.connect(self.detect_hardware)
         self.btn_settings = QPushButton("Settings...")
         self.btn_settings.setToolTip("Choose the MIDI ports, the theme, and run the loopback and hardware tests.")
         self.btn_settings.clicked.connect(self.open_settings)
-        buttons.addWidget(self.btn_detect)
         buttons.addWidget(self.btn_settings)
+        connection.addWidget(self.status_pill)
         connection.addWidget(self.connection_label)
-        connection.addWidget(self.detect_results_label)
         connection.addLayout(buttons)
         top_bar.addLayout(connection)
 
@@ -271,11 +277,6 @@ class MainWindow(QMainWindow):
         self.library_header = QLabel("USER Patches")
         self.library_header.setObjectName("sectionHeader")
         self.library_header.setToolTip("The unit's 128 user patches. Double-click (or press Enter) to open one; right-click to rename, copy or swap.")
-        self.btn_read_names = QPushButton("Read Patch Names")
-        self.btn_read_names.setToolTip(
-            "Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a patch to open it."
-        )
-        self.btn_read_names.clicked.connect(self.read_names)
         self.names_list = QListWidget()
         self.names_list.itemDoubleClicked.connect(self._read_user_from_item)
         self.names_list.itemActivated.connect(self._read_user_from_item)
@@ -299,7 +300,12 @@ class MainWindow(QMainWindow):
         self.list_stack.addWidget(self.perf_list)
         self.list_stack.addWidget(self.rhythm_list)
         library_layout.addWidget(self.library_header)
-        library_layout.addWidget(self.btn_read_names)
+        self.list_filter = QLineEdit()
+        self.list_filter.setPlaceholderText("Filter by name or number")
+        self.list_filter.setClearButtonEnabled(True)
+        self.list_filter.setToolTip("Type to show only the entries of the list below that contain this text.")
+        self.list_filter.textChanged.connect(self._apply_list_filter)
+        library_layout.addWidget(self.list_filter)
         library_layout.addWidget(self.list_stack, 1)
         self.library = library  # a fixed width, as wide as the Patches / Performances switch (set when first shown)
 
@@ -342,6 +348,7 @@ class MainWindow(QMainWindow):
         self.tree = QTreeWidget()  # the last tab of the editor: every value as the unit holds it
         self.tree.setHeaderLabels(["Parameter", "Value", "Raw"])
         self.editor.add_extra_tab(self.tree, "Raw Values")
+        self.editor.set_extra_tab_visible(self.tree, self.show_raw_values())
         self.editor.tabs.currentChanged.connect(lambda _i: self._refresh_tree_if_shown())
         panel.addWidget(self.patch_label)
         panel.addWidget(self.problems_label)
@@ -428,9 +435,10 @@ class MainWindow(QMainWindow):
         # the ports themselves are shown in Settings; here only the prompt when there are none
         self.connection_label.setText("No MIDI ports are open. Choose the interface the JV-1010 is connected to in Settings.")
         self.connection_label.setVisible(not self.session.is_open)
+        self._update_status_pill()
         idle = self.worker.is_idle()
         ready = self.session.is_open and idle
-        for control in (self.btn_detect, self.detect_action, self.btn_read_temporary, self.read_action, self.btn_read_names):
+        for control in (self.detect_action, self.btn_read_temporary, self.read_action):
             control.setEnabled(ready)
         for control in (self.backup_action, self.restore_action):
             control.setEnabled(ready)
@@ -443,6 +451,7 @@ class MainWindow(QMainWindow):
             control.setEnabled(ready and self._shown is not None)
         self.open_action.setEnabled(idle)
         self.btn_revert.setEnabled(self._shown is not None and self._is_dirty())
+        set_primary(self.btn_write, self._is_dirty())  # the likely next step once there is something to keep
         self.performance_panel.refresh_state(ready)
         self.rhythm_panel.refresh_state(ready)
         panel = self._side_panel()  # the menu acts on whichever editor is showing
@@ -464,6 +473,58 @@ class MainWindow(QMainWindow):
         self.names_progress.setVisible(self._long_job)
         self.save_action.setEnabled(shown)
 
+    # -- the connection pill, the raw values tab, the list filter, the playing marker ---------------------------------------------
+
+    def show_raw_values(self):
+        return self.raw_action.isChecked()
+
+    def _set_raw_values(self, shown):
+        app_config.save_show_raw_values(shown)
+        self.editor.set_extra_tab_visible(self.tree, shown)
+        self.performance_panel.apply_raw_visibility()
+        self.rhythm_panel.apply_raw_visibility()
+
+    def _update_status_pill(self):
+        """One word and a colour for what the app knows about the unit. Hidden while no ports are open (the muted prompt says what to do)."""
+        if not self.session.is_open:
+            self.status_pill.setVisible(False)
+            return
+        unit_name = "Simulated JV-1010" if self.demo else "JV-1010"
+        if self._unit_silent:
+            state, text = "bad", "● No answer from the unit"
+        elif self._sound_mode == 2:
+            state, text = "warn", "● GM mode: the unit ignores this app"
+        elif self._sound_mode in (0, 1):
+            state, text = "ok", f"● {unit_name} · {'Patch' if self._sound_mode == 1 else 'Performance'} mode"
+        elif self.demo:
+            state, text = "ok", f"● {unit_name}"
+        else:
+            state, text = "idle", "● Ports open"
+        self.status_pill.setText(text)
+        set_style_property(self.status_pill, "state", state)
+        self.status_pill.setVisible(True)
+
+    def _current_list(self):
+        return self.list_stack.currentWidget()
+
+    def _filter_item(self, item, needle=None):
+        needle = self.list_filter.text().strip().lower() if needle is None else needle
+        item.setHidden(bool(needle) and needle not in item.text().lower())
+
+    def _apply_list_filter(self, *_):
+        """Show only the rows of the list on screen that contain the text; rows that arrive later are filtered as they come."""
+        needle = self.list_filter.text().strip().lower()
+        listing = self._current_list()
+        for row in range(listing.count()):
+            self._filter_item(listing.item(row), needle)
+
+    def _mark_playing(self, number):
+        """Mark USER patch `number` (or none: None) in the list as the one the unit is playing: bold with a dot."""
+        before, self._playing_user = self._playing_user, number
+        for row in (before, number):
+            if row is not None and row < self.names_list.count():
+                self._style_name_row(self.names_list.item(row), row)
+
     # -- the two modes -----------------------------------------------------------------------------------------------------
 
     def _performance_mode(self):
@@ -475,22 +536,21 @@ class MainWindow(QMainWindow):
 
     _MODES = {
         0: ("USER Patches", "The unit's 128 user patches. Double-click (or press Enter) to open one; right-click to rename, copy or swap.",
-            "Read Patch Names", "Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a patch to open it.", "Patch"),
+            "Patch"),
         1: ("USER Performances", "The unit's 32 user performances. Double-click (or press Enter) to open one.",
-            "Read Performance Names", "Reads the 32 USER performance names, one request each (read-only). Double-click a performance to open it.", "Performance"),
+            "Performance"),
         2: ("USER Rhythm Sets", "The unit's 2 user rhythm sets. Double-click (or press Enter) to open one; right-click to choose it on the unit.",
-            "Read Rhythm Set Names", "Reads the 2 USER rhythm set names (read-only). Double-click a set to open it.", "Rhythm Set"),
+            "Rhythm Set"),
     }
 
     def _set_mode(self, index):
         """Patches, Performances or Rhythm Sets: swap the list and the editor, and say what the menu and buttons now act on."""
-        header, header_tip, button, button_tip, noun = self._MODES[index]
+        header, header_tip, noun = self._MODES[index]
         self.list_stack.setCurrentIndex(index)
         self.right_stack.setCurrentIndex(index)
+        self.list_filter.clear()  # (a filter typed for one list means nothing on another)
         self.library_header.setText(header)
         self.library_header.setToolTip(header_tip)
-        self.btn_read_names.setText(button)
-        self.btn_read_names.setToolTip(button_tip)
         self.open_action.setText(f"Open {noun} .syx...")
         self.save_action.setText(f"Save {noun} as .syx...")
         self.read_action.setText(f"Read Temporary {noun}")
@@ -533,6 +593,7 @@ class MainWindow(QMainWindow):
         item = QListWidgetItem(f"{number + 1:02d}  {name}")
         item.setData(Qt.ItemDataRole.UserRole, number)
         self.perf_list.addItem(item)
+        self._filter_item(item)
 
     def _on_performance_names_read(self, names):
         self._long_job = False
@@ -563,8 +624,8 @@ class MainWindow(QMainWindow):
         if not self.session.is_open:
             QMessageBox.information(self, "Detect JV-1010", "Choose the MIDI ports in Settings first.")
             return
-        set_enabled_without_scrolling(self.btn_detect, False)
-        self.btn_detect.setText("Detecting...")
+        self.detect_action.setEnabled(False)  # (a menu item has no focus to give up)
+        self.statusBar().showMessage("Asking the unit who it is...")
         QApplication.processEvents()
         try:
             result = midi_diagnostics.detect_hardware(self.session.connection, pump=QApplication.processEvents)
@@ -573,14 +634,13 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Detect JV-1010", f"Couldn't run the check: {e}")
             return
         finally:
-            self.btn_detect.setEnabled(self.session.is_open and self.worker.is_idle())
-            self.btn_detect.setText("Detect JV-1010")
-        self.detect_results_label.setText(result.message)
+            self.detect_action.setEnabled(self.session.is_open and self.worker.is_idle())
         log = debug_log.get_logger()
         log.info(f"detect: {result.status}")
         for line in result.log_lines:
             log.info(f"detect: {line}")
         self.statusBar().showMessage("JV-1010 found" if result.found else "No JV-1010 found", 5000)
+        QMessageBox.information(self, "Detect JV-1010", result.message)  # (what the unit said: a menu action has no label of its own to show it in)
 
     # -- reading (read-only) -----------------------------------------------------------------------------------------------
 
@@ -713,6 +773,7 @@ class MainWindow(QMainWindow):
     def _end_progress(self, *_):
         """A performance or a rhythm set arrived: the progress bar goes (the panel that asked shows it)."""
         self._long_job = False
+        self._unit_silent = False
         self._refresh_connection()
 
     def _read_user_from_item(self, item):
@@ -735,6 +796,7 @@ class MainWindow(QMainWindow):
         item.setData(Qt.ItemDataRole.UserRole, number)
         self.names_list.addItem(item)
         self._style_name_row(item, number)
+        self._filter_item(item)
 
     def _on_names_read(self, summaries):
         self._long_job = False
@@ -756,6 +818,7 @@ class MainWindow(QMainWindow):
 
     def _on_failed(self, label, message):
         self._long_job = False
+        self._unit_silent = "no reply" in message.lower()  # (the unit did not answer at all: the pill says so; any later successful read clears it)
         if label == "firmware":
             self._firmware_running = False
         if label in ("temporary_follow", "check_temporary"):  # started by the window, not by a click: a status line, not a dialog
@@ -788,6 +851,7 @@ class MainWindow(QMainWindow):
         self._refresh_connection()
 
     def _on_patch_read(self, label, read, problems):
+        self._unit_silent = False
         if label == "check":
             return self._on_follow_checked(read)
         base = patch.TEMPORARY_BASE if label == "temporary" else patch.user_base(int(label.split(":")[1]))
@@ -1165,12 +1229,20 @@ class MainWindow(QMainWindow):
             return
         item.setText(f"{number + 1:03d}  {summary.name}")
         status, factory = stock.compare_one(number, summary)
+        tips = []
         if status == stock.DIFFERENT:
             item.setForeground(QBrush(QColor(theme.current_palette()["warning"])))
-            item.setToolTip(f'The factory patch here is "{factory.name}" ({factory.key_assign}).')
+            tips.append(f'The factory patch here is "{factory.name}" ({factory.key_assign}).')
         else:
             item.setData(Qt.ItemDataRole.ForegroundRole, None)
-            item.setToolTip("")
+        playing = number == self._playing_user
+        font = item.font()
+        font.setBold(playing)
+        item.setFont(font)
+        item.setIcon(self._playing_icon() if playing else QIcon())
+        if playing:
+            tips.append("The unit is playing this patch.")
+        item.setToolTip(" ".join(tips))
 
     # -- the USER list's own actions: rename, copy, swap ----------------------------------------------------------------------------
 
@@ -1274,6 +1346,7 @@ class MainWindow(QMainWindow):
         self._temp_synced = False
         self.performance_panel._temp_synced = False
         self.rhythm_panel._temp_synced = False
+        self._update_status_pill()
 
     def gm_system_on(self):
         if not self.session.is_open or not self.worker.is_idle() or self._firmware_running:
@@ -1287,6 +1360,7 @@ class MainWindow(QMainWindow):
         if answer != QMessageBox.StandardButton.Yes:
             return
         self._send_midi(universal.GM_SYSTEM_ON)
+        self._sound_mode = 2
         self._unit_state_changed()
         debug_log.get_logger().warning("universal: GM System On sent")
         self.statusBar().showMessage("GM System On sent: the unit is in GM mode and ignores this app's reads and writes. Hardware > GM System Off brings it back.", 15000)
@@ -1295,6 +1369,7 @@ class MainWindow(QMainWindow):
         if not self.session.is_open or not self.worker.is_idle() or self._firmware_running:
             return
         self._send_midi(universal.GM_SYSTEM_OFF)
+        self._sound_mode = None  # (the manual says Performance mode: the next read of the System block says for sure)
         self._unit_state_changed()
         debug_log.get_logger().info("universal: GM System Off sent")
         self.statusBar().showMessage("GM System Off sent: the unit returns to Performance mode. Refresh All from Unit (Ctrl/Cmd+Shift+R) reads it again.", 15000)
@@ -1307,6 +1382,7 @@ class MainWindow(QMainWindow):
         """A patch was chosen on the unit by Program Change: the unit's current patch is no longer what the editor last sent or read. A moment after the LAST choice the window reads
         the temporary patch into the editor (`_after_audition_choice`), unless that would replace edits that were never sent."""
         self._temp_synced = False
+        self._mark_playing(number if group == "USER" else None)
         if self._pending_check is None:
             self.statusBar().showMessage(f"Chose {self.audition.current_label()} on the unit...", 8000)
         self._audition_timer.start(self.AUDITION_READ_DELAY_MS)
@@ -1352,8 +1428,22 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"{where} is open, but the unit is not playing it (it needs Patch mode, Receive Program Change ON and the right channel). Send to Temporary Patch to hear it.", 12000)
         self._refresh_connection()
 
+    def _playing_icon(self):
+        """A small accent-coloured dot for the row of the patch the unit is playing."""
+        pixmap = QPixmap(12, 12)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setBrush(QColor(theme.current_palette()["accent"]))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(2, 2, 8, 8)
+        painter.end()
+        return QIcon(pixmap)
+
     def _on_system_midi(self, info):
+        self._unit_silent = False
         self._sound_mode = info.sound_mode
+        self._mark_playing(info.patch_number if info.sound_mode == 1 and (info.group_type, info.group_id) == (0, 1) and 0 <= info.patch_number < patch.USER_PATCH_COUNT else None)
         announce, self._announce_system = self._announce_system, True
         self.audition.show_system(info, announce=announce)  # (a bound method, so the worker's signal is delivered on the GUI thread)
 

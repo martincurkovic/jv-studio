@@ -48,7 +48,7 @@ def shown(w):
 def test_the_mode_switch_has_a_rhythm_sets_page_and_the_menu_follows(win):
     w, fake, _ = win
     assert w._side_panel() is w.rhythm_panel and w.list_stack.currentWidget() is w.rhythm_list and w.right_stack.currentWidget() is w.rhythm_panel
-    assert w.library_header.text() == "USER Rhythm Sets" and w.btn_read_names.text() == "Read Rhythm Set Names"
+    assert w.library_header.text() == "USER Rhythm Sets"
     assert w.read_action.text() == "Read Temporary Rhythm Set" and w.open_action.text() == "Open Rhythm Set .syx..." and w.send_action.text() == "Send to Temporary Rhythm Set"
     w.mode_tabs.setCurrentIndex(1)
     assert w._side_panel() is w.performance_panel and w.read_action.text() == "Read Temporary Performance"
@@ -63,7 +63,7 @@ def test_reading_the_temporary_rhythm_set_fills_the_editor_and_changes_nothing(w
     panel, editor = shown(w)
     assert panel.label.text() == "Temporary rhythm set · Big Kit" and panel.problems_label.isHidden()
     assert editor.name_edit.text() == "Big Kit" and editor.chosen_key() == 36 and editor.widget_for("tone_level").value() == 99
-    assert fake.writes == [] and w.save_action.isEnabled() and w.btn_read_names.isEnabled()
+    assert fake.writes == [] and w.save_action.isEnabled()
 
 
 def test_the_names_of_the_two_user_sets_and_opening_one(win):
@@ -85,7 +85,7 @@ def test_an_edit_goes_to_the_chosen_key_and_live_to_the_temporary_rhythm_set(win
     assert panel._shown[1].get(NOTE, "tone_level", key=40) == 88 and panel._shown[1].get(NOTE, "tone_level", key=36) == 0
     assert fake.temp_rhythm.get(NOTE, "tone_level", key=40) == 88 and fake.temp_rhythm.get(NOTE, "tone_level", key=36) == 0
     assert all(wr.address[:2] == (0x02, 0x09) for wr in fake.writes) and fake.user_rhythms[0].get(NOTE, "tone_level", key=40) == 0
-    assert panel.label.text().endswith("(edited)")
+    assert panel.label.text().endswith("● edited")
     panel.undo()
     w.worker.process_pending()
     assert fake.temp_rhythm.get(NOTE, "tone_level", key=40) == 0 and not panel.is_dirty()

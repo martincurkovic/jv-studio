@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from jv_studio.core import friendly, groups, hints, params, patch, waves
+from jv_studio.ui.choice_controls import ChoiceCombo, SwitchBox, check_grid, make_choice_control  # (ChoiceCombo and SwitchBox are importable from here too)
 from jv_studio.ui.efx import apply_efx_meanings
 from jv_studio.ui.envelope_graph import GRAPH_FOR_CARD
 from jv_studio.ui.knob_control import KnobControl, origin_value
@@ -30,58 +31,6 @@ KNOBS_PER_ROW = 4
 #: a card with at least this many knobs uses the COMPACT layout (the value beside the knob, about half the height): the roomy one for a handful, the compact one for the
 #: envelope, LFO and controller cards
 COMPACT_FROM = 8
-
-
-class ChoiceCombo(QComboBox):
-    def __init__(self, param, parent=None):
-        super().__init__(parent)
-        self.param = param
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        if param.choices:
-            options = [(index, choice.label) for index, choice in enumerate(param.choices) if choice.jv1010]  # a JV-1080-family value the JV-1010 ignores is not offered
-        else:
-            options = list(enumerate(param.labels))
-        for index, label in options:
-            self._add(label, param.min + index)
-
-    def _add(self, label, value):
-        """An option under its readable name (core/friendly.py); the tooltip says what the unit's own display calls it."""
-        name = friendly.label(self.param.key, label)
-        self.addItem(name, value)
-        if text := friendly.description(self.param.key, label):
-            self.setItemData(self.count() - 1, text, Qt.ItemDataRole.ToolTipRole)
-        elif name != label:
-            self.setItemData(self.count() - 1, f"On the unit: {label}", Qt.ItemDataRole.ToolTipRole)
-
-    def set_raw(self, value):
-        index = self.findData(value)
-        if index < 0:  # the unit holds a value we don't offer (a JV-1080-only choice, or outside the table): show it, don't hide it
-            self.addItem(f"{friendly.label(self.param.key, params.format_value(self.param, value))} (not offered)", value)
-            index = self.count() - 1
-        self.setCurrentIndex(index)
-
-    def wheelEvent(self, event):
-        if self.hasFocus():
-            super().wheelEvent(event)
-        else:
-            event.ignore()
-
-
-class SwitchBox(QCheckBox):
-    """An ON/OFF parameter as a check box (a tone's switch, in its card's heading): it says what it does, and it takes one click. Same small interface as the knobs (`set_value`, `value`)."""
-
-    def __init__(self, param, text="On", parent=None):
-        super().__init__(text, parent)
-        self.param = param
-
-    def set_value(self, value):
-        """Show `value` (0 or 1) without telling anyone."""
-        self.blockSignals(True)
-        self.setChecked(bool(value))
-        self.blockSignals(False)
-
-    def value(self):
-        return 1 if self.isChecked() else 0
 
 
 class PatchEditor(QWidget):
@@ -122,6 +71,23 @@ class PatchEditor(QWidget):
         """Add a tab after the parameter pages (the window's raw-values view)."""
         self.tabs.addTab(widget, title)
 
+    def set_extra_tab_visible(self, widget, visible):
+        """Show or hide an extra tab; hiding the tab that is showing moves to the first."""
+        index = self.tabs.indexOf(widget)
+        if index >= 0:
+            if not visible and self.tabs.currentIndex() == index:
+                self.tabs.setCurrentIndex(0)
+            self.tabs.setTabVisible(index, visible)
+
+    def _update_tone_tabs(self):
+        """A dot in each tone's tab says whether it is switched on (a hollow one: off), so the shape of a patch shows without opening the tabs."""
+        if self._patch is None:
+            return
+        for tone in range(patch.TONE_COUNT):
+            on = bool(self._patch.get(patch.TONE, "tone_switch", tone=tone))
+            self.tabs.setTabText(1 + tone, f"{'●' if on else '○'} Tone {tone + 1}")
+            self.tabs.setTabToolTip(1 + tone, f"Tone {tone + 1} is {'on' if on else 'switched off: it makes no sound'}.")
+
     def _build_tab(self, index):
         if index in self._built or not 0 <= index < len(self._holders):
             return
@@ -143,13 +109,19 @@ class PatchEditor(QWidget):
             compact = sum(1 for p in members if not p.string and not p.has_choices()) >= COMPACT_FROM
             knobs = 0
             header = []  # small controls beside the card's title
+            checks = []  # the card's ON/OFF parameters, as check boxes in a grid
             if block_key == patch.TONE and title == "Wave":
                 form.addRow("Wave", self._wave_row(tone))
             for param in members:
                 widget, control, is_knob = self._make_widget(block_key, tone, param, compact)
                 self._widgets[(block_key, tone, param.key)] = control
                 if param.key == "tone_switch":  # the tone's on/off sits in the Wave card's heading: "Wave [x] On"
+                    control.setText("On")
+                    control.setToolTip(control.toolTip() + "\nOff: the tone makes no sound (its wave and settings are kept).")
                     header.append(control)
+                    continue
+                if isinstance(control, SwitchBox):
+                    checks.append(control)
                     continue
                 if is_knob:
                     grid.addWidget(widget, knobs // KNOBS_PER_ROW, knobs % KNOBS_PER_ROW, Qt.AlignmentFlag.AlignTop)
@@ -157,11 +129,11 @@ class PatchEditor(QWidget):
                 else:
                     form.addRow(param.name.replace("&", "&&"), widget)
                     form.labelForField(widget).setToolTip(widget.toolTip())
-            rows = [layout_ for layout_, used in ((form, form.rowCount()), (grid, knobs)) if used]
+            rows = [layout_ for layout_, used in ((check_grid(checks), checks), (form, form.rowCount()), (grid, knobs)) if used]
             if block_key == patch.TONE and title in GRAPH_FOR_CARD:
                 rows.insert(0, self._graph_row(tone, GRAPH_FOR_CARD[title]))
             cards.append(build_editor_card(scope, title, *rows, header_widgets=header, key=f"{title}"))
-            weights.append(form.rowCount() + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2)
+            weights.append(form.rowCount() + -(-len(checks) // 2) + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2)
         if block_key == patch.COMMON:  # the four tones' levels side by side, next to the patch's own settings
             cards.insert(1, self._mixer_card())
             weights.insert(1, 7)
@@ -299,23 +271,20 @@ class PatchEditor(QWidget):
 
     def _make_widget(self, block_key, tone, param, compact=False):
         """(widget to place, the control the editor reads and sets, is it a knob). A number is a `KnobControl` (name, knob, value readout: below the knob, or beside it when
-        `compact`); a name or a choice list goes in a form row; a tone's switch is a check box (placed in its card's heading by `_page`)."""
-        if param.key == "tone_switch":
-            control = SwitchBox(param)
-            control.clicked.connect(lambda checked, b=block_key, t=tone, p=param: self._edited(b, t, p, 1 if checked else 0))
-            control.setToolTip(self._tooltip(block_key, param, False) + "\nOff: the tone makes no sound (its wave and settings are kept).")
-            return control, control, False
+        `compact`); a name goes in a form row; a list of named options is a check box (OFF/ON: placed in a grid at the top of its card, a tone's switch in its heading), two joined
+        buttons (two options) or a drop-down (`choice_controls.make_choice_control`)."""
         if param.string:
             control = QLineEdit()
             control.setMaxLength(param.size)
             control.editingFinished.connect(lambda w=control, p=param: self._name_edited(w, p))
             is_knob = False
         elif param.has_choices():
-            control = ChoiceCombo(param)
-            # sized by a typical item, not the longest one: a few lists (patch categories, EFX types) have long names that would widen the whole page
-            control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-            control.setMinimumContentsLength(7)
-            control.activated.connect(lambda _i, w=control, b=block_key, t=tone, p=param: self._edited(b, t, p, w.currentData()))
+            control = make_choice_control(param)
+            if isinstance(control, ChoiceCombo):
+                # sized by a typical item, not the longest one: a few lists (patch categories, EFX types) have long names that would widen the whole page
+                control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+                control.setMinimumContentsLength(7)
+            control.edited.connect(lambda v, b=block_key, t=tone, p=param: self._edited(b, t, p, v))
             is_knob = False
         else:
             control = KnobControl(param, compact=compact)
@@ -361,7 +330,7 @@ class PatchEditor(QWidget):
                 value = self._patch.get(block_key, key, tone=tone)
                 if isinstance(widget, QLineEdit):
                     widget.setText(value)
-                elif isinstance(widget, ChoiceCombo):
+                elif hasattr(widget, "set_raw"):  # a check box, two buttons or a drop-down
                     widget.set_raw(value)
                 else:
                     widget.set_value(value)
@@ -370,6 +339,7 @@ class PatchEditor(QWidget):
         for tone, knob in self._mixer.items():
             knob.set_value(self._patch.get(patch.TONE, "tone_level", tone=tone))
         self._apply_mixer_states()
+        self._update_tone_tabs()
         self._apply_efx_labels()
         self._apply_structure_states()
         self._sync_graphs()
@@ -414,6 +384,7 @@ class PatchEditor(QWidget):
             self._update_wave_labels()
         if param.key == "tone_switch":
             self._apply_mixer_states()
+            self._update_tone_tabs()
         if block_key == patch.TONE and param.key == "tone_level":  # the mixer knob and the Level card's knob are one parameter: keep both showing it
             if tone in self._mixer:
                 self._mixer[tone].set_value(stored)

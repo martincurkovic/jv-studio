@@ -48,6 +48,7 @@ DARK_PALETTE = {
     "text_on_accent": "#ffffff",
     "warning": "#d9a94a",
     "critical": "#d9544a",
+    "ok": "#5fbf7a",  # the connection pill when the unit answers
     # a faint wash of the warning colour (#AARRGGBB, which Qt style sheets accept): the strip that says a patch has unsent edits
     "warning_tint": "#26d9a94a",
     # a faint alternating-row tint for grids (the controller matrix); close to bg_panel so it reads as banding, not a selection
@@ -89,6 +90,7 @@ LIGHT_PALETTE = {
     "text_on_accent": "#ffffff",
     "warning": "#f57927",
     "critical": "#d54439",
+    "ok": "#2e9d57",
     "warning_tint": "#26f57927",
     "bg_zebra": "#f6f3fb",
     "key_white": "#ffffff",

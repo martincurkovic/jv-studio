@@ -74,7 +74,7 @@ class PatchPickerDialog(QDialog):
             self.note.setText("Grouped by kind, like the unit's CATEGORY knob. Hover a patch to see which bank it is stored in.")
         else:
             names = patch_groups.names_of(data, self._user_names)
-            self.note.setText("" if names else "The USER patch names haven't been read from the unit yet (Read Patch Names), so only numbers are shown.")
+            self.note.setText("" if names else "The USER patch names haven't been read from the unit yet (Refresh All from Unit reads them), so only numbers are shown.")
         if chosen is not None:
             self.list.setCurrentItem(chosen)
             self.list.scrollToItem(chosen, QListWidget.ScrollHint.PositionAtCenter)

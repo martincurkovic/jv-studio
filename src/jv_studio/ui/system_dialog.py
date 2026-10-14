@@ -25,7 +25,8 @@ from PySide6.QtWidgets import (
 
 from jv_studio.core import debug_log, groups, params, scale_tune, system
 from jv_studio.ui.knob_control import KnobControl
-from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, ChoiceCombo, PatchEditor
+from jv_studio.ui.choice_controls import ChoiceCombo, SwitchBox, check_grid, make_choice_control
+from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, PatchEditor
 from jv_studio.ui.qt_helpers import build_editor_card, build_two_column_page
 from jv_studio.ui.scale_tune_editor import ScaleTuneEditor
 
@@ -64,14 +65,14 @@ class SystemEditor(QWidget):
             grid.setVerticalSpacing(6)
             compact = sum(1 for p in members if not p.string and not p.has_choices()) >= COMPACT_FROM
             knobs = 0
+            checks = []
             for param in members:
                 if param.has_choices():
-                    control = ChoiceCombo(param)
-                    for value in NOT_OFFERED.get(param.key, ()):
-                        control.removeItem(control.findData(value))
-                    control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-                    control.setMinimumContentsLength(7)
-                    control.activated.connect(lambda _i, w=control, p=param: self._edited(p, w.currentData()))
+                    control = make_choice_control(param, hide=NOT_OFFERED.get(param.key, ()))
+                    if isinstance(control, ChoiceCombo):
+                        control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+                        control.setMinimumContentsLength(7)
+                    control.edited.connect(lambda v, p=param: self._edited(p, v))
                     is_knob = False
                 else:
                     control = KnobControl(param, compact=compact)
@@ -79,15 +80,18 @@ class SystemEditor(QWidget):
                     is_knob = True
                 control.setToolTip(PatchEditor._tooltip(system.COMMON, param, is_knob))
                 self._widgets[param.key] = control
+                if isinstance(control, SwitchBox):
+                    checks.append(control)
+                    continue
                 if is_knob:
                     grid.addWidget(control, knobs // KNOBS_PER_ROW, knobs % KNOBS_PER_ROW, Qt.AlignmentFlag.AlignTop)
                     knobs += 1
                 else:
                     form.addRow(param.name.replace("&", "&&"), control)
                     form.labelForField(control).setToolTip(control.toolTip())
-            rows = [layout for layout, used in ((form, form.rowCount()), (grid, knobs)) if used]
+            rows = [layout for layout, used in ((check_grid(checks), checks), (form, form.rowCount()), (grid, knobs)) if used]
             cards.append(build_editor_card("system_editor", title, *rows))
-            weights.append(form.rowCount() + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2)
+            weights.append(form.rowCount() + -(-len(checks) // 2) + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(build_two_column_page(cards, weights))
@@ -105,7 +109,7 @@ class SystemEditor(QWidget):
         try:
             for key, widget in self._widgets.items():
                 value = self._system.get(key)
-                if isinstance(widget, ChoiceCombo):
+                if hasattr(widget, "set_raw"):
                     widget.set_raw(value)
                 elif isinstance(widget, QLineEdit):
                     widget.setText(value)

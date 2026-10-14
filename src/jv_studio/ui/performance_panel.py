@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 from jv_studio.core import app_config, debug_log, params, performance, sysex, validate
 from jv_studio.ui import theme
 from jv_studio.ui.performance_editor import PerformanceEditor
-from jv_studio.ui.qt_helpers import item_heading
+from jv_studio.ui.qt_helpers import item_heading, set_primary
 from jv_studio.ui.unit_dialogs import SlotDialog
 
 
@@ -104,6 +104,7 @@ class PerformancePanel(QWidget):
             self.tree = QTreeWidget()  # the editor's last tab: every value as the unit holds it
             self.tree.setHeaderLabels(["Parameter", "Value", "Raw"])
             self.editor.add_extra_tab(self.tree, "Raw Values")
+            self.editor.set_extra_tab_visible(self.tree, self.host.show_raw_values())
             self.editor.tabs.currentChanged.connect(lambda _i: self._refresh_tree_if_shown())
             self._layout.addWidget(self.editor, 1)
             self.editor.set_user_patch_names(self._user_patch_names)
@@ -116,6 +117,10 @@ class PerformancePanel(QWidget):
         super().showEvent(event)
 
     # -- state the window needs --------------------------------------------------------------------------------------------
+
+    def apply_raw_visibility(self):
+        if self.editor is not None:
+            self.editor.set_extra_tab_visible(self.tree, self.host.show_raw_values())
 
     def has_shown(self):
         return self._shown is not None
@@ -387,3 +392,4 @@ class PerformancePanel(QWidget):
         self.btn_send.setEnabled(ready and self._shown is not None)
         self.btn_write.setEnabled(ready and self._shown is not None)
         self.btn_revert.setEnabled(self._shown is not None and self.is_dirty())
+        set_primary(self.btn_write, self.is_dirty())  # the likely next step once there is something to keep

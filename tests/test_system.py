@@ -228,8 +228,8 @@ def test_opening_system_settings_reads_and_shows_what_the_unit_is_doing(win):
 
 def test_gm_mode_is_not_offered_for_the_sound_mode(win):
     w, _, _ = win
-    combo = open_dialog(w).editor.widget_for("sound_mode")
-    assert [combo.itemText(i) for i in range(combo.count())] == ["Performance", "Patch"]
+    toggle = open_dialog(w).editor.widget_for("sound_mode")
+    assert [b.text() for b in toggle._buttons] == ["Performance", "Patch"] and toggle._values == [0, 1]  # GM is not an option (two buttons now)
 
 
 def test_an_edit_marks_it_dirty_and_nothing_is_sent_until_apply(win):
@@ -245,9 +245,8 @@ def test_apply_lists_the_changes_asks_and_then_the_unit_holds_them(win):
     w, fake, asked = win
     d = open_dialog(w)
     d.editor.widget_for("master_tune").setValue(70)
-    combo = d.editor.widget_for("receive_program_change")
-    combo.setCurrentIndex(combo.findData(0))
-    combo.activated.emit(combo.currentIndex())
+    box = d.editor.widget_for("receive_program_change")
+    box.click()  # the check box: Receive Program Change was on, now off
     d.apply()
     title, text = asked[-1]
     assert title == "Apply to the unit?" and "Master Tune: 440.0 Hz  →  441.4 Hz" in text and "Receive Program Change: ON  →  OFF" in text

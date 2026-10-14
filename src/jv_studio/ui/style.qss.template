@@ -63,6 +63,28 @@ QLabel#knobLabel {
     font-size: 11px;
 }
 
+/* the connection pill in the top bar: what the app knows about the unit, in a word and a colour */
+QLabel#statusPill {
+    font-weight: 600;
+    padding: 0px 2px;
+}
+
+QLabel#statusPill[state="ok"] {
+    color: ${ok};
+}
+
+QLabel#statusPill[state="warn"] {
+    color: ${warning};
+}
+
+QLabel#statusPill[state="bad"] {
+    color: ${critical};
+}
+
+QLabel#statusPill[state="idle"] {
+    color: ${text_disabled};
+}
+
 /* the dot that marks a sample with unsent edits: in its list row and on the strip */
 QLabel#unsentDot {
     color: ${warning};
@@ -146,6 +168,11 @@ QPushButton:checked:hover {
 /* the joined buttons of a segmented control (the Patches | Performances switch): square where they meet, no double border, a little roomier than an ordinary button */
 QPushButton[segment] {
     padding: 6px 20px;
+}
+
+/* the two-option toggle inside a card (Poly | Solo): the same joined look, less padding */
+QPushButton[segment][compact="true"] {
+    padding: 4px 14px;
 }
 
 QPushButton[segment="first"] {
