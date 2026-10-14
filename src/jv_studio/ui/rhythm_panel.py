@@ -11,13 +11,13 @@ from PySide6.QtCore import QTimer, Signal
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QFileDialog,
     QHBoxLayout,
     QInputDialog,
     QLabel,
     QMessageBox,
     QPushButton,
-    QSpinBox,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -86,12 +86,13 @@ class RhythmPanel(QWidget):
         actions.addWidget(self.live_check)
         actions.addStretch()
         channel_row = QHBoxLayout()
-        self.channel_spin = QSpinBox()
-        self.channel_spin.setRange(1, 16)
-        self.channel_spin.setValue(10)
-        self.channel_spin.setToolTip("The MIDI channel of Part 10, which plays the rhythm set (10 unless you changed it in the performance). Clicked keys play on it.")
+        self.channel_combo = QComboBox()
+        for number in range(1, 17):
+            self.channel_combo.addItem(str(number))
+        self.channel_combo.setCurrentIndex(9)  # channel 10
+        self.channel_combo.setToolTip("The MIDI channel of Part 10, which plays the rhythm set (10 unless you changed it in the performance). Clicked keys play on it.")
         channel_row.addWidget(QLabel("Part 10 channel"))
-        channel_row.addWidget(self.channel_spin)
+        channel_row.addWidget(self.channel_combo)
         self.hint_label = QLabel(
             "Keys sound with the unit in Performance or Rhythm mode. Choose a rhythm set on the unit (right-click a set in the list), then Read Temporary."
         )
@@ -150,7 +151,7 @@ class RhythmPanel(QWidget):
     # -- sounding --------------------------------------------------------------------------------------------------------
 
     def channel(self):
-        return self.channel_spin.value() - 1
+        return self.channel_combo.currentIndex()
 
     def play_key(self, key):
         """Sound `key` on Part 10's channel for a moment, at the audition bar's velocity."""

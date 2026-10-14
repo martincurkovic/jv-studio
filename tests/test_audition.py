@@ -2,9 +2,9 @@
 
 import pytest
 from PySide6.QtCore import QEvent, QPoint, Qt
-from PySide6.QtGui import QFocusEvent
+from PySide6.QtGui import QFocusEvent, QKeyEvent
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QLineEdit, QMessageBox
 
 from fakes import FakeJV1010, FakePorts
 from jv_studio.core import app_config, audition, midi, params
@@ -211,12 +211,91 @@ def test_what_the_unit_says_sets_the_channel_and_the_note(bar):
     assert bar.channel() == 6 and "Receive Program Change is OFF" in bar.note.text()
 
 
-def test_the_open_state_is_remembered(qapp):
+def test_the_bar_always_starts_closed_because_an_open_one_owns_the_keyboard(qapp):
     bar = AuditionBar()
-    bar.set_open(False)
-    assert not app_config.get_audition_open() and not bar.is_open() and AuditionBar().is_open() is False
+    assert not bar.is_open() and bar.body.isHidden()
     bar.set_open(True)
-    assert app_config.get_audition_open()
+    assert AuditionBar().is_open() is False  # (nothing is remembered between launches)
+    bar.set_open(False)
+
+
+def test_the_channel_is_a_box_of_1_to_16_and_idle_notes_are_not_shown(bar):
+    bar, _, _ = bar
+    assert [bar.channel_combo.itemText(i) for i in range(16)] == [str(n) for n in range(1, 17)] and bar.channel() == 0
+    bar.set_channel(16)
+    assert bar.channel() == 15 and bar.channel_combo.currentText() == "16"
+    assert bar.note.isHidden() and bar.note.text() == ""  # the old "click the keys..." line is gone
+    assert bar.typing_label.text() == "Octave: C4 to E5"
+    QTest.keyClick(bar.keyboard, Qt.Key.Key_Z)
+    assert bar.typing_label.text() == "Octave: C3 to E4"
+
+
+# -- the bar owns the computer keyboard while it is open ------------------------------------------------------------------------
+
+
+def key_event(kind, key, text="", modifiers=Qt.KeyboardModifier.NoModifier):
+    return QKeyEvent(kind, key, modifiers, text)
+
+
+@pytest.fixture
+def routed(bar):
+    bar, out, chosen = bar
+    bar.set_open(True)
+    bar._window_in_front = lambda: True  # (an offscreen window is never the active one)
+    yield bar, out
+    bar.set_open(False)
+
+
+def test_while_open_every_ordinary_key_goes_to_the_piano_not_to_a_text_box(routed):
+    bar, out = routed
+    box = QLineEdit()
+    press = key_event(QEvent.Type.KeyPress, Qt.Key.Key_A, "a")
+    assert bar.eventFilter(box, press) is True and out == [audition.note_on(0, 60, 100)]
+    assert bar.eventFilter(box, key_event(QEvent.Type.KeyRelease, Qt.Key.Key_A, "a")) is True and out[-1] == audition.note_off(0, 60)
+    assert bar.eventFilter(box, key_event(QEvent.Type.KeyPress, Qt.Key.Key_Q, "q")) is True  # a letter that plays nothing is still not typed
+    assert bar.eventFilter(box, key_event(QEvent.Type.KeyPress, Qt.Key.Key_Backspace)) is True
+    assert bar.eventFilter(box, key_event(QEvent.Type.KeyPress, Qt.Key.Key_5, "5")) is True
+    assert bar.eventFilter(box, key_event(QEvent.Type.KeyPress, Qt.Key.Key_Z, "z")) is True and bar.keyboard.typing_base == 48 and len(out) == 2
+
+
+def test_shortcuts_and_navigation_keys_still_work(routed):
+    bar, out = routed
+    box = QLineEdit()
+    for key, modifier in ((Qt.Key.Key_K, Qt.KeyboardModifier.ControlModifier), (Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier),
+                          (Qt.Key.Key_S, Qt.KeyboardModifier.MetaModifier), (Qt.Key.Key_A, Qt.KeyboardModifier.AltModifier)):
+        assert bar.eventFilter(box, key_event(QEvent.Type.KeyPress, key, "k", modifier)) is False
+    for key in (Qt.Key.Key_Tab, Qt.Key.Key_Escape, Qt.Key.Key_Return, Qt.Key.Key_Left, Qt.Key.Key_Down, Qt.Key.Key_Space, Qt.Key.Key_F2, Qt.Key.Key_F12):
+        assert bar.eventFilter(box, key_event(QEvent.Type.KeyPress, key)) is False
+    assert out == []
+
+
+def test_the_keys_are_given_back_when_the_bar_closes_the_unit_goes_or_another_window_is_in_front(routed):
+    bar, out = routed
+    box = QLineEdit()
+    press = key_event(QEvent.Type.KeyPress, Qt.Key.Key_A, "a")
+    bar._window_in_front = lambda: False  # a dialog or the System Settings window
+    assert bar.eventFilter(box, press) is False
+    bar._window_in_front = lambda: True
+    assert bar.eventFilter(bar.keyboard, press) is False  # (the piano handles its own events)
+    bar.set_available(False)  # no unit: a dead keyboard must not swallow typing
+    assert not bar.routing_keys() and bar.eventFilter(box, press) is False
+    bar.set_available(True)
+    assert bar.eventFilter(box, press) is True
+    bar.set_open(False)
+    assert not bar.routing_keys() and bar.eventFilter(box, press) is False
+
+
+def test_typing_in_a_real_text_box_is_swallowed_while_the_bar_is_open(win):
+    w, fake = win
+    w.audition._window_in_front = lambda: True
+    box = QLineEdit()
+    box.show()
+    w.audition.set_open(True)
+    QTest.keyClick(box, Qt.Key.Key_A)
+    assert box.text() == "" and audition.note_on(0, 60, 100) in fake.channel_messages  # the key played C4 and did not type
+    w.audition.set_open(False)
+    QTest.keyClick(box, Qt.Key.Key_A)
+    assert box.text() == "a"
 
 
 # -- the window ------------------------------------------------------------------------------------------------------------
@@ -350,11 +429,12 @@ def test_a_bar_under_the_keyboard_marks_the_octave_the_computer_keys_play(keys):
 def test_cmd_k_shows_and_hides_the_keyboard_and_the_menu_item_follows(win):
     w, fake = win
     assert w.audition_action.shortcut().toString() == "Ctrl+K" and w.audition_action.isCheckable()
+    assert not w.audition.is_open() and not w.audition_action.isChecked()  # closed at startup
+    w.audition_action.trigger()
     assert w.audition.is_open() and w.audition_action.isChecked()
     w.audition_action.trigger()
-    assert not w.audition.is_open() and not w.audition_action.isChecked() and not app_config.get_audition_open()
+    assert not w.audition.is_open() and not w.audition_action.isChecked()
     w.audition_action.trigger()
-    assert w.audition.is_open() and w.audition_action.isChecked() and app_config.get_audition_open()
     w.audition.toggle.click()  # the bar's own arrow keeps the menu item in step
     assert not w.audition_action.isChecked()
 

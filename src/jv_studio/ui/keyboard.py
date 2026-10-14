@@ -44,6 +44,7 @@ class PianoKeyboard(QWidget):
         self._down = {}  # note -> how many sources hold it (mouse, typing key)
         self._mouse_note = None
         self._typed = {}  # Qt key -> the note it started
+        self._live = False  # the computer keyboard is routed here (the audition bar is open): the range bar is drawn solid
 
     # -- geometry --------------------------------------------------------------------------------------------------------
 
@@ -117,6 +118,10 @@ class PianoKeyboard(QWidget):
             self.held_changed.emit([])
         self._mouse_note = None
         self._typed.clear()
+        self.update()
+
+    def set_live(self, live):
+        self._live = live
         self.update()
 
     def set_typing_base(self, note):
@@ -230,10 +235,10 @@ class PianoKeyboard(QWidget):
             if note % 12 in BLACK:
                 painter.setBrush(accent if self.is_down(note) else QColor(palette["key_black"] if enabled else palette["border_disabled"]))
                 painter.drawRect(self._key_rect(note))
-        if enabled:  # the bar under the keys: which keys the computer keyboard plays (solid while the keyboard has the focus, which is when those keys work)
+        if enabled:  # the bar under the keys: which keys the computer keyboard plays (solid while the computer keyboard is routed here)
             left, right = self._typing_span()
             bar = QColor(accent)
-            bar.setAlpha(255 if self.hasFocus() else 110)
+            bar.setAlpha(255 if self._live or self.hasFocus() else 110)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(bar)
             painter.drawRect(QRectF(left, self.height() - RANGE_BAR, right - left, RANGE_BAR))

@@ -91,19 +91,6 @@ def save_collapsed_cards(keys):
     save_config(config)
 
 
-# -- the audition bar (ui/audition_bar.py) ----------------------------------------------------------------------------------
-
-
-def get_audition_open():
-    return load_config().get("audition_open", True) is not False
-
-
-def save_audition_open(opened):
-    config = load_config()
-    config["audition_open"] = bool(opened)
-    save_config(config)
-
-
 # -- backups ----------------------------------------------------------------------------------------------------------------
 
 

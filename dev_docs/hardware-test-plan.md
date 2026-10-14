@@ -31,7 +31,7 @@ Do A completely. In B, go in the order given (each write path assumes the one be
 - [ ] File > **Back Up Unit...**: keep the `.syx` outside the app's folders (cloud folder, second drive). Read-only, about half a minute. **Do this first, always.**
   *First proof of:* whole-unit backup on the real unit (1,300 requests, no reply is dropped).
 - [ ] The unit is in **Patch mode**, not GM mode (the app says so in its error if it is in GM mode: RQ1/DT1 are ignored there).
-- [ ] Open the audition bar (View > Audition Keyboard, Cmd+K) and press **From Unit**: the channel fills in and the note says "Patch mode" (or what is wrong).
+- [ ] Open the audition bar (View > Audition Keyboard, Cmd+K: it starts closed, and while open it takes the computer keyboard, so close it with Cmd+K before typing anywhere) and press **From Unit**: the channel fills in and the note says "Patch mode" (or what is wrong).
   *First proof of:* the System block parses (`sound_mode`, channel, receive switches) and the table's offsets are right.
 
 ### A1. Reading (5 min, nothing is written)

@@ -3,15 +3,30 @@
 Nothing here writes to the unit's memory. It only emits what to send (`midi_out`, one complete channel message at a time) and what was chosen (`patch_chosen`), and the
 window decides whether it is safe to send (not during a backup or an update). Choosing a patch changes the unit's CURRENT patch: the window says so and stops treating the
 shown patch as the one on the unit (core/audition.py).
+
+While the bar is OPEN (and the unit is connected) it owns the computer keyboard, as Ableton's computer MIDI keyboard does: every key press that is not a shortcut (Ctrl/Cmd/Alt) or a
+navigation key (Tab, arrows, Esc, Enter, F-keys) is routed to the piano, whatever has the focus, so nothing can be typed into a text box. It stands aside while another window is in front
+(a dialog, the System Settings window) or a drop-down is open. Cmd+K closes the bar and gives the keys back. The bar always starts closed.
 """
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QPushButton, QSlider, QSpinBox, QToolButton, QVBoxLayout, QWidget
+from PySide6.QtCore import QEvent, Qt, Signal
+from PySide6.QtWidgets import QApplication, QComboBox, QHBoxLayout, QLabel, QPushButton, QSlider, QToolButton, QVBoxLayout, QWidget
 
-from jv_studio.core import app_config, audition, params, patch_groups
+from jv_studio.core import audition, params, patch_groups
 from jv_studio.ui.keyboard import TYPING_KEYS, PianoKeyboard
 
-HINT = "Click the keys, or click the keyboard and type: A W S E D F T G Y H U J K O L P ; play notes, Z and X change the octave, C and V the velocity (Cmd+K shows or hides this bar)."
+HELP = (
+    "Play the unit from the keyboard below and choose its patches. Nothing here is stored on the unit.\n"
+    "While it is open the computer keyboard plays it: A W S E D F T G Y H U J K O L P ; are the notes, Z and X change the octave, C and V the velocity. "
+    "Shortcuts such as Cmd+K (show or hide) still work."
+)
+
+#: keys that keep working while the bar owns the keyboard: moving around, confirming, cancelling
+_PASS_THROUGH = {
+    Qt.Key.Key_Tab, Qt.Key.Key_Backtab, Qt.Key.Key_Escape, Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Left, Qt.Key.Key_Right,
+    Qt.Key.Key_PageUp, Qt.Key.Key_PageDown, Qt.Key.Key_Home, Qt.Key.Key_End, Qt.Key.Key_Space,
+}
+_SHORTCUT_MODIFIERS = Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.MetaModifier | Qt.KeyboardModifier.AltModifier  # (Control is Cmd on a Mac)
 
 
 class AuditionBar(QWidget):
@@ -35,7 +50,7 @@ class AuditionBar(QWidget):
         self.toggle.setText("Audition")
         self.toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.toggle.setAutoRaise(True)
-        self.toggle.setToolTip("Play the unit from the keyboard below and choose its patches. Nothing here is stored on the unit.")
+        self.toggle.setToolTip(HELP)
         self.toggle.clicked.connect(lambda: self.set_open(not self.is_open()))
         self.note = QLabel("")
         self.note.setObjectName("mutedLabel")
@@ -52,9 +67,10 @@ class AuditionBar(QWidget):
         outer.addWidget(self.body)
 
         row = QHBoxLayout()
-        self.channel_spin = QSpinBox()
-        self.channel_spin.setRange(1, 16)
-        self.channel_spin.setToolTip("The MIDI channel the unit receives on. In Patch mode that is its Patch Receive Channel (System): 1 unless you changed it.")
+        self.channel_combo = QComboBox()
+        for number in range(1, 17):
+            self.channel_combo.addItem(str(number))
+        self.channel_combo.setToolTip("The MIDI channel the unit receives on. In Patch mode that is its Patch Receive Channel (System): 1 unless you changed it.")
         self.unit_button = QPushButton("From Unit")
         self.unit_button.setToolTip("Read the unit's receive channel and mode (a read; nothing is written).")
         self.unit_button.clicked.connect(self.unit_settings_requested)
@@ -74,7 +90,7 @@ class AuditionBar(QWidget):
         self.panic_button = QPushButton("Panic")
         self.panic_button.setToolTip("Silence the channel: hold pedal up, All Sound Off, All Notes Off.")
         self.panic_button.clicked.connect(self.panic)
-        for widget in (QLabel("Channel"), self.channel_spin, self.unit_button, QLabel("Velocity"), self.velocity, self.velocity_label):
+        for widget in (QLabel("Channel"), self.channel_combo, self.unit_button, QLabel("Velocity"), self.velocity, self.velocity_label):
             row.addWidget(widget)
         row.addSpacing(12)
         row.addWidget(self.typing_label)
@@ -116,11 +132,15 @@ class AuditionBar(QWidget):
         body.addWidget(self.keyboard)
         self._show_typing()
         self._fill_patches()
-        self.set_open(app_config.get_audition_open(), remember=False)
+        self.set_open(False)  # always starts closed: an open bar takes over the computer keyboard
         self.set_available(False)
 
     def _idle_note(self):
-        return self._info_note or (("Demo: the simulated unit makes no sound. " if self._demo else "") + HINT)
+        return self._info_note or ("Demo: the simulated unit makes no sound." if self._demo else "")
+
+    def _set_note(self, text):
+        self.note.setText(text)
+        self.note.setVisible(bool(text))  # (an empty line would still take up room)
 
     def set_demo(self, demo):
         self._demo = demo
@@ -130,19 +150,51 @@ class AuditionBar(QWidget):
     def is_open(self):
         return not self.body.isHidden()
 
-    def set_open(self, opened, *, remember=True, focus=False):
-        """Show or hide the keyboard. Hiding it lets go of every note; `focus` (the shortcut) gives the keys the focus so typing plays at once."""
+    def set_open(self, opened, *, focus=False):
+        """Show or hide the keyboard. Hiding it lets go of every note and gives the computer keyboard back; `focus` (the shortcut) also gives the piano the focus."""
         changed = opened != self.is_open()
         self.body.setVisible(opened)
         self.toggle.setArrowType(Qt.ArrowType.DownArrow if opened else Qt.ArrowType.RightArrow)
-        if not opened:
+        app = QApplication.instance()
+        if opened:
+            if app is not None:
+                app.installEventFilter(self)
+            if focus:
+                self.keyboard.setFocus()
+        else:
+            if app is not None:
+                app.removeEventFilter(self)
             self.keyboard.release_all()
-        elif focus:
-            self.keyboard.setFocus()
-        if remember:
-            app_config.save_audition_open(opened)
+        self._update_routing()
         if changed:
             self.open_changed.emit(opened)
+
+    # -- owning the computer keyboard ------------------------------------------------------------------------------------
+
+    def routing_keys(self):
+        """True while the computer keyboard belongs to the piano: the bar is open and the unit is connected (a dead keyboard must not swallow typing)."""
+        return self.is_open() and self._available
+
+    def _update_routing(self):
+        self.keyboard.set_live(self.routing_keys())
+
+    def _window_in_front(self):
+        return QApplication.activeWindow() is self.window()
+
+    def eventFilter(self, watched, event):
+        kind = event.type()
+        if kind not in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease) or watched is self.keyboard or not self.routing_keys():
+            return False
+        if QApplication.activePopupWidget() is not None or not self._window_in_front():
+            return False  # a drop-down, a dialog or another window of the app: typing there works as usual
+        key = event.key()
+        if event.modifiers() & _SHORTCUT_MODIFIERS or key in _PASS_THROUGH or Qt.Key.Key_F1 <= key <= Qt.Key.Key_F35:
+            return False
+        if kind == QEvent.Type.KeyPress:
+            self.keyboard.keyPressEvent(event)
+        else:
+            self.keyboard.keyReleaseEvent(event)
+        return True  # every other key belongs to the piano, whether or not it plays a note
 
     def set_available(self, available, why=""):
         """Off while there is no connection or a long job runs: the keys let go of everything first."""
@@ -150,20 +202,21 @@ class AuditionBar(QWidget):
         if not available:
             self.keyboard.release_all()
         self.body.setEnabled(available)
-        self.note.setText(self._idle_note() if available else why or self.note.text())
+        self._update_routing()
+        self._set_note(self._idle_note() if available else why or self.note.text())
 
     # -- the keyboard ----------------------------------------------------------------------------------------------------
 
     def channel(self):
         """0-15."""
-        return self.channel_spin.value() - 1
+        return self.channel_combo.currentIndex()
 
     def set_channel(self, channel_one_based):
-        self.channel_spin.setValue(channel_one_based)
+        self.channel_combo.setCurrentIndex(max(1, min(16, channel_one_based)) - 1)
 
     def _show_typing(self):
         base = self.keyboard.typing_base
-        self.typing_label.setText(f"Computer keys: {params.note_name(base)} to {params.note_name(base + len(TYPING_KEYS) - 1)}")
+        self.typing_label.setText(f"Octave: {params.note_name(base)} to {params.note_name(base + len(TYPING_KEYS) - 1)}")
 
     def step_velocity(self, direction):
         """Louder (+) or quieter (-): the next multiple of 10, or 1 / 127 at the ends (the C and V keys); the new value is shown in the read-out."""
@@ -244,5 +297,5 @@ class AuditionBar(QWidget):
         """Use the unit's Patch Receive Channel and say what would stop this working."""
         self.set_channel(info.channel + 1)
         problems = info.problems()
-        self._info_note = " ".join(problems) if problems else f"The unit is in {info.mode_name} mode and receives on channel {info.channel + 1}. {HINT}"
-        self.note.setText(self._info_note)
+        self._info_note = " ".join(problems) if problems else f"The unit is in {info.mode_name} mode and receives on channel {info.channel + 1}."
+        self._set_note(self._info_note)

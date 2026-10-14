@@ -192,7 +192,7 @@ def test_clicking_a_key_plays_it_on_the_channel_of_part_10_and_choosing_a_set_se
     fake.channel_messages.clear()
     editor._buttons[39].click()
     assert fake.channel_messages == [] and editor.chosen_key() == 39  # chosen, not played
-    panel.channel_spin.setValue(12)
+    panel.channel_combo.setCurrentIndex(11)
     panel.select_on_unit(1)
     assert fake.channel_messages == audition.rhythm_select(11, "USER", 1) and not panel._temp_synced
 
