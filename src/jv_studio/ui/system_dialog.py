@@ -1,6 +1,6 @@
 """Hardware > System Settings...: the unit's global settings (master tune, MIDI receive, controller sources, effect switches, preview notes) in the editor's cards and knobs.
 
-A modeless window with its own working copy. Nothing is sent while you edit; **Apply to Unit...** shows what will change (and what each change does), saves the current
+Two tabs: Settings (the System common block) and Scale Tune (12 notes in cents for Patch mode and each part). A modeless window with its own working copy. Nothing is sent while you edit; **Apply to Unit...** shows what will change (and what each change does), saves the current
 System block to `~/.jv-studio/backups/SYSTEM-<time>.syx` first (nothing is written if that fails), sends ONLY the changed settings, then reads the block back and checks them.
 The unit's mode is never switched to GM from here: the unit ignores SysEx in GM mode, so the app could neither check the change nor undo it.
 """
@@ -18,14 +18,16 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from jv_studio.core import debug_log, groups, params, system
+from jv_studio.core import debug_log, groups, params, scale_tune, system
 from jv_studio.ui.knob_control import KnobControl
 from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, ChoiceCombo, PatchEditor
 from jv_studio.ui.qt_helpers import build_editor_card, build_two_column_page
+from jv_studio.ui.scale_tune_editor import ScaleTuneEditor
 
 #: what a change does, shown in the confirmation (the settings that can make the unit behave differently, or go quiet)
 CAUTION = {
@@ -129,6 +131,8 @@ class SystemDialog(QDialog):
         self.worker = host.worker
         self._working = None
         self._original = None
+        self._working_scale = None
+        self._original_scale = None
         self._just_applied = False  # the read that follows an apply must not hide the apply's message
         self.setWindowTitle("System Settings")
         self.setModal(False)
@@ -161,18 +165,30 @@ class SystemDialog(QDialog):
         buttons.addWidget(close)
         self.editor = SystemEditor()
         self.editor.param_edited.connect(self._on_edited)
+        self.scale_editor = ScaleTuneEditor()
+        self.scale_editor.edited.connect(self._on_scale_edited)
+        self.tabs = QTabWidget()
+        self.tabs.addTab(self.editor, "Settings")
+        self.tabs.addTab(self.scale_editor, "Scale Tune")
         for widget in (self.heading, self.selection_label, self.problems_label):
             layout.addWidget(widget)
         layout.addLayout(buttons)
-        layout.addWidget(self.editor, 1)
+        layout.addWidget(self.tabs, 1)
         self.worker.system_read.connect(self._on_read)
+        self.worker.scale_read.connect(self._on_scale_read)
         self.worker.system_applied.connect(self._on_applied)
         self.refresh_state(False)
 
     # -- state -----------------------------------------------------------------------------------------------------------
 
-    def is_dirty(self):
+    def settings_dirty(self):
         return self._working is not None and self._working != self._original
+
+    def scale_dirty(self):
+        return self._working_scale is not None and self._working_scale != self._original_scale
+
+    def is_dirty(self):
+        return self.settings_dirty() or self.scale_dirty()
 
     def has_shown(self):
         return self._working is not None
@@ -201,7 +217,7 @@ class SystemDialog(QDialog):
                 return
         if not self.host.session.is_open or not self.worker.is_idle():
             return
-        self.host.statusBar().showMessage("Reading the System settings...")
+        self.host.statusBar().showMessage("Reading the System settings and scale tunes...")
         self.worker.submit("system_read")
 
     def _on_read(self, read, problems):
@@ -219,6 +235,13 @@ class SystemDialog(QDialog):
         self._just_applied = False
         self.host._refresh_connection()
 
+    def _on_scale_read(self, scales):
+        self._working_scale = scales
+        self._original_scale = scales.copy()
+        self.scale_editor.set_scales(self._working_scale, self._original_scale)
+        self._update_heading()
+        self.host._refresh_connection()
+
     # -- editing and applying --------------------------------------------------------------------------------------------
 
     def _on_edited(self, key, value):
@@ -226,11 +249,20 @@ class SystemDialog(QDialog):
         self._update_heading()
         self.host._refresh_connection()
 
+    def _on_scale_edited(self):
+        debug_log.get_logger().info("edit: scale tune")
+        self._update_heading()
+        self.host._refresh_connection()
+
     def revert(self):
         if not self.is_dirty():
             return
-        self._working = self._original.copy()
-        self.editor.set_system(self._working)
+        if self._working is not None:
+            self._working = self._original.copy()
+            self.editor.set_system(self._working)
+        if self._working_scale is not None:
+            self._working_scale = self._original_scale.copy()
+            self.scale_editor.set_scales(self._working_scale, self._original_scale)
         self._update_heading()
         self.host._refresh_connection()
 
@@ -243,7 +275,20 @@ class SystemDialog(QDialog):
             lines.append(f"{param.name}: {params.format_value(param, old)}  →  {params.format_value(param, new)}")
             if key in CAUTION:
                 cautions.append(f"• {param.name}: {CAUTION[key]}.")
+        scale_param = params.load_table().block(scale_tune.BLOCK).param_list()
+        for target in self._scale_changes():
+            notes = self._working_scale.changed_notes(self._original_scale, target)
+            shown = ", ".join(
+                f"{scale_tune.NOTES[n]} {params.format_value(scale_param[n], self._original_scale.get(target, n))} → {params.format_value(scale_param[n], self._working_scale.get(target, n))}"
+                for n in notes[:4]
+            )
+            lines.append(f"Scale tune, {scale_tune.target_name(target)}: {shown}" + (f" and {len(notes) - 4} more notes" if len(notes) > 4 else "") + " (cents)")
+        if self._scale_changes() and self._working is not None and not self._working.get("scale_tune_switch"):
+            cautions.append("• Scale Tune Switch is OFF, so scale tuning is not used until you switch it on (Settings > Tuning & Clock).")
         return lines, cautions
+
+    def _scale_changes(self):
+        return self._working_scale.changed_targets(self._original_scale) if self.scale_dirty() else []
 
     def apply(self):
         if not self.is_dirty() or not self.host.session.is_open or not self.worker.is_idle():
@@ -258,9 +303,10 @@ class SystemDialog(QDialog):
         )
         if answer != QMessageBox.StandardButton.Yes or not self.host._offer_backup_first("changing the System settings"):
             return
-        changes = [(key, new) for key, _, new in system.changes(self._original, self._working)]
+        changes = [(key, new) for key, _, new in system.changes(self._original, self._working)] if self._working is not None else []
+        blocks = {target: bytes(self._working_scale.blocks[target]) for target in self._scale_changes()}
         self.host.statusBar().showMessage("Applying the System settings...")
-        self.worker.submit("system_apply", changes)
+        self.worker.submit("system_apply", changes, blocks)
 
     def _on_applied(self, backup_path, count):
         self._just_applied = True

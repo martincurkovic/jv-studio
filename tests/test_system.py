@@ -4,7 +4,7 @@ import pytest
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from fakes import FakeJV1010, FakePorts
-from jv_studio.core import app_config, backup, friendly, groups, hints, midi, params, sysex, system, unit, validate
+from jv_studio.core import app_config, backup, friendly, groups, hints, memory, midi, params, sysex, system, unit, validate
 from jv_studio.ui.knob_control import origin_value, parse_display_text
 from jv_studio.ui.main_window import MainWindow
 from jv_studio.ui.midi_session import MidiSession
@@ -166,9 +166,9 @@ def test_applying_saves_the_old_block_first_then_writes_only_the_changes_and_rep
     worker.process_pending()
     ((path, count),) = seen["applied"]
     assert count == 2 and seen["failed"] == []
-    saved = backup.parse_backup(open(path, "rb").read())  # the file is a normal backup of the System block, holding what was there BEFORE
-    assert path.endswith(".syx") and "SYSTEM-" in path and saved.summary()[__import__("jv_studio.core.memory", fromlist=["x"]).SYSTEM][0] == 1
-    assert sysex.parse(open(path, "rb").read()).data == bytes(old.common)
+    raw = open(path, "rb").read()  # a normal backup of the whole System section (the common block + 17 scale tunes), holding what was there BEFORE: Restore Unit can read it
+    assert path.endswith(".syx") and "SYSTEM-" in path and backup.parse_backup(raw).summary()[memory.SYSTEM] == (18, 18)
+    assert sysex.parse(sysex.split_messages(raw)[0]).data == bytes(old.common)
     assert len(fake.writes) == 2 and seen["read"][-1][0].get("master_tune") == 70 and seen["read"][-1][0].get("receive_bank_select") == 0
 
 

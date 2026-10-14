@@ -8,7 +8,7 @@ Options for testing the app's safety nets: `gm_mode` (the unit ignores RQ1/DT1 i
 check) and `drop_first_replies=n` (the first n RQ1s get no answer, to test retries).
 """
 
-from . import memory, patch, performance, sysex, system
+from . import memory, patch, performance, scale_tune, sysex, system
 
 IDENTITY_REPLY = bytes.fromhex("F0 7E 10 06 02 41 6A 00 05 00 00 00 00 00 F7")
 
@@ -41,6 +41,8 @@ class SimulatedUnit:
                            ("receive_bank_select", 1), ("efx_switch", 1), ("chorus_switch", 1), ("reverb_switch", 1), ("system_tempo", 120)):
             initial.set(key, value)
         self.other[0] = bytearray(initial.common)
+        for target in range(scale_tune.TARGETS):  # equal temperament: every scale tune byte is 64 (0 cents)
+            self.other[sysex.address_to_int(scale_tune.target_address(target))] = bytearray(scale_tune.ScaleTunes.blank().blocks[target])
 
     @property
     def patch(self):  # (the temporary patch: what older tests call "the patch")

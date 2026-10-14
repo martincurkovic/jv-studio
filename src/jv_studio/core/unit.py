@@ -10,7 +10,7 @@ Rules that come from the manual and from AKAISDS's hardware lessons:
 import time
 from dataclasses import dataclass
 
-from . import params, patch, performance, sysex, system
+from . import params, patch, performance, scale_tune, sysex, system
 
 DEFAULT_TIMEOUT = 1.0  # seconds to wait for one reply
 DEFAULT_RETRIES = 1  # extra attempts after a timeout (so two requests at most per block)
@@ -74,6 +74,24 @@ class JV1010Unit:
     def read_system(self):
         """The System settings as a `system.System`."""
         return system.System(bytearray(self.read_system_common()))
+
+    def read_scale_tunes(self):
+        """All 17 scale tune blocks (Part 1-16, Patch Mode): 17 requests, one at a time."""
+        return scale_tune.ScaleTunes([bytearray(self.read_block(scale_tune.target_address(t), scale_tune.block_size())) for t in range(scale_tune.TARGETS)])
+
+    def write_scale_blocks(self, blocks):
+        """Set whole scale tune blocks: `blocks` is {target: 12 bytes}. One DT1 each (>= 20 ms apart), then every block is read back and compared. Returns the
+        ScaleTunes as read back. Raises `UnitError` naming the targets the unit did not take."""
+        for target, data in blocks.items():
+            if len(data) != scale_tune.block_size() or any(b > 127 for b in data):
+                raise ValueError(f"scale tune data for {scale_tune.target_name(target)} must be {scale_tune.block_size()} bytes of 0-127")
+            self._send_dt1(sysex.dt1(scale_tune.target_address(target), bytes(data)))
+        self._wait(sysex.PACKET_GAP_MS / 1000)
+        read = self.read_scale_tunes()
+        refused = [scale_tune.target_name(t) for t, data in blocks.items() if bytes(read.blocks[t]) != bytes(data)]
+        if refused:
+            raise UnitError(f"the unit did not take the scale tune of: {', '.join(refused)} (the read-back differs)")
+        return read
 
     def write_system_params(self, changes):
         """Set the System parameters in `changes` [(key, value)]: one small DT1 each (>= 20 ms apart), then read the block back and check every one of them. Returns the
