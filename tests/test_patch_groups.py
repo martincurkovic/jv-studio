@@ -25,3 +25,23 @@ def test_describing_an_assignment():
 def test_groups_have_readable_titles_and_every_one_is_explained():
     assert [g.title for g in pg.GROUPS] == ["USER", "Preset A", "Preset B", "Preset C", "Preset D (GM)", "Preset E", "Session"]
     assert set(pg.GROUP_HELP) == {g.key for g in pg.GROUPS} and all(text.endswith(".") for text in pg.GROUP_HELP.values())
+
+
+def test_the_category_list_covers_the_factory_sounds_and_every_entry_can_be_chosen_by_program_change():
+    from jv_studio.core import audition
+
+    entries = {c: pg.category_entries(c) for c in pg.CATEGORIES}
+    assert {c: len(e) for c, e in entries.items()} == {"PIANO": 59, "KEY&ORGAN": 116, "GUITAR/BASS": 151, "ORCH/BRASS": 162, "SYNTH/PAD": 355, "ETHNIC": 27, "RHYTHM&SFX": 25}
+    every = [(e.group.key, e.number) for c in entries.values() for e in c]
+    assert len(every) == len(set(every)) == 640 + 255  # every factory patch: Presets A-E and Session
+    for group, number in every:
+        audition.patch_select(0, group, number)  # raises for a patch with no Bank Select / Program Change
+    for category, found in entries.items():
+        for e in found:
+            assert e.name == pg.name_of(e.group.type, e.group.id, e.number)  # the same patch, by the Patch List's own spelling
+    piano = entries["PIANO"]
+    assert [e.no for e in piano] == list(range(1, 60)) and (piano[7].no, piano[7].name, piano[7].group.key, piano[7].number) == (8, "Bright Piano", "PR-A", 1)  # the manual's own example: PIANO 008
+    synth = {e.no: e for e in entries["SYNTH/PAD"]}
+    assert list(synth) == list(range(1, 356))  # whole numbering, no hole
+    # the manual prints "054 DanceStack 8" and no 055; a Max for Live editor lists 054 DanceStack 7 and 055 DanceStack 8 (unconfirmed on a unit), which is what is used
+    assert [(synth[n].name, synth[n].group.key, synth[n].number) for n in (53, 54, 55, 56)] == [("DanceStack 6", "XP-A", 148), ("DanceStack 7", "XP-A", 149), ("DanceStack 8", "XP-A", 150), ("Big BPF", "PR-C", 102)]

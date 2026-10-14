@@ -321,6 +321,69 @@ def preset_patches(lines):
         result[group] = entries
     return result
 
+#: the unit's CATEGORY knob positions, in the order the manual's "Patch Category List" prints them
+CATEGORY_GROUPS = ["PIANO", "KEY&ORGAN", "GUITAR/BASS", "ORCH/BRASS", "SYNTH/PAD", "ETHNIC", "RHYTHM&SFX"]
+#: The manual's list (p.61) prints `054 DanceStack 8`, then `056 Big BPF`: no 055, and "DanceStack 7" (XP-A:150) is in no category. A Max for Live editor for the JV-1010 lists
+#: 054 as DanceStack 7 and 055 as DanceStack 8, which makes the numbering whole, so that is used `[third-party, NOT yet checked on a unit]`. {category: {no: (bank, number)}}; the manual's own
+#: row at each number is checked to be what is expected, so a different manual edition fails loudly instead of being overwritten.
+CATEGORY_CORRECTIONS = {"SYNTH/PAD": {54: ("XP-A", 150), 55: ("XP-A", 151)}}
+CATEGORY_MANUAL_ROWS = {("SYNTH/PAD", 54): ("XP-A", 151)}  # what the manual prints at a corrected number (if anything)
+CATEGORY_UNLISTED = set()  # patches that are in no category after the corrections
+CATEGORY_GAPS = {}  # numbers the list skips after the corrections
+
+
+def patch_categories(lines, presets):
+    """The manual's Patch Category List: {"PIANO": [{no, name, group, number}] ...} in the order of the unit's "No." within each of the 7 category groups. `no` is the number the unit
+    shows in that category; `group`/`number` say where the patch lives (the Preset A-E and Session banks, numbered from 1), which is what a Bank Select + Program Change can reach. Every name is checked against the Patch List."""
+    top = next(i for i, l in enumerate(lines) if l.strip() == "Patch Category List" and i + 1 < len(lines) and lines[i + 1].startswith("PIANO"))
+    end = next(i for i in range(top, len(lines)) if re.match(r"^\s+USER \(User\)", lines[i]))
+    entry = re.compile(r"(?<!\d)(\d{3}) +(.+?) +(\d) +(P?PR-[A-E]|XP-A):(\d{1,3})")
+    found = {g: {} for g in CATEGORY_GROUPS}
+    mode = split = None  # which group the entries below belong to (or the pair of groups side by side, split at a column)
+    for line in lines[top:end]:
+        if re.match(r"^PIANO\s+KEY&ORGAN", line):
+            mode, split = ("PIANO", "KEY&ORGAN"), line.index("KEY&ORGAN") - 4
+        elif re.match(r"^ETHNIC\s+RHYTHM&SFX", line):
+            mode, split = ("ETHNIC", "RHYTHM&SFX"), line.index("RHYTHM&SFX") - 4
+        elif m := re.match(r"^\((Guitar/Bass|Orchestra/Brass|Synth/Pad) Group\)", line):
+            mode, split = {"Guitar/Bass": "GUITAR/BASS", "Orchestra/Brass": "ORCH/BRASS", "Synth/Pad": "SYNTH/PAD"}[m[1]], None
+        for m in entry.finditer(line):
+            if mode is None:
+                continue
+            category = mode if split is None else (mode[0] if m.start() < split else mode[1])
+            bank, number = m[4][-4:], int(m[5])  # ("PPR-C:121" is a typo in the manual)
+            name = m[2].rstrip().replace("\u2019", "'").replace("\u2018", "'")
+            if int(m[1]) in found[category]:
+                sys.exit(f"patch categories {category}: No. {m[1]} appears twice")
+            found[category][int(m[1])] = {"no": int(m[1]), "name": name, "group": bank, "number": number}
+    for category, fixes in CATEGORY_CORRECTIONS.items():
+        for no, (bank, number) in fixes.items():
+            printed = found[category].get(no)
+            expected = CATEGORY_MANUAL_ROWS.get((category, no))
+            if (printed and (printed["group"], printed["number"])) != expected:
+                sys.exit(f"patch categories {category} {no:03d}: the manual prints {printed}, expected {expected}: re-check CATEGORY_CORRECTIONS")
+            found[category][no] = {"no": no, "name": presets[bank][number - 1]["name"], "group": bank, "number": number}
+    result, seen = {}, set()
+    for category in CATEGORY_GROUPS:
+        numbers = sorted(found[category])
+        gaps = set(range(1, max(numbers) + 1)) - set(numbers)
+        if gaps != CATEGORY_GAPS.get(category, set()):
+            sys.exit(f"patch categories {category}: the numbers skip {sorted(gaps)[:10]} (expected {sorted(CATEGORY_GAPS.get(category, set()))})")
+        result[category] = [found[category][n] for n in numbers]
+        for e in result[category]:
+            listed = presets[e["group"]][e["number"] - 1]["name"]
+            squash = lambda text: re.sub(r"\s+", "", text)
+            if e["name"].isascii() and not squash(listed).startswith(squash(e["name"])):  # (a column prints a long name cut short: "Steelin Key" for "Steelin Keys"; a smiley comes out as mojibake)
+                sys.exit(f"patch categories {category}: {e['group']}:{e['number']:03d} is {e['name']!r} here but {listed!r} in the Patch List")
+            e["name"] = listed  # the Patch List's spelling is the full one
+            if (e["group"], e["number"]) in seen:
+                sys.exit(f"patch categories: {e['group']}:{e['number']:03d} is listed twice")
+            seen.add((e["group"], e["number"]))
+    missing = {(g, n) for g, entries in presets.items() for n in range(1, len(entries) + 1)} - seen
+    if missing != CATEGORY_UNLISTED:
+        sys.exit(f"patch categories: patches in no category: {sorted(missing)[:10]} (expected {sorted(CATEGORY_UNLISTED)})")
+    return result
+
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -341,9 +404,13 @@ def main():
         "memory_map": memory_map(lines),
         "factory_user_patches": factory_user_patches(lines),
         "efx_types": efx_types(pdf),
-        "preset_patches": preset_patches(lines),
+        "preset_patches": None,
+        "patch_categories": None,
         "blocks": {},
     }
+    data["preset_patches"] = preset_patches(lines)
+    data["patch_categories"] = patch_categories(lines, data["preset_patches"])
+    print("patch categories:", {k: len(v) for k, v in data["patch_categories"].items()})
     problems = 0
     for key, heading in BLOCKS:
         # the heading is printed once in the map (and once in an index): the one followed by a table is the right one

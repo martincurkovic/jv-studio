@@ -45,7 +45,7 @@ Do A completely. In B, go in the order given (each write path assumes the one be
 ### A2. Audition keyboard (3 min, plain notes: nothing is stored)
 - [ ] Click keys and type A S D F: the unit plays on the channel shown. C/V change how hard. **Panic** silences a hung note.
   *First proof of:* notes and velocity reach the unit; the channel default.
-- [ ] Choose patches in the Patch box and with the arrows: the unit's display follows each one. Then **Read Temporary Patch**: it is the patch you just chose.
+- [ ] Choose patches in the Patch box and with the arrows: the unit's display follows each one. Then pick "Piano (category)" and 008: the unit shows Bright Piano (bank PrA, number 002) and the same sound as the bank route. **One extra look:** on the unit turn CATEGORY to SYNTH/PAD and VALUE to 053-056: the manual prints 053 DanceStack 6, 054 DanceStack 8, (nothing at 055), 056 Big BPF, but the app lists 054 DanceStack 7 and 055 DanceStack 8 (from a Max for Live editor; unconfirmed). Note what the unit shows at 054, 055 and 056 and tell me if it differs. Then **Read Temporary Patch**: it is the patch you just chose.
   *First proof of:* Bank Select + Program Change (the manual's bank table: User 80/0, PR-A..E 81/0-4, Session 84/0-1).
 
 ### A3. The one write everything rests on (5 min, heard, not stored)

@@ -42,6 +42,33 @@ GROUP_HELP = {
 }
 
 
+#: the blue positions of the unit's CATEGORY/BANK knob (the manual's names, as printed on the panel) and what to call them
+CATEGORIES = {
+    "PIANO": "Piano",
+    "KEY&ORGAN": "Key & Organ",
+    "GUITAR/BASS": "Guitar / Bass",
+    "ORCH/BRASS": "Orchestra / Brass",
+    "SYNTH/PAD": "Synth / Pad",
+    "ETHNIC": "Ethnic",
+    "RHYTHM&SFX": "Rhythm & SFX",
+}
+CATEGORY_HELP = "The same factory sounds as Preset A-E and Session, grouped by kind (the blue positions of the unit's CATEGORY/BANK knob). USER patches have no category."
+
+
+@dataclass(frozen=True)
+class CategoryEntry:
+    no: int  # the number the unit shows in the category (the manual's list skips one: SYNTH/PAD has no 055)
+    name: str
+    group: PatchGroup  # the bank the patch lives in
+    number: int  # 0-based in that bank, what a Program Change counts
+
+
+def category_entries(category):
+    """The patches of a category (a key of `CATEGORIES`) in the unit's order."""
+    by_key = {g.key: g for g in GROUPS}
+    return [CategoryEntry(e.no, e.name, by_key[e.group], e.number - 1) for e in params.load_table().patch_categories.get(category, ())]
+
+
 def group_for(group_type, group_id):
     return next((g for g in GROUPS if (g.type, g.id) == (group_type, group_id)), None)
 

@@ -444,3 +444,47 @@ def test_hiding_the_keyboard_lets_go_of_held_notes(win):
     w.audition.keyboard._press(60)
     w.audition.set_open(False)
     assert fake.channel_messages[-1] == audition.note_off(0, 60) and not w.audition.keyboard.is_down(60)
+
+
+# -- browsing by category -------------------------------------------------------------------------------------------------------
+
+
+def test_the_bank_box_lists_the_banks_then_the_categories(bar):
+    bar, out, chosen = bar
+    items = [bar.bank_combo.itemText(i) for i in range(bar.bank_combo.count())]
+    assert items[:7] == ["USER", "Preset A", "Preset B", "Preset C", "Preset D (GM)", "Preset E", "Session"] and items[7] == ""  # (the separator)
+    assert items[8:] == ["Piano (category)", "Key & Organ (category)", "Guitar / Bass (category)", "Orchestra / Brass (category)", "Synth / Pad (category)", "Ethnic (category)", "Rhythm & SFX (category)"]
+
+
+def test_choosing_a_category_lists_its_patches_by_the_units_numbers_and_sends_the_bank_they_live_in(bar):
+    bar, out, chosen = bar
+    bar.bank_combo.setCurrentIndex(bar.bank_combo.findData("category:PIANO"))
+    bar.bank_combo.activated.emit(bar.bank_combo.currentIndex())
+    assert bar.patch_combo.count() == 59 and bar.patch_combo.itemText(7) == "008  Bright Piano" and "Preset A 002" in bar.patch_combo.itemData(7, Qt.ItemDataRole.ToolTipRole)
+    assert out[-3:] == audition.patch_select(0, "XP-A", 0) and chosen[-1] == ("XP-A", 0)  # PIANO 001 is the Session's St.Concert
+    bar.patch_combo.setCurrentIndex(7)
+    bar.patch_combo.activated.emit(7)
+    assert out[-3:] == audition.patch_select(0, "PR-A", 1) and chosen[-1] == ("PR-A", 1)  # Bank Select 81/0, Program Change 2
+    assert bar.current_label() == "PIANO 008  Bright Piano"
+    bar.next_button.click()
+    assert bar.patch_combo.currentText() == "009  Classique" and chosen[-1] == ("PR-A", 2)
+
+
+def test_a_category_patch_in_the_second_half_of_the_session_bank_uses_its_second_bank_select(bar):
+    bar, out, chosen = bar
+    bar.bank_combo.setCurrentIndex(bar.bank_combo.findData("category:SYNTH/PAD"))
+    bar._fill_patches()
+    index = bar.patch_combo.findText("055  DanceStack 8")  # (the manual prints no 055; see core/patch_groups and tools/extract_params.py)
+    assert index >= 0 and bar.patch_combo.itemText(index - 1) == "054  DanceStack 7" and bar.patch_combo.count() == 355
+    bar.patch_combo.setCurrentIndex(index)
+    bar.patch_combo.activated.emit(index)
+    assert out[-3:] == [audition.control_change(0, 0, 84), audition.control_change(0, 32, 1), audition.program_change(0, 22)] and chosen[-1] == ("XP-A", 150)
+
+
+def test_going_back_to_a_bank_after_a_category_works_and_play_on_unit_leaves_a_category(bar):
+    bar, out, chosen = bar
+    bar.bank_combo.setCurrentIndex(bar.bank_combo.findData("category:ETHNIC"))
+    bar._fill_patches()
+    assert bar.patch_combo.count() == 27
+    bar.choose("USER", 5)
+    assert bar.bank_combo.currentData() == "USER" and bar.patch_combo.count() == 128 and out[-3:] == audition.patch_select(0, "USER", 5)

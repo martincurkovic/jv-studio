@@ -21,6 +21,8 @@ HELP = (
     "Shortcuts such as Cmd+K (show or hide) still work."
 )
 
+CATEGORY_PREFIX = "category:"  # in the bank box's data: "category:PIANO"
+
 #: keys that keep working while the bar owns the keyboard: moving around, confirming, cancelling
 _PASS_THROUGH = {
     Qt.Key.Key_Tab, Qt.Key.Key_Backtab, Qt.Key.Key_Escape, Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Left, Qt.Key.Key_Right,
@@ -106,6 +108,10 @@ class AuditionBar(QWidget):
         for group in patch_groups.GROUPS:
             self.bank_combo.addItem(group.title, group.key)
             self.bank_combo.setItemData(self.bank_combo.count() - 1, patch_groups.GROUP_HELP[group.key], Qt.ItemDataRole.ToolTipRole)
+        self.bank_combo.insertSeparator(self.bank_combo.count())
+        for key, title in patch_groups.CATEGORIES.items():
+            self.bank_combo.addItem(f"{title} (category)", CATEGORY_PREFIX + key)
+            self.bank_combo.setItemData(self.bank_combo.count() - 1, patch_groups.CATEGORY_HELP, Qt.ItemDataRole.ToolTipRole)
         self.patch_combo = QComboBox()
         self.patch_combo.setMinimumWidth(260)
         self.prev_button = QPushButton("◀")
@@ -252,16 +258,28 @@ class AuditionBar(QWidget):
         if self.bank_combo.currentData() == "USER":
             self._fill_patches(keep=self.patch_combo.currentIndex())
 
+    def _category(self):
+        """The category being browsed ("PIANO"...), or None when a bank is."""
+        data = self.bank_combo.currentData() or ""
+        return data[len(CATEGORY_PREFIX):] if data.startswith(CATEGORY_PREFIX) else None
+
     def _group(self):
         return next(g for g in patch_groups.GROUPS if g.key == self.bank_combo.currentData())
 
     def _fill_patches(self, keep=0):
+        """The patch box: a bank's patches 001.., or a category's patches (the unit's own numbering for it), each remembering which bank patch it is."""
+        self.patch_combo.clear()
+        if (category := self._category()) is not None:
+            for entry in patch_groups.category_entries(category):
+                self.patch_combo.addItem(f"{entry.no:03d}  {entry.name}", (entry.group.key, entry.number))
+                self.patch_combo.setItemData(self.patch_combo.count() - 1, f"{entry.group.title} {entry.number + 1:03d}", Qt.ItemDataRole.ToolTipRole)
+            self.patch_combo.setCurrentIndex(max(0, min(keep, self.patch_combo.count() - 1)))
+            return
         group = self._group()
         names = patch_groups.names_of(group, self._user_names) or []
-        self.patch_combo.clear()
         for number in range(group.count):
             name = names[number] if number < len(names) else ""
-            self.patch_combo.addItem(f"{number + 1:03d}  {name}".rstrip(), number)
+            self.patch_combo.addItem(f"{number + 1:03d}  {name}".rstrip(), (group.key, number))
         self.patch_combo.setCurrentIndex(max(0, min(keep, group.count - 1)))
 
     def _bank_chosen(self):
@@ -275,7 +293,9 @@ class AuditionBar(QWidget):
             self._send_patch()
 
     def _send_patch(self):
-        key, number = self.bank_combo.currentData(), self.patch_combo.currentData()
+        if self.patch_combo.currentData() is None:
+            return
+        key, number = self.patch_combo.currentData()  # (the bank the patch lives in: a category's entries point into the banks)
         self.keyboard.release_all()  # (the old patch's notes must not hang on after it changes)
         for message in audition.patch_select(self.channel(), key, number):
             self.midi_out.emit(message)
@@ -291,6 +311,8 @@ class AuditionBar(QWidget):
         self._send_patch()
 
     def current_label(self):
+        if (category := self._category()) is not None:
+            return f"{category} {self.patch_combo.currentText()}".strip()
         return f"{self._group().key} {self.patch_combo.currentText()}".strip()
 
     # -- what the unit says about itself ---------------------------------------------------------------------------------

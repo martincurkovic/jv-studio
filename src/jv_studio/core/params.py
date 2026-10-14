@@ -101,6 +101,16 @@ class EfxParam:
 
 
 @dataclass(frozen=True)
+class CategoryPatch:
+    """One entry of the manual's Patch Category List: the number the unit shows in the category, and where the patch lives (group "PR-A".."PR-E"/"XP-A", number from 1)."""
+
+    no: int
+    name: str
+    group: str
+    number: int
+
+
+@dataclass(frozen=True)
 class EfxType:
     number: int  # 1-40, as the unit's display shows it (the EFX Type parameter holds number - 1)
     name: str
@@ -120,6 +130,7 @@ class ParameterTable:
     factory_user_patches: tuple[FactoryPatch, ...] = ()
     efx_types: tuple[EfxType, ...] = ()
     preset_patches: dict = field(default_factory=dict)  # "PR-A".."PR-E", "XP-A" -> tuple[PresetPatch]
+    patch_categories: dict = field(default_factory=dict)  # "PIANO".."RHYTHM&SFX" -> tuple[CategoryPatch], in the unit's order
 
     def efx_type(self, value):
         """The EfxType for the EFX Type parameter's raw value (0-39), or None outside that."""
@@ -164,7 +175,8 @@ def load_table():
         for t in raw.get("efx_types", ())
     )
     presets = {group: tuple(PresetPatch(e["name"], e["voices"], e["key_assign"]) for e in entries) for group, entries in raw.get("preset_patches", {}).items()}
-    return ParameterTable(int(raw["model_id"], 16), int(raw["device_id"], 16), blocks, memory, factory, efx, presets)
+    categories = {name: tuple(CategoryPatch(e["no"], e["name"], e["group"], e["number"]) for e in entries) for name, entries in raw.get("patch_categories", {}).items()}
+    return ParameterTable(int(raw["model_id"], 16), int(raw["device_id"], 16), blocks, memory, factory, efx, presets, categories)
 
 
 # -- reading and writing values ------------------------------------------------------------------------------------------
