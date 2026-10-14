@@ -87,7 +87,7 @@ def main(argv=None):
         sys.exit(f"unknown picture {args.only!r}")
     for which, preference in wanted:
         theme.apply_to_app(app, preference)
-        session, _unit = demo.build_demo(0)
+        session, _unit = demo.build_demo(0, use_backup=False)  # (the pictures are committed: always the built-in contents, never someone's own backup)
         window = MainWindow(session=session, worker=UnitWorker(session, timeout=0.5), start_worker=False, demo=True)
         window.resize(*SIZE)
         window.show()

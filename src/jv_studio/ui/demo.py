@@ -2,7 +2,7 @@
 
 import os
 
-from jv_studio.core import demo_unit, midi
+from jv_studio.core import app_config, demo_unit, midi
 from jv_studio.ui.midi_session import MidiSession
 
 PORT_IN = "Demo JV-1010 (in)"
@@ -20,9 +20,9 @@ def latency():
     return 0.0 if instant else demo_unit.DEFAULT_LATENCY_S
 
 
-def build_demo(request_latency=None):
-    """(an open MidiSession, the simulated unit it talks to)."""
-    unit = demo_unit.make_demo_unit()
+def build_demo(request_latency=None, use_backup=True):
+    """(an open MidiSession, the simulated unit it talks to). The unit holds the owner's own backup when `~/.jv-studio/demo-backup.syx` exists (`use_backup`), else the built-in contents."""
+    unit = demo_unit.make_demo_unit(app_config.demo_backup_path() if use_backup else None)
     ports = demo_unit.DemoPorts(unit, latency() if request_latency is None else request_latency)
     session = MidiSession(lambda i, o: midi.MidiConnection(i, o, input_factory=ports.input_factory, output_factory=ports.output_factory))
     session.open(PORT_IN, PORT_OUT)

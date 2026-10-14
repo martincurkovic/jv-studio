@@ -128,3 +128,55 @@ def test_the_demo_window_uses_the_simulated_unit_and_never_lists_real_ports(qapp
     assert window.names_list.count() == 128 and "2 differ from the factory list" in window.statusBar().currentMessage()
     window.close()
     window.deleteLater()
+
+
+# -- a demo unit filled from a whole-unit backup ---------------------------------------------------------------------------------
+
+
+def _a_backup_file(tmp_path):
+    from fakes import FakeJV1010, FakePorts
+    from jv_studio.core import backup, memory
+    from jv_studio.core.midi import MidiConnection
+    from jv_studio.core.unit import JV1010Unit
+
+    fake = FakeJV1010()
+    fake.user[4].name = "Kept Patch"
+    fake.user_performances[2].name = "Kept Perf"
+    fake.user_rhythms[1].name = "Kept Kit"
+    ports = FakePorts(fake)
+    conn = MidiConnection("in", "out", input_factory=ports.input_factory, output_factory=ports.output_factory)
+    saved = backup.read_backup(JV1010Unit(conn, timeout=0.2))
+    path = tmp_path / "unit.syx"
+    path.write_bytes(saved.to_syx())
+    return path
+
+
+def test_a_backup_fills_the_demo_unit_with_what_it_holds(tmp_path):
+    from jv_studio.core import rhythm, system
+
+    unit = demo_unit.make_demo_unit(_a_backup_file(tmp_path))
+    assert unit.user[4].name == "Kept Patch" and unit.user[0].name == "User 001" and unit.user_performances[2].name == "Kept Perf" and unit.user_rhythms[1].name == "Kept Kit"
+    assert unit.temporary.name == unit.user[1].name and unit.temp_performance.name == unit.user_performances[0].name and unit.temp_rhythm.name == unit.user_rhythms[0].name
+    assert system.System(bytearray(unit.block_data(0))).get("sound_mode") == 1  # the System block came from the file too
+
+
+def test_a_missing_or_unusable_backup_falls_back_to_the_built_in_demo(tmp_path):
+    builtin = demo_unit.make_demo_unit().user[0].name
+    assert demo_unit.make_demo_unit(tmp_path / "nothing.syx").user[0].name == builtin
+    junk = tmp_path / "junk.syx"
+    junk.write_bytes(b"not sysex")
+    assert demo_unit.make_demo_unit(junk).user[0].name == builtin
+    partial = tmp_path / "partial.syx"
+    partial.write_bytes(_a_backup_file(tmp_path).read_bytes()[:5000])
+    assert demo_unit.make_demo_unit(partial).user[0].name == builtin
+
+
+def test_the_demo_session_uses_the_saved_backup_only_when_asked_and_present(tmp_path, monkeypatch):
+    from jv_studio.core import app_config
+
+    monkeypatch.setattr(app_config, "CONFIG_PATH", tmp_path / "config.json")
+    _, unit = demo_mode.build_demo(0)
+    assert unit.user[4].name != "Kept Patch"  # no backup saved: the built-in contents
+    (tmp_path / "demo-backup.syx").write_bytes(_a_backup_file(tmp_path).read_bytes())
+    assert demo_mode.build_demo(0)[1].user[4].name == "Kept Patch"
+    assert demo_mode.build_demo(0, use_backup=False)[1].user[4].name != "Kept Patch"  # (the screenshots)

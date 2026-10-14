@@ -83,7 +83,7 @@ class SystemEditor(QWidget):
                     grid.addWidget(control, knobs // KNOBS_PER_ROW, knobs % KNOBS_PER_ROW, Qt.AlignmentFlag.AlignTop)
                     knobs += 1
                 else:
-                    form.addRow(param.name, control)
+                    form.addRow(param.name.replace("&", "&&"), control)
                     form.labelForField(control).setToolTip(control.toolTip())
             rows = [layout for layout, used in ((form, form.rowCount()), (grid, knobs)) if used]
             cards.append(build_editor_card("system_editor", title, *rows))

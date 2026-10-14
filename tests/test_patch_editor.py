@@ -455,3 +455,12 @@ def test_the_booster_is_only_available_for_the_structure_types_that_use_it(edito
     editor.working.set(patch.COMMON, "structure_type_3and4", 3)
     editor.refresh()
     assert other.isEnabled()
+
+
+def test_an_ampersand_in_a_parameter_name_is_shown_not_taken_for_a_mnemonic(qapp):
+    from PySide6.QtWidgets import QLabel
+
+    editor = PatchEditor()
+    editor.widget_for("patch_common", "structure_type_1and2")
+    labels = [label.text() for label in editor.findChildren(QLabel)]
+    assert "Structure Type 1&&2" in labels  # (Qt shows "&&" as one "&")

@@ -8,7 +8,9 @@ every write when the app quits.
 import time
 from functools import lru_cache
 
-from . import params, patch, performance, rhythm, sysex
+from pathlib import Path
+
+from . import backup, debug_log, memory, params, patch, performance, rhythm, sysex
 from .simulated_unit import SimulatedUnit
 
 DEFAULT_LATENCY_S = 0.004  # a real unit answers a request in a few milliseconds: this makes progress bars (names, a backup of ~1,300 requests) visible
@@ -216,8 +218,35 @@ def demo_performance(index):
 # -- the unit -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-def make_demo_unit(**options):
-    """A simulated JV-1010 holding the factory USER patch names, 32 performances and a temporary patch and performance. `options` are `SimulatedUnit`'s."""
+def unit_from_backup(path, **options):
+    """A simulated JV-1010 holding exactly what a whole-unit backup (`.syx`, File > Back Up Unit) holds: the 128 USER patches, 32 performances, 2 rhythm sets and the System block and
+    scale tunes. The temporary areas are not in a backup, so they start as copies of USER:002 (the patch the owner's unit had selected), performance 1 and rhythm set 1.
+    Raises `backup.BackupError` when the file is not a complete backup."""
+    data = Path(path).read_bytes()
+    saved = backup.parse_backup(data)
+    if not saved.is_complete():
+        raise backup.BackupError(f"{path} is not a complete whole-unit backup: {saved.summary()}")
+    unit = SimulatedUnit(**options)
+    patches, performances, rhythms = patch.parse_syx(data), performance.parse_syx(data), rhythm.parse_syx(data)
+    unit.user = [patches[patch.user_base(i)] for i in range(patch.USER_PATCH_COUNT)]
+    unit.user_performances = [performances[performance.user_base(i)] for i in range(performance.USER_PERFORMANCE_COUNT)]
+    unit.user_rhythms = [rhythms[rhythm.user_base(i)] for i in range(rhythm.USER_RHYTHM_COUNT)]
+    for block in memory.plan([memory.SYSTEM]):
+        unit.other[block.start] = bytearray(saved.data(block))
+    unit.temporary = unit.user[1].copy()
+    unit.temp_performance = unit.user_performances[0].copy()
+    unit.temp_rhythm = unit.user_rhythms[0].copy()
+    return unit
+
+
+def make_demo_unit(backup_path=None, **options):
+    """A simulated JV-1010. With `backup_path` (a complete backup file that exists) it holds that unit's contents; otherwise the factory USER patch names, 32 performances and a temporary
+    patch and performance of the built-in demo. A backup that can't be read is logged and the built-in contents are used. `options` are `SimulatedUnit`'s."""
+    if backup_path is not None and Path(backup_path).exists():
+        try:
+            return unit_from_backup(backup_path, **options)
+        except (OSError, ValueError, KeyError, backup.BackupError):
+            debug_log.get_logger().error(f"demo: couldn't use {backup_path} as the simulated unit: using the built-in contents", exc_info=True)
     unit = SimulatedUnit(**options)
     factory = params.load_table().factory_user_patches
     for i, entry in enumerate(factory):

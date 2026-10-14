@@ -132,7 +132,7 @@ class PatchEditor(QWidget):
                     grid.addWidget(widget, knobs // KNOBS_PER_ROW, knobs % KNOBS_PER_ROW, Qt.AlignmentFlag.AlignTop)
                     knobs += 1
                 else:
-                    form.addRow(param.name, widget)
+                    form.addRow(param.name.replace("&", "&&"), widget)
                     form.labelForField(widget).setToolTip(widget.toolTip())
             rows = [layout_ for layout_, used in ((form, form.rowCount()), (grid, knobs)) if used]
             if block_key == patch.TONE and title in GRAPH_FOR_CARD:

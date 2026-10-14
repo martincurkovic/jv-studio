@@ -39,7 +39,7 @@ Do A completely. In B, go in the order given (each write path assumes the one be
 - [ ] **Read Temporary Patch**: the name matches the unit's display and no "values outside the manual's ranges" line appears. If one does, the log lists which parameter: a bug in the table, not the unit.
 - [ ] **Read Patch Names**: 128 names; the status bar says how many differ from the factory list (you think "basically stock").
 - [ ] Open two or three USER patches (double-click) and compare names, level and tempo with the unit's display.
-- [ ] Hardware > **System Settings...**: it reads (settings and scale tune together). The line at the top names the unit's mode and patch correctly, and Master Tune / receive channel match the unit's SYSTEM menu.
+- [ ] Hardware > **System Settings...**: it reads (settings and scale tune together). The line at the top names the unit's mode and patch correctly, and Master Tune / receive channel match the unit's SYSTEM menu. **Two things the 2026-10-13 backup showed:** Master Tune should read 437.6 Hz (raw 51; if the unit's display says something else, the Hz mapping is off), and the EFX / Chorus / Reverb switches are all OFF (is the unit really dry? that is a System setting you may want back ON).
 - [ ] Performances > **Read Performance Names** (32) and **Read Temporary Performance**: part-to-patch assignments match the unit's PERFORM display; with USER names read first, a part's patch name is right (group IDs: USER = 1, PR-A..E = 3-7, Session = 2/9).
 
 ### A2. Audition keyboard (3 min, plain notes: nothing is stored)

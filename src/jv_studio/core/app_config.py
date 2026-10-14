@@ -94,6 +94,12 @@ def save_collapsed_cards(keys):
 # -- backups ----------------------------------------------------------------------------------------------------------------
 
 
+def demo_backup_path():
+    """Where `--demo` looks for a whole-unit backup (`.syx` from File > Back Up Unit) to fill the simulated unit with: the owner's own unit, for realism. It stays on the machine (it is
+    Roland's factory sounds plus whatever the owner stored), never in the repo or an app bundle. Absent = the built-in demo contents. Read at call time so tests can redirect it."""
+    return CONFIG_PATH.parent / "demo-backup.syx"
+
+
 def backups_dir():
     """Where the app puts the automatic `.syx` backup of a USER patch before overwriting it (next to the config; read at call time so tests can redirect it)."""
     return CONFIG_PATH.parent / "backups"
