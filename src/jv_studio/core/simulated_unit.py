@@ -81,6 +81,9 @@ class SimulatedUnit:
         if status != 0xC0 or len(message) < 2 or self.gm_mode:
             return
         settings = system.System(self.other[0])
+        if settings.get("sound_mode") == 0 and settings.get("receive_program_change"):
+            self._part_program_change(channel, message[1])  # Performance mode: the parts listening on this channel take the patch
+            return
         if settings.get("sound_mode") != 1 or channel != settings.get("patch_receive_channel") or not settings.get("receive_program_change"):
             return
         msb, lsb = self._bank.get(channel, [80, 0]) if settings.get("receive_bank_select") else (80, 0)
@@ -98,6 +101,22 @@ class SimulatedUnit:
                         settings.set(param, value)
                     self.other[0][:] = settings.common
                     return
+
+    def _part_program_change(self, channel, program):
+        """In Performance mode a Program Change (with the Bank Select before it) sets the patch of every part that listens on `channel`, receives and takes program changes
+        (`[manual p.68]`): the temporary performance's Patch Group Type / ID / Number change, which is what the unit's PERFORM display would show."""
+        msb, lsb = self._bank.get(channel, [80, 0])
+        found = next(((key, bank_first) for key, entries in audition.BANKS.items() for bank_msb, bank_lsb, count, bank_first in entries
+                      if (bank_msb, bank_lsb) == (msb, lsb) and program + bank_first < bank_first + count), None)
+        if found is None:
+            return
+        key, first = found
+        group = next(g for g in patch_groups.GROUPS if g.key == key)
+        for part in range(performance.PART_COUNT):
+            if (self.temp_performance.get(performance.PART, "midi_channel", part=part) == channel and self.temp_performance.get(performance.PART, "receive_switch", part=part)
+                    and self.temp_performance.get(performance.PART, "receive_program_change_switch", part=part)):
+                for name, value in (("patch_group_type", group.type), ("patch_group_id", group.id), ("patch_number", first + program)):
+                    self.temp_performance.set(performance.PART, name, value, part=part)
 
     def block_data(self, start):
         """The bytes of the block that starts at `start` (an int address, `memory.MemBlock.start`) as the unit holds them: a live bytearray, so a test can change it."""

@@ -1,8 +1,9 @@
 """Small Qt helpers shared by the windows and dialogs: section cards, scroll pages, form alignment."""
 
-from PySide6.QtCore import QEvent, Qt
+from PySide6.QtCore import QEvent, Qt, Signal
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import (
+    QLabel,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -14,6 +15,21 @@ from PySide6.QtWidgets import (
 )
 
 from jv_studio.ui.section_card import SectionCard
+
+
+class ClickableLabel(QLabel):
+    """A label that can be clicked (the connection pill): `clicked` is emitted on a left click, and the pointer shows it."""
+
+    clicked = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(event)
 
 
 class FullWidthTabBar(QTabBar):

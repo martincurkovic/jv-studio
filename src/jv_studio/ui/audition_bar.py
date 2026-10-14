@@ -137,7 +137,9 @@ class AuditionBar(QWidget):
         for button, tip in ((self.prev_button, "The previous patch"), (self.next_button, "The next patch")):
             button.setToolTip(tip)
             button.setMaximumWidth(36)
-        self.bank_combo.setToolTip("Choose a patch on the unit (Patch mode): the unit's current patch changes. Use Read Temporary Patch to edit what you hear.")
+        self._bank_tip = "Choose a patch on the unit: in Patch mode its current patch changes, in Performance mode the part on this channel gets it. It is read into the editor for you."
+        self._patch_row_enabled = True
+        self.bank_combo.setToolTip(self._bank_tip)
         self.bank_combo.activated.connect(lambda _i: self._bank_chosen())
         self.patch_combo.activated.connect(lambda _i: self._send_patch())
         self.prev_button.clicked.connect(lambda: self._step(-1))
@@ -314,6 +316,8 @@ class AuditionBar(QWidget):
         self._send_patch()
 
     def _step(self, direction):
+        if not self._patch_row_enabled:
+            return
         index = self.patch_combo.currentIndex() + direction
         if 0 <= index < self.patch_combo.count():
             self.patch_combo.setCurrentIndex(index)
@@ -321,6 +325,8 @@ class AuditionBar(QWidget):
 
     def _step_bank(self, direction):
         """The previous / next entry of the bank box (the banks, then the categories; the separator between them is skipped), choosing its first patch on the unit."""
+        if not self._patch_row_enabled:
+            return
         index = self.bank_combo.currentIndex() + direction
         while 0 <= index < self.bank_combo.count() and self.bank_combo.itemData(index) is None:
             index += direction  # (the separator)
@@ -329,7 +335,7 @@ class AuditionBar(QWidget):
             self._bank_chosen()
 
     def _send_patch(self):
-        if self.patch_combo.currentData() is None:
+        if not self._patch_row_enabled or self.patch_combo.currentData() is None:
             return
         key, number = self.patch_combo.currentData()  # (the bank the patch lives in: a category's entries point into the banks)
         self.keyboard.release_all()  # (the old patch's notes must not hang on after it changes)
@@ -353,15 +359,29 @@ class AuditionBar(QWidget):
 
     # -- what the unit says about itself ---------------------------------------------------------------------------------
 
+    def show_patch(self, group_type, group_id, number):
+        """Show a patch in the bank and patch boxes WITHOUT sending anything (the unit is already there, or it is a part's patch being looked at). Only for a patch group the
+        manual's table names (a Wave Expansion board's is left alone). Returns whether it was shown."""
+        group = patch_groups.group_for(group_type, group_id)
+        if group is None or not 0 <= number < group.count:
+            return False
+        self.bank_combo.setCurrentIndex(self.bank_combo.findData(group.key))
+        self._fill_patches(keep=number)
+        return True
+
     def show_selected_patch(self, info):
-        """Show the patch the unit has selected in the bank and patch boxes, WITHOUT sending anything (the unit is already there). Only in Patch mode, and only for a patch group
-        the manual's table names (a Wave Expansion board's is left alone)."""
-        group = patch_groups.group_for(info.group_type, info.group_id)
-        if info.sound_mode != 1 or group is None or not 0 <= info.patch_number < group.count:
-            return
-        index = self.bank_combo.findData(group.key)
-        self.bank_combo.setCurrentIndex(index)
-        self._fill_patches(keep=info.patch_number)
+        """Show the patch the unit has selected in the bank and patch boxes (Patch mode only), WITHOUT sending anything."""
+        if info.sound_mode == 1:
+            self.show_patch(info.group_type, info.group_id, info.patch_number)
+
+    def set_patch_row_enabled(self, enabled, why=""):
+        """The bank and patch boxes, the arrows and the `,` `.` `[` `]` keys. Off while Part 10 is the context: it plays a rhythm set, and a patch chosen on it would replace that."""
+        self._patch_row_enabled = enabled
+        for widget in (self.bank_combo, self.patch_combo, self.prev_button, self.next_button):
+            widget.setEnabled(enabled)
+        self.bank_combo.setToolTip(self._bank_tip if enabled else why)
+        self.prev_button.setToolTip("The previous patch" if enabled else why)
+        self.next_button.setToolTip("The next patch" if enabled else why)
 
     def show_system(self, info, announce=True):
         """Show the patch the unit has selected. With `announce` (the From Unit button) also use its Patch Receive Channel and say what would stop this working; without it (a refresh)

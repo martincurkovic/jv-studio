@@ -100,6 +100,7 @@ class PerformancePanel(QWidget):
         if self.editor is None:
             self.editor = PerformanceEditor()
             self.editor.param_committed.connect(self._on_param_committed)
+            self.editor.part_selected.connect(lambda _part: self.host._sync_audition_context())
             self.editor.edits_recorded.connect(self._on_edits_recorded)
             self.tree = QTreeWidget()  # the editor's last tab: every value as the unit holds it
             self.tree.setHeaderLabels(["Parameter", "Value", "Raw"])
@@ -183,6 +184,7 @@ class PerformancePanel(QWidget):
         self._redo.clear()
         self.ensure_editor().set_performance(read)
         self._update_label()
+        self.host._sync_audition_context()  # (the audition bar follows the part shown: its channel and its patch)
         if problems:
             shown = "; ".join(str(p) for p in problems[:3])
             more = f" (and {len(problems) - 3} more)" if len(problems) > 3 else ""
@@ -209,7 +211,12 @@ class PerformancePanel(QWidget):
         self._refresh_tree_if_shown()
         if self._live():
             self.worker.submit("perf_write_param", block, key, None if part < 0 else part, value)
+        if block == performance.PART and key in ("midi_channel", "patch_group_type", "patch_group_id", "patch_number"):
+            self.host._sync_audition_context()
         self.host._refresh_connection()
+
+    def shown_performance(self):
+        return self._shown[1] if self._shown else None
 
     def _on_edits_recorded(self, edits):
         self._undo.append(edits)

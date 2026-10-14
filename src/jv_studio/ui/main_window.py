@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QTimer, Qt
-from PySide6.QtGui import QAction, QBrush, QColor, QIcon, QKeySequence, QPixmap, QPainter
+from PySide6.QtGui import QAction, QActionGroup, QBrush, QColor, QIcon, QKeySequence, QPixmap, QPainter
 from PySide6.QtWidgets import (
     QApplication,
     QMenu,
@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, patch_collection, stock, sysex, unit, universal, validate
+from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, patch_collection, performance, stock, sysex, unit, universal, validate
 from jv_studio.ui import theme
 from jv_studio.ui.about_dialog import AboutDialog
 from jv_studio.ui.audition_bar import AuditionBar
@@ -35,7 +35,7 @@ from jv_studio.ui.midi_session import MidiSession
 from jv_studio.ui.patch_editor import PatchEditor
 from jv_studio.ui.performance_panel import PerformancePanel
 from jv_studio.ui.patch_collection_dialog import PatchCollectionDialog
-from jv_studio.ui.qt_helpers import set_primary, set_style_property
+from jv_studio.ui.qt_helpers import ClickableLabel, set_primary, set_style_property
 from jv_studio.ui.rhythm_panel import RhythmPanel
 from jv_studio.ui.qt_helpers import item_heading, set_enabled_without_scrolling
 from jv_studio.ui.segmented import SegmentedControl
@@ -59,6 +59,8 @@ class MainWindow(QMainWindow):
         self._autoload_enabled = autoload  # read the names and the temporary patch / performance as soon as ports are open (the app turns it on; tests call what they need)
         self._autoload_ports = None  # the (input, output) the last auto-load ran for: reopening the same ports after a diagnostic does not read again
         self._autoload_steps = []  # [(job label, function that submits it)]
+        self._patch_rx_channel = None  # the unit's Patch Receive Channel (0-15) as of the last System read: what the audition bar uses on the Patches tab
+        self._mode_switch = None  # the sound mode (0/1) a Unit Mode switch has asked for and not yet had confirmed
         self._unit_silent = False  # the last read got no answer at all (the connection pill says so)
         self._playing_user = None  # the USER patch (0-127) the unit is known to be playing: marked in the list
         self._sound_mode = None  # the unit's sound mode (0 performance, 1 patch, 2 GM) as of the last System read; None until one
@@ -84,6 +86,8 @@ class MainWindow(QMainWindow):
         self.worker.names_read.connect(self._on_names_read)
         self.worker.name_read.connect(self._on_name_read)
         self.worker.performance_name_read.connect(self._on_performance_name_read)
+        self.worker.system_read.connect(self._on_system_read)
+        self.worker.system_applied.connect(self._on_system_applied)
         self.worker.performance_read.connect(self._end_progress)  # (connected before the panels', which refresh the window's state after this)
         self.worker.rhythm_read.connect(self._end_progress)
         self.worker.performance_names_read.connect(self._on_performance_names_read)
@@ -204,6 +208,19 @@ class MainWindow(QMainWindow):
         self.system_action.setToolTip("The unit's global settings: master tune, MIDI receive, controller sources, effect switches.")
         self.system_action.triggered.connect(self.open_system_settings)
         hardware_menu.addAction(self.system_action)
+        mode_menu = hardware_menu.addMenu("Unit Mode")
+        mode_group = QActionGroup(self)
+        mode_group.setExclusive(True)
+        self.mode_patch_action = QAction("Patch Mode", self, checkable=True)
+        self.mode_patch_action.setToolTip("One sound at a time on the Patch Receive Channel: what the Patches tab edits. Written to the unit's System settings (backed up first).")
+        self.mode_patch_action.triggered.connect(lambda: self.set_unit_mode(1))
+        self.mode_performance_action = QAction("Performance Mode", self, checkable=True)
+        self.mode_performance_action.setToolTip("Sixteen parts on their own channels (Part 10 plays the rhythm set): what the Performances and Rhythm Sets tabs edit. Written to the System settings (backed up first).")
+        self.mode_performance_action.triggered.connect(lambda: self.set_unit_mode(0))
+        for action in (self.mode_patch_action, self.mode_performance_action):
+            mode_group.addAction(action)
+            mode_menu.addAction(action)
+        mode_menu.setToolTip("GM mode has its own items below: the unit ignores this app while it is in GM mode.")
         self.gm_on_action = QAction("GM System On...", self)
         self.gm_on_action.setToolTip("Put the unit in General MIDI mode (the standard Universal SysEx message). While it is in GM mode this app can't read or write it.")
         self.gm_on_action.triggered.connect(self.gm_system_on)
@@ -252,10 +269,11 @@ class MainWindow(QMainWindow):
         top_bar.addStretch()
         connection = QVBoxLayout()
         connection.setSpacing(4)
-        self.status_pill = QLabel()  # what the app knows about the unit: "● JV-1010 · Patch mode" (green), GM mode (amber), no answer (red)
+        self.status_pill = ClickableLabel()  # clickable: switches the unit's mode (see `_on_pill_clicked`). What the app knows about the unit: "● JV-1010 · Patch mode" (green), GM mode (amber), no answer (red)
         self.status_pill.setObjectName("statusPill")
         self.status_pill.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.status_pill.setVisible(False)
+        self.status_pill.clicked.connect(self._on_pill_clicked)
         self.connection_label = QLabel()
         self.connection_label.setObjectName("mutedLabel")
         self.connection_label.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -444,6 +462,8 @@ class MainWindow(QMainWindow):
             control.setEnabled(ready)
         for control in (self.gm_on_action, self.gm_off_action):
             control.setEnabled(ready)
+        for control in (self.mode_patch_action, self.mode_performance_action):
+            control.setEnabled(ready and self._sound_mode != 2)  # (in GM mode the unit ignores this app: GM System Off first)
         self.firmware_action.setEnabled(ready and not self.demo)  # (a simulated unit has no update mode)
         if self.system_dialog is not None:
             self.system_dialog.refresh_state(ready)
@@ -490,19 +510,103 @@ class MainWindow(QMainWindow):
             self.status_pill.setVisible(False)
             return
         unit_name = "Simulated JV-1010" if self.demo else "JV-1010"
+        wanted = self.TAB_MODE[self.mode_tabs.currentIndex()]
         if self._unit_silent:
             state, text = "bad", "● No answer from the unit"
         elif self._sound_mode == 2:
             state, text = "warn", "● GM mode: the unit ignores this app"
+        elif self._sound_mode in (0, 1) and self._sound_mode != wanted:  # this tab edits the other mode: say so, and one click switches
+            state, text = "warn", f"● {unit_name} is in {self.MODE_NAMES[self._sound_mode]} mode · click to switch to {self.MODE_NAMES[wanted]}"
         elif self._sound_mode in (0, 1):
-            state, text = "ok", f"● {unit_name} · {'Patch' if self._sound_mode == 1 else 'Performance'} mode"
+            state, text = "ok", f"● {unit_name} · {self.MODE_NAMES[self._sound_mode]} mode"
         elif self.demo:
             state, text = "ok", f"● {unit_name}"
         else:
             state, text = "idle", "● Ports open"
         self.status_pill.setText(text)
         set_style_property(self.status_pill, "state", state)
+        self.status_pill.setToolTip("Click to choose the unit's mode." if state != "warn" or self._sound_mode == 2 else "Click to switch the unit to the mode this tab edits.")
         self.status_pill.setVisible(True)
+        for action, mode in ((self.mode_patch_action, 1), (self.mode_performance_action, 0)):
+            action.setChecked(self._sound_mode == mode)
+
+    #: the tab -> the unit mode it edits (Rhythm Sets are Part 10 of a performance), and the modes' names
+    TAB_MODE = {0: 1, 1: 0, 2: 0}
+    MODE_NAMES = {0: "Performance", 1: "Patch", 2: "GM"}
+
+    def _on_pill_clicked(self):
+        """A mismatch between the tab and the unit's mode: switch (the pill said so). Otherwise a small menu of the modes."""
+        wanted = self.TAB_MODE[self.mode_tabs.currentIndex()]
+        if self._sound_mode in (0, 1) and self._sound_mode != wanted:
+            self.set_unit_mode(wanted)
+            return
+        self._show_mode_menu()
+
+    def _show_mode_menu(self):
+        menu = QMenu(self)
+        menu.addAction(self.mode_patch_action)
+        menu.addAction(self.mode_performance_action)
+        menu.popup(self.status_pill.mapToGlobal(self.status_pill.rect().bottomLeft()))
+        self._mode_menu = menu  # (kept alive while it shows)
+
+    def set_unit_mode(self, mode):
+        """Put the unit in Patch (1) or Performance (0) mode: ONE byte of the System settings (Sound Mode), through the same job as System Settings (the whole System section is saved
+        to a file first, the byte is written and read back). GM is not offered here: the unit ignores this app there (Hardware > GM System On / Off)."""
+        if mode not in (0, 1) or not self.session.is_open or not self.worker.is_idle() or self._firmware_running:
+            return
+        if self._sound_mode == 2:
+            self.statusBar().showMessage("The unit is in GM mode and ignores this app: use Hardware > GM System Off first.", 8000)
+            return
+        if mode == self._sound_mode:
+            self.statusBar().showMessage(f"The unit is already in {self.MODE_NAMES[mode]} mode.", 4000)
+            return
+        self._mode_switch = mode
+        self.statusBar().showMessage(f"Switching the unit to {self.MODE_NAMES[mode]} mode (the System settings are saved to a file first)...")
+        self.worker.submit("system_apply", [("sound_mode", mode)], {})
+
+    def _on_system_read(self, read, problems):
+        """Any read of the System settings (this window's, or the System Settings window's) tells us the mode and the Patch Receive Channel."""
+        self._unit_silent = False
+        self._sound_mode = read.get("sound_mode")
+        self._patch_rx_channel = read.get("patch_receive_channel")
+        self._update_status_pill()
+        self._sync_audition_context()
+
+    def _on_system_applied(self, path, count):
+        """The System settings were written and read back. If that was a Unit Mode switch: nothing the editors hold is known to be on the unit any more, so read it again."""
+        mode, self._mode_switch = self._mode_switch, None
+        if mode is None:
+            return
+        self._unit_state_changed()
+        self.statusBar().showMessage(f"The unit is in {self.MODE_NAMES[mode]} mode now (the old System settings are in {Path(path).name}). Reading it again...", 10000)
+        self._autoload_force = False
+        self._autoload_steps = self._reload_plan()  # (runs when the job finishes; a patch or performance with unsent edits is left alone)
+        self._autoload_next()
+
+    # -- the audition bar follows what is being edited ---------------------------------------------------------------------------
+
+    def _sync_audition_context(self):
+        """The audition bar's channel (and patch) follow the tab: on Patches the unit's Patch Receive Channel; on Performances the channel and patch of the part shown on the Part
+        tab; on Rhythm Sets Part 10's channel (10 unless the performance says otherwise), with the patch boxes off because Part 10 plays a rhythm set."""
+        tab = self.mode_tabs.currentIndex()
+        bar = self.audition
+        if tab == 0:
+            bar.set_patch_row_enabled(True)
+            if self._patch_rx_channel is not None:
+                bar.set_channel(self._patch_rx_channel + 1)
+            return
+        shown = self.performance_panel.shown_performance()
+        if tab == 1:
+            bar.set_patch_row_enabled(True)
+            editor = self.performance_panel.editor
+            if shown is not None and editor is not None:
+                part = editor.current_part()
+                bar.set_channel(shown.get(performance.PART, "midi_channel", part=part) + 1)
+                bar.show_patch(*(shown.get(performance.PART, key, part=part) for key in ("patch_group_type", "patch_group_id", "patch_number")))
+            return
+        channel = shown.get(performance.PART, "midi_channel", part=performance.RHYTHM_PART) if shown is not None else 9
+        bar.set_channel(channel + 1)
+        bar.set_patch_row_enabled(False, "Part 10 plays a rhythm set, not a patch: choose rhythm sets in the list on the left (right-click > Choose on Unit).")
 
     def _current_list(self):
         return self.list_stack.currentWidget()
@@ -555,6 +659,7 @@ class MainWindow(QMainWindow):
         self.save_action.setText(f"Save {noun} as .syx...")
         self.read_action.setText(f"Read Temporary {noun}")
         self.send_action.setText(f"Send to Temporary {noun}")
+        self._sync_audition_context()
         self._refresh_connection()
         self._load_tab(index)
 
@@ -821,7 +926,9 @@ class MainWindow(QMainWindow):
         self._unit_silent = "no reply" in message.lower()  # (the unit did not answer at all: the pill says so; any later successful read clears it)
         if label == "firmware":
             self._firmware_running = False
-        if label in ("temporary_follow", "check_temporary"):  # started by the window, not by a click: a status line, not a dialog
+        if label == "system_apply":
+            self._mode_switch = None
+        if label in ("temporary_follow", "check_temporary", "perf_temporary_follow"):  # started by the window, not by a click: a status line, not a dialog
             self._pending_check = None
             self.statusBar().showMessage(f"Couldn't read the patch the unit now plays: {message}", 10000)
             self._refresh_connection()
@@ -1347,6 +1454,7 @@ class MainWindow(QMainWindow):
         self.performance_panel._temp_synced = False
         self.rhythm_panel._temp_synced = False
         self._update_status_pill()
+        self._refresh_connection()
 
     def gm_system_on(self):
         if not self.session.is_open or not self.worker.is_idle() or self._firmware_running:
@@ -1382,7 +1490,10 @@ class MainWindow(QMainWindow):
         """A patch was chosen on the unit by Program Change: the unit's current patch is no longer what the editor last sent or read. A moment after the LAST choice the window reads
         the temporary patch into the editor (`_after_audition_choice`), unless that would replace edits that were never sent."""
         self._temp_synced = False
-        self._mark_playing(number if group == "USER" else None)
+        if self.mode_tabs.currentIndex() == 1:
+            self.performance_panel._temp_synced = False  # (a part's patch changed on the unit)
+        else:
+            self._mark_playing(number if group == "USER" else None)
         if self._pending_check is None:
             self.statusBar().showMessage(f"Chose {self.audition.current_label()} on the unit...", 8000)
         self._audition_timer.start(self.AUDITION_READ_DELAY_MS)
@@ -1395,6 +1506,12 @@ class MainWindow(QMainWindow):
         if not self.worker.is_idle():  # a job is running: try again shortly (the choice is not forgotten)
             self._audition_timer.start(200)
             return
+        tab = self.mode_tabs.currentIndex()
+        if tab == 2:
+            return  # (the patch boxes are off on this tab)
+        if tab == 1:
+            self._follow_part_patch()
+            return
         if self._sound_mode not in (None, 1):
             self._pending_check = None
             self.statusBar().showMessage("The unit is not in Patch mode: a patch chosen here goes to a part (Performance mode) or is ignored (GM mode), so there is no patch to load into the editor.", 10000)
@@ -1406,6 +1523,19 @@ class MainWindow(QMainWindow):
         else:
             self.statusBar().showMessage(f"Chose {self.audition.current_label()}: reading it into the editor...")
             self.worker.submit("temporary_follow")
+
+    def _follow_part_patch(self):
+        """A patch was chosen in the bar while the Performances tab shows: in Performance mode the part that listens on that channel took it, so read the temporary performance (unless it
+        has unsent edits) and the part's patch shows."""
+        if self._sound_mode == 1:
+            self.statusBar().showMessage("The unit is in Patch mode, so the choice went to its current patch, not to a part: click the status above to switch to Performance mode.", 10000)
+        elif self._sound_mode == 2:
+            self.statusBar().showMessage("The unit is in GM mode and ignores this app.", 8000)
+        elif self.performance_panel.has_shown() and self.performance_panel.is_dirty():
+            self.statusBar().showMessage(f"Chose {self.audition.current_label()} on the unit. Your unsent edits stay in the editor: Read Temporary Performance (Ctrl/Cmd+R) loads what the unit has instead.", 12000)
+        else:
+            self.statusBar().showMessage(f"Chose {self.audition.current_label()}: reading the performance...")
+            self.worker.submit("perf_temporary_follow")
 
     def _play_shown_on_unit(self, number):
         """A USER patch was just opened by double-click: have the unit select it too (Bank Select + Program Change: a plain MIDI message, nothing is written) and check that it did."""
@@ -1444,8 +1574,10 @@ class MainWindow(QMainWindow):
         self._unit_silent = False
         self._sound_mode = info.sound_mode
         self._mark_playing(info.patch_number if info.sound_mode == 1 and (info.group_type, info.group_id) == (0, 1) and 0 <= info.patch_number < patch.USER_PATCH_COUNT else None)
+        self._patch_rx_channel = info.channel
         announce, self._announce_system = self._announce_system, True
         self.audition.show_system(info, announce=announce)  # (a bound method, so the worker's signal is delivered on the GUI thread)
+        self._sync_audition_context()  # (on the other tabs the channel and patch belong to the part or to Part 10, not to the unit's Patch Receive Channel)
 
     def _read_unit_midi_settings(self):
         if not self.session.is_open or not self.worker.is_idle():

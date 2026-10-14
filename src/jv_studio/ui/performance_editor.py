@@ -42,6 +42,8 @@ DETAIL_CARDS = ("Part", "Mix", "Keyboard")
 
 class PerformanceEditor(QWidget):
     #: block key, parameter key, part (0-15, or -1 for the common block), the value now in the performance (an int, or the text of the name)
+    #: the part shown on the Part tab changed (a part button, the Part box, or a new performance): the window follows it with the audition bar's channel and patch
+    part_selected = Signal(int)
     param_committed = Signal(str, str, int, object)
     #: one user gesture as [(block, key, part or -1, old value, new value)]
     edits_recorded = Signal(list)
@@ -291,6 +293,11 @@ class PerformanceEditor(QWidget):
         self.refresh()
         if jump:
             self.tabs.setCurrentIndex(PART_TAB)
+        self.part_selected.emit(part)
+
+    def current_part(self):
+        """The part (0-15) the Part tab shows."""
+        return self._part
 
     def _apply_efx(self):
         if self._perf is None or "efx_parameter_1" not in self._common:

@@ -599,13 +599,12 @@ def test_the_bar_shows_the_selected_patch_without_sending_anything(bar):
 
 def test_refresh_all_follows_the_front_panel_patch_quietly(win):
     w, fake = win
-    w.audition.set_channel(10)  # the owner is auditioning the rhythm part
     w.audition._info_note = "Some earlier note"  # what an earlier From Unit said
     unit_selects(fake, 0, 5, 12)  # Preset C, patch 013, chosen on the unit's panel
     w.refresh_all()
     w.worker.process_pending()
     assert w.audition.bank_combo.currentData() == "PR-C" and w.audition.patch_combo.currentIndex() == 12
-    assert w.audition.channel() == 9 and w.audition._info_note == "Some earlier note"  # a refresh does not touch the channel box or the note
+    assert w.audition.channel() == 0 and w.audition._info_note == "Some earlier note"  # a refresh does not touch the note line (the channel follows the tab: the unit's Patch Receive Channel here)
     assert fake.channel_messages == [] and w._announce_system is True  # nothing was played or sent, and the next From Unit announces again
 
 

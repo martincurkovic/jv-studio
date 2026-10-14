@@ -11,7 +11,6 @@ from PySide6.QtCore import QTimer, Signal
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QCheckBox,
-    QComboBox,
     QFileDialog,
     QHBoxLayout,
     QInputDialog,
@@ -85,16 +84,8 @@ class RhythmPanel(QWidget):
         )
         actions.addWidget(self.live_check)
         actions.addStretch()
-        channel_row = QHBoxLayout()
-        self.channel_combo = QComboBox()
-        for number in range(1, 17):
-            self.channel_combo.addItem(str(number))
-        self.channel_combo.setCurrentIndex(9)  # channel 10
-        self.channel_combo.setToolTip("The MIDI channel of Part 10, which plays the rhythm set (10 unless you changed it in the performance). Clicked keys play on it.")
-        channel_row.addWidget(QLabel("Part 10 channel"))
-        channel_row.addWidget(self.channel_combo)
         self.hint_label = QLabel(
-            "Keys sound with the unit in Performance or Rhythm mode. Choose a rhythm set on the unit (right-click a set in the list), then Read Temporary."
+            "Keys sound with the unit in Performance mode, on Part 10's channel (the audition bar's Channel follows it). Choose a rhythm set on the unit (right-click a set in the list), then Read Temporary."
         )
         self.hint_label.setObjectName("mutedLabel")
         self.hint_label.setWordWrap(True)
@@ -102,9 +93,8 @@ class RhythmPanel(QWidget):
         self.tree = None
         for item in (self.label, self.problems_label):
             layout.addWidget(item)
-        channel_row.addWidget(self.hint_label, 1)
         layout.addLayout(actions)
-        layout.addLayout(channel_row)
+        layout.addWidget(self.hint_label)
         self._layout = layout
 
         self.worker.rhythm_read.connect(self._on_read)
@@ -156,7 +146,8 @@ class RhythmPanel(QWidget):
     # -- sounding --------------------------------------------------------------------------------------------------------
 
     def channel(self):
-        return self.channel_combo.currentIndex()
+        """0-15: the audition bar's channel (it is set to Part 10's while this tab shows, and can be changed there)."""
+        return self.host.audition.channel()
 
     def play_key(self, key):
         """Sound `key` on Part 10's channel for a moment, at the audition bar's velocity."""
