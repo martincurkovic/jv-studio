@@ -75,7 +75,8 @@ Found by reading the Owner's Manual's MIDI Implementation chapter against what t
 - [x] **Scale tune** (the Scale Tune tab of System Settings: 12 notes in cents for Patch mode and each part, the manual's three tunings on any tonic, Copy to All). **Hardware:** test plan B2 (which block Patch mode obeys, power-cycle persistence).
 - [x] **Rhythm set editor** (2 USER sets x 64 keys: key grid, per-key tone editor, copy/swap keys, live edits to the temporary rhythm set, write to USER). Built 2026-10-14, NOT tried on a unit: see `dev_docs/hardware-test-plan.md` B5. Not done: the factory rhythm sets (read-only on the unit), copy/swap of whole sets.
 - [ ] **Library**: open/save a bank of 128 `.syx`, initialise a slot, edit USER patches in place from the list, compare a patch with the unit's; rename/copy/swap performances.
-- [ ] Smaller: Universal SysEx (master volume, GM On/Off), the unit's own Data Transfer (performance dump), per-effect display mapping, an interface check ("can this port pass a 265-byte message?") before any long write.
+- [x] **Universal SysEx** (`core/universal.py`): a Master slider in the audition bar (sends on release; starts at full, the unit can't report its level) and Hardware > GM System On... / GM System Off. Built 2026-10-14, NOT tried on a unit: `dev_docs/hardware-test-plan.md` B6.
+- [ ] Smaller: the unit's own Data Transfer (performance dump), per-effect display mapping, an interface check ("can this port pass a 265-byte message?") before any long write.
 
 ## Open questions
 

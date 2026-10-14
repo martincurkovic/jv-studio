@@ -488,3 +488,143 @@ def test_going_back_to_a_bank_after_a_category_works_and_play_on_unit_leaves_a_c
     assert bar.patch_combo.count() == 27
     bar.choose("USER", 5)
     assert bar.bank_combo.currentData() == "USER" and bar.patch_combo.count() == 128 and out[-3:] == audition.patch_select(0, "USER", 5)
+
+
+# -- stepping patches and banks from the computer keyboard ------------------------------------------------------------------------
+
+
+def test_comma_period_and_brackets_step_the_patch_and_the_bank(bar):
+    bar, out, chosen = bar
+    keyboard = bar.keyboard
+    assert bar.bank_combo.currentData() == "USER" and bar.patch_combo.currentIndex() == 0
+    QTest.keyClick(keyboard, Qt.Key.Key_Period)
+    QTest.keyClick(keyboard, Qt.Key.Key_Period)
+    assert bar.patch_combo.currentIndex() == 2 and chosen[-1] == ("USER", 2) and out[-3:] == audition.patch_select(0, "USER", 2)
+    QTest.keyClick(keyboard, Qt.Key.Key_Comma)
+    assert bar.patch_combo.currentIndex() == 1 and chosen[-1] == ("USER", 1)
+    QTest.keyClick(keyboard, Qt.Key.Key_BracketRight)  # the next bank: Preset A, its first patch
+    assert bar.bank_combo.currentData() == "PR-A" and bar.patch_combo.currentIndex() == 0 and chosen[-1] == ("PR-A", 0) and out[-3:] == audition.patch_select(0, "PR-A", 0)
+    QTest.keyClick(keyboard, Qt.Key.Key_BracketLeft)
+    assert bar.bank_combo.currentData() == "USER"
+    QTest.keyClick(keyboard, Qt.Key.Key_BracketLeft)  # already the first: stays
+    assert bar.bank_combo.currentData() == "USER" and bar.bank_combo.currentIndex() == 0
+
+
+def test_the_bank_keys_walk_on_through_the_categories_past_the_separator_and_stop_at_the_end(bar):
+    bar, out, chosen = bar
+    for _ in range(6):
+        QTest.keyClick(bar.keyboard, Qt.Key.Key_BracketRight)
+    assert bar.bank_combo.currentData() == "XP-A"  # Session: the last bank
+    QTest.keyClick(bar.keyboard, Qt.Key.Key_BracketRight)  # over the separator
+    assert bar.bank_combo.currentData() == "category:PIANO" and bar.patch_combo.itemText(0).startswith("001  ")
+    for _ in range(10):
+        QTest.keyClick(bar.keyboard, Qt.Key.Key_BracketRight)
+    assert bar.bank_combo.currentData() == "category:RHYTHM&SFX"  # the last entry
+    QTest.keyClick(bar.keyboard, Qt.Key.Key_BracketLeft)
+    assert bar.bank_combo.currentData() == "category:ETHNIC"
+    for _ in range(6):
+        QTest.keyClick(bar.keyboard, Qt.Key.Key_BracketLeft)
+    assert bar.bank_combo.currentData() == "XP-A"  # back over the separator
+
+
+def test_the_patch_keys_stop_at_the_ends_and_repeat_while_held(bar):
+    bar, out, chosen = bar
+    QTest.keyClick(bar.keyboard, Qt.Key.Key_Comma)
+    assert bar.patch_combo.currentIndex() == 0  # nothing before the first
+    from PySide6.QtGui import QKeyEvent
+
+    for _ in range(3):  # an auto-repeating key: each repeat steps again
+        bar.keyboard.keyPressEvent(QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Period, Qt.KeyboardModifier.NoModifier, ".", True))
+    assert bar.patch_combo.currentIndex() == 3
+    bar.keyboard.keyPressEvent(QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_BracketRight, Qt.KeyboardModifier.NoModifier, "]", True))
+    assert bar.bank_combo.currentData() == "USER"  # a bank key does not repeat: a held key would race through the banks
+
+
+def test_the_step_keys_are_routed_to_the_bar_while_it_is_open_and_do_not_play_notes(routed):
+    bar, out = routed
+    box = QLineEdit()
+    for key, text in ((Qt.Key.Key_Period, "."), (Qt.Key.Key_BracketRight, "]")):
+        assert bar.eventFilter(box, key_event(QEvent.Type.KeyPress, key, text)) is True
+    assert bar.patch_combo.currentIndex() == 1 or bar.bank_combo.currentData() == "PR-A"
+    assert all(m[0] & 0xF0 != 0x90 for m in out)  # no note was played
+    assert bar.eventFilter(box, key_event(QEvent.Type.KeyPress, Qt.Key.Key_Period, ".", Qt.KeyboardModifier.ControlModifier)) is False  # a shortcut still passes
+
+
+def test_the_audition_button_sits_at_the_left_even_with_no_note_line(qapp):
+    bar = AuditionBar()
+    bar.resize(900, 300)
+    bar.show()
+    qapp.processEvents()
+    assert bar.note.isHidden() and bar.toggle.geometry().left() < 40 and bar.toggle.width() < 200
+    bar.close()
+
+
+# -- following the patch the unit has selected -------------------------------------------------------------------------------------
+
+
+def unit_selects(fake, group_type, group_id, number, mode=1):
+    table = params.load_table().block("system_common")
+    for key, value in (("sound_mode", mode), ("patch_group_type", group_type), ("patch_group_id", group_id), ("patch_number", number)):
+        params.write(fake.other[0], table.param(key), value)
+
+
+def test_the_system_block_says_which_patch_the_unit_has_selected():
+    from jv_studio.core import system
+
+    fake = FakeJV1010()
+    unit_selects(fake, 0, 4, 41)  # Preset B, patch 042
+    info = audition.parse_system_common(bytes(fake.other[0]))
+    assert (info.group_type, info.group_id, info.patch_number, info.sound_mode) == (0, 4, 41, 1)
+
+
+def test_the_bar_shows_the_selected_patch_without_sending_anything(bar):
+    bar, out, chosen = bar
+    info = lambda **k: audition.SystemMidi(channel=0, program_change=True, bank_select=True, sound_mode=k.pop("mode", 1), **k)
+    bar.show_selected_patch(info(group_type=0, group_id=4, patch_number=41))
+    assert bar.bank_combo.currentData() == "PR-B" and bar.patch_combo.currentIndex() == 41 and bar.patch_combo.currentText().startswith("042  ")
+    bar.show_selected_patch(info(group_type=2, group_id=9, patch_number=200))  # the Session bank's second half
+    assert bar.bank_combo.currentData() == "XP-A" and bar.patch_combo.currentIndex() == 200
+    assert out == [] and chosen == []  # shown only: the unit is already there
+    bar.bank_combo.setCurrentIndex(bar.bank_combo.findData("category:PIANO"))
+    bar._fill_patches()
+    bar.show_selected_patch(info(group_type=0, group_id=3, patch_number=1))  # browsing a category: back to the bank list the unit really uses
+    assert bar.bank_combo.currentData() == "PR-A" and bar.patch_combo.currentIndex() == 1
+    before = (bar.bank_combo.currentData(), bar.patch_combo.currentIndex())
+    bar.show_selected_patch(info(group_type=0, group_id=4, patch_number=7, mode=0))  # Performance mode: the patch is not what plays
+    bar.show_selected_patch(info(group_type=2, group_id=4, patch_number=7))  # a group the manual's table does not name
+    bar.show_selected_patch(info(group_type=0, group_id=4, patch_number=200))  # beyond the bank
+    bar.show_selected_patch(audition.SystemMidi(channel=0, program_change=True, bank_select=True, sound_mode=1))  # not read at all
+    assert (bar.bank_combo.currentData(), bar.patch_combo.currentIndex()) == before and out == []
+
+
+def test_refresh_all_follows_the_front_panel_patch_quietly(win):
+    w, fake = win
+    w.audition.set_channel(10)  # the owner is auditioning the rhythm part
+    w.audition._info_note = "Some earlier note"  # what an earlier From Unit said
+    unit_selects(fake, 0, 5, 12)  # Preset C, patch 013, chosen on the unit's panel
+    w.refresh_all()
+    w.worker.process_pending()
+    assert w.audition.bank_combo.currentData() == "PR-C" and w.audition.patch_combo.currentIndex() == 12
+    assert w.audition.channel() == 9 and w.audition._info_note == "Some earlier note"  # a refresh does not touch the channel box or the note
+    assert fake.channel_messages == [] and w._announce_system is True  # nothing was played or sent, and the next From Unit announces again
+
+
+def test_from_unit_still_announces_and_now_selects_the_patch_too(win):
+    w, fake = win
+    unit_selects(fake, 0, 3, 99)
+    w.audition.unit_button.click()
+    w.worker.process_pending()
+    assert w.audition.bank_combo.currentData() == "PR-A" and w.audition.patch_combo.currentIndex() == 99
+    assert w.audition.channel() == 0 and "receives on channel 1" in w.audition.note.text()
+
+
+def test_the_start_up_read_shows_the_unit_selection_too(win):
+    w, fake = win
+    unit_selects(fake, 2, 9, 3)
+    w.session.close()
+    w.session.open("in", "out")
+    w._autoload_enabled = True
+    w._autoload_ports = None
+    w._maybe_autoload()
+    w.worker.process_pending()
+    assert w.audition.bank_combo.currentData() == "XP-A" and w.audition.patch_combo.currentIndex() == 3

@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, patch_collection, stock, sysex, unit, validate
+from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, patch_collection, stock, sysex, unit, universal, validate
 from jv_studio.ui import theme
 from jv_studio.ui.about_dialog import AboutDialog
 from jv_studio.ui.audition_bar import AuditionBar
@@ -56,6 +56,7 @@ class MainWindow(QMainWindow):
         self._autoload_enabled = autoload  # read the names and the temporary patch / performance as soon as ports are open (the app turns it on; tests call what they need)
         self._autoload_ports = None  # the (input, output) the last auto-load ran for: reopening the same ports after a diagnostic does not read again
         self._autoload_steps = []  # [(job label, function that submits it)]
+        self._announce_system = True  # the next System read is the From Unit button's (it says what it found); a refresh's is quiet
         self._autoload_force = False  # Refresh All was confirmed: read even a patch, performance or rhythm set with unsent edits
         self._autoload_job = None  # the label of the auto-load job in flight: its failure is a status line, not a dialog (a silent unit at startup is not an alarm)
         self.demo = demo  # a simulated unit on a fake connection (`--demo`): no real ports are listed, chosen or opened
@@ -186,6 +187,14 @@ class MainWindow(QMainWindow):
         self.system_action.setToolTip("The unit's global settings: master tune, MIDI receive, controller sources, effect switches.")
         self.system_action.triggered.connect(self.open_system_settings)
         hardware_menu.addAction(self.system_action)
+        self.gm_on_action = QAction("GM System On...", self)
+        self.gm_on_action.setToolTip("Put the unit in General MIDI mode (the standard Universal SysEx message). While it is in GM mode this app can't read or write it.")
+        self.gm_on_action.triggered.connect(self.gm_system_on)
+        hardware_menu.addAction(self.gm_on_action)
+        self.gm_off_action = QAction("GM System Off", self)
+        self.gm_off_action.setToolTip("Take the unit out of GM mode: it returns to Performance mode, and this app can read and write it again.")
+        self.gm_off_action.triggered.connect(self.gm_system_off)
+        hardware_menu.addAction(self.gm_off_action)
         hardware_menu.addSeparator()
         self.firmware_action = QAction("Update Firmware... (unverified)", self)
         self.firmware_action.setToolTip("Plays Roland's System Update files to a unit in update mode. Never tried on a real JV-1010: use at your own risk.")
@@ -367,6 +376,7 @@ class MainWindow(QMainWindow):
         self.audition.midi_out.connect(self._send_midi)
         self.audition.patch_chosen.connect(self._on_audition_patch)
         self.audition.unit_settings_requested.connect(self._read_unit_midi_settings)
+        self.audition.master_volume_changed.connect(self._on_master_volume)
         central_layout.addWidget(self.audition)
         self.audition_action.setChecked(self.audition.is_open())
         self.audition.open_changed.connect(self.audition_action.setChecked)
@@ -411,6 +421,8 @@ class MainWindow(QMainWindow):
         for control in (self.btn_detect, self.detect_action, self.btn_read_temporary, self.read_action, self.btn_read_names):
             control.setEnabled(ready)
         for control in (self.backup_action, self.restore_action):
+            control.setEnabled(ready)
+        for control in (self.gm_on_action, self.gm_off_action):
             control.setEnabled(ready)
         self.firmware_action.setEnabled(ready and not self.demo)  # (a simulated unit has no update mode)
         if self.system_dialog is not None:
@@ -593,7 +605,7 @@ class MainWindow(QMainWindow):
         self._autoload_next()
 
     def _reload_plan(self):
-        return [("temporary", self._autoload_patch), ("names", self._read_patch_names), ("perf_names", self._read_performance_names), ("rhythm_names", self._read_rhythm_names),
+        return [("temporary", self._autoload_patch), ("system_midi", self._autoload_selection), ("names", self._read_patch_names), ("perf_names", self._read_performance_names), ("rhythm_names", self._read_rhythm_names),
                 ("perf_temporary", self._autoload_performance), ("rhythm_temporary", self._autoload_rhythm)]
 
     def refresh_all(self):
@@ -1178,6 +1190,43 @@ class MainWindow(QMainWindow):
         except Exception:
             debug_log.get_logger().error("audition: couldn't send a MIDI message", exc_info=True)
 
+    # -- Universal SysEx: master volume and GM mode ------------------------------------------------------------------------
+
+    def _on_master_volume(self, level):
+        self._send_midi(universal.master_volume(level))
+        debug_log.get_logger().info(f"universal: master volume {level}")
+        self.statusBar().showMessage(f"Master volume {level} sent", 3000)
+
+    def _unit_state_changed(self):
+        """The unit's own state changed under the editors (GM mode on or off): nothing the windows hold is known to be on the unit any more."""
+        self._temp_synced = False
+        self.performance_panel._temp_synced = False
+        self.rhythm_panel._temp_synced = False
+
+    def gm_system_on(self):
+        if not self.session.is_open or not self.worker.is_idle() or self._firmware_running:
+            return
+        answer = QMessageBox.question(
+            self, "GM System On",
+            "Put the unit in General MIDI mode?\n\nIt resets the unit's current sound settings to the GM start state. While it is in GM mode JV Studio can't read or write it: "
+            "use Hardware > GM System Off (or the unit's VALUE knob) to come back. Your stored patches are not touched.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self._send_midi(universal.GM_SYSTEM_ON)
+        self._unit_state_changed()
+        debug_log.get_logger().warning("universal: GM System On sent")
+        self.statusBar().showMessage("GM System On sent: the unit is in GM mode and ignores this app's reads and writes. Hardware > GM System Off brings it back.", 15000)
+
+    def gm_system_off(self):
+        if not self.session.is_open or not self.worker.is_idle() or self._firmware_running:
+            return
+        self._send_midi(universal.GM_SYSTEM_OFF)
+        self._unit_state_changed()
+        debug_log.get_logger().info("universal: GM System Off sent")
+        self.statusBar().showMessage("GM System Off sent: the unit returns to Performance mode. Refresh All from Unit (Ctrl/Cmd+Shift+R) reads it again.", 15000)
+
     def _on_audition_patch(self, group, number):
         """A patch was chosen on the unit by Program Change: the unit's current patch is no longer what the editor last sent or read."""
         self._temp_synced = False
@@ -1185,12 +1234,19 @@ class MainWindow(QMainWindow):
         self._refresh_connection()
 
     def _on_system_midi(self, info):
-        self.audition.show_system(info)  # (a bound method, so the worker's signal is delivered on the GUI thread)
+        announce, self._announce_system = self._announce_system, True
+        self.audition.show_system(info, announce=announce)  # (a bound method, so the worker's signal is delivered on the GUI thread)
 
     def _read_unit_midi_settings(self):
         if not self.session.is_open or not self.worker.is_idle():
             self.statusBar().showMessage("Wait for the current job to finish first")
             return
+        self._announce_system = True
+        self.worker.submit("system_midi")
+
+    def _autoload_selection(self):
+        """A start-up or Refresh All step: which patch the unit has selected, shown in the audition bar's boxes (quietly: no note, the channel box untouched)."""
+        self._announce_system = False
         self.worker.submit("system_midi")
 
     def _on_cancelled(self, label, message):

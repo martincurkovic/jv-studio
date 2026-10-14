@@ -7,7 +7,7 @@ Options for testing the app's safety nets: `gm_mode` (the unit ignores RQ1/DT1 i
 check) and `drop_first_replies=n` (the first n RQ1s get no answer, to test retries).
 """
 
-from . import memory, patch, performance, rhythm, scale_tune, sysex, system
+from . import memory, patch, performance, rhythm, scale_tune, sysex, system, universal
 
 IDENTITY_REPLY = bytes.fromhex("F0 7E 10 06 02 41 6A 00 05 00 00 00 00 00 F7")
 
@@ -38,6 +38,8 @@ class SimulatedUnit:
         self.drop_first_replies = drop_first_replies
         self.requests = []  # (address, size) of every RQ1
         self.writes = []  # every DT1 received, parsed
+        self.master_volume = None  # the last Master Volume received (None: never set)
+        self.universal_messages = []  # every Universal SysEx received: "gm_on", "gm_off", ("master_volume", n)
         self.channel_messages = []  # every non-SysEx message received (notes, Bank Select, Program Change...): the unit would play or switch, here they are just kept
         # the System settings: VALID ones (a block of the pattern would hold values outside every range): Patch mode on USER 001, A = 440.0 Hz, channel 1, program change and bank select ON
         initial = system.System.minimum()
@@ -87,6 +89,15 @@ class SimulatedUnit:
             return []
         if message == sysex.IDENTITY_REQUEST:
             return [self.identity]
+        if (universal_kind := universal.classify(message)) is not None:
+            self.universal_messages.append(universal_kind)
+            if universal_kind == "gm_on":
+                self.gm_mode = True  # in GM mode the unit ignores RQ1/DT1 (and the Master Volume message)
+            elif universal_kind == "gm_off":
+                self.gm_mode = False
+            elif not self.gm_mode:
+                self.master_volume = universal_kind[1]
+            return []
         parsed = sysex.parse(message)
         if not isinstance(parsed, sysex.Message) or self.gm_mode:
             return []

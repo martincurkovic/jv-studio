@@ -106,6 +106,9 @@ class SystemMidi:
     program_change: bool
     bank_select: bool
     sound_mode: int  # 0 performance, 1 patch, 2 GM
+    group_type: int = -1  # the patch the unit has selected (Patch mode): the System block's Patch Group Type, Patch Group ID and Patch Number (0-based); -1 = not read
+    group_id: int = -1
+    patch_number: int = -1
 
     @property
     def mode_name(self):
@@ -137,4 +140,7 @@ def parse_system_common(block):
         program_change=bool(value("receive_program_change")),
         bank_select=bool(value("receive_bank_select")),
         sound_mode=value("sound_mode"),
+        group_type=value("patch_group_type"),
+        group_id=value("patch_group_id"),
+        patch_number=value("patch_number"),
     )

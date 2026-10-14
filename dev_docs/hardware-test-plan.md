@@ -11,7 +11,7 @@ it turns a `[guess]` into a measurement). Keep `~/.jv-studio/jv-studio.log` from
 | Tier | Time | What it buys | Needs |
 |---|---|---|---|
 | **A: essentials** | ~20 min | Reads work; one write path proven (the one everything else rests on); the keyboard plays | nothing spare |
-| **B: the new writes** | ~35 min | System settings, scale tune, USER patch write, performances, rhythm sets | a spare USER slot, performance slot and rhythm set; a tuner or a good ear |
+| **B: the new writes** | ~40 min | System settings, scale tune, USER patch write, performances, rhythm sets | a spare USER slot, performance slot and rhythm set; a tuner or a good ear |
 | **C: if time is left** | ~15 min | Restore, small checks | the step-0 backup |
 | **D: optional** | n/a | Firmware | a different MIDI interface, see step 7 |
 
@@ -35,7 +35,7 @@ Do A completely. In B, go in the order given (each write path assumes the one be
   *First proof of:* the System block parses (`sound_mode`, channel, receive switches) and the table's offsets are right.
 
 ### A1. Reading (5 min, nothing is written)
-- [ ] **Startup auto-load:** with the unit on and the saved ports, opening the app alone fills the temporary patch, the 128 patch names, the 32 performance names and the temporary performance (the status bar walks through them). One error and the rest stop: note which read failed (the temporary performance in Patch mode is the likely one, `01 00 00 00` is unproven). The buttons below are then refreshes. **Front-panel changes:** turn the unit's VALUE knob to another patch, then **Ctrl/Cmd+R** (Read Temporary): the window shows that patch. Change a name on the unit and Store it, then **Ctrl/Cmd+Shift+R** (Refresh All): the USER list shows the new name.
+- [ ] **Startup auto-load:** with the unit on and the saved ports, opening the app alone fills the temporary patch, the 128 patch names, the 32 performance names and the temporary performance (the status bar walks through them). One error and the rest stop: note which read failed (the temporary performance in Patch mode is the likely one, `01 00 00 00` is unproven). The buttons below are then refreshes. **Front-panel changes:** turn the unit's VALUE knob to another patch, then **Ctrl/Cmd+R** (Read Temporary): the window shows that patch, and **Ctrl/Cmd+Shift+R** also moves the audition bar's bank and patch boxes to it (this relies on the System block's selection changing as you turn the knob: if the boxes stay put, tell me). Change a name on the unit and Store it, then **Ctrl/Cmd+Shift+R** (Refresh All): the USER list shows the new name.
 - [ ] **Read Temporary Patch**: the name matches the unit's display and no "values outside the manual's ranges" line appears. If one does, the log lists which parameter: a bug in the table, not the unit.
 - [ ] **Read Patch Names**: 128 names; the status bar says how many differ from the factory list (you think "basically stock").
 - [ ] Open two or three USER patches (double-click) and compare names, level and tempo with the unit's display.
@@ -45,7 +45,7 @@ Do A completely. In B, go in the order given (each write path assumes the one be
 ### A2. Audition keyboard (3 min, plain notes: nothing is stored)
 - [ ] Click keys and type A S D F: the unit plays on the channel shown. C/V change how hard. **Panic** silences a hung note.
   *First proof of:* notes and velocity reach the unit; the channel default.
-- [ ] Choose patches in the Patch box and with the arrows: the unit's display follows each one. Then pick "Piano (category)" and 008: the unit shows Bright Piano (bank PrA, number 002) and the same sound as the bank route. **One extra look:** on the unit turn CATEGORY to SYNTH/PAD and VALUE to 053-056: the manual prints 053 DanceStack 6, 054 DanceStack 8, (nothing at 055), 056 Big BPF, but the app lists 054 DanceStack 7 and 055 DanceStack 8 (from a Max for Live editor; unconfirmed). Note what the unit shows at 054, 055 and 056 and tell me if it differs. Then **Read Temporary Patch**: it is the patch you just chose.
+- [ ] Choose patches in the Patch box and with the arrows (or `,` `.` for the previous / next patch and `[` `]` for the previous / next bank while the bar is open): the unit's display follows each one. Then pick "Piano (category)" and 008: the unit shows Bright Piano (bank PrA, number 002) and the same sound as the bank route. **One extra look:** on the unit turn CATEGORY to SYNTH/PAD and VALUE to 053-056: the manual prints 053 DanceStack 6, 054 DanceStack 8, (nothing at 055), 056 Big BPF, but the app lists 054 DanceStack 7 and 055 DanceStack 8 (from a Max for Live editor; unconfirmed). Note what the unit shows at 054, 055 and 056 and tell me if it differs. Then **Read Temporary Patch**: it is the patch you just chose.
   *First proof of:* Bank Select + Program Change (the manual's bank table: User 80/0, PR-A..E 81/0-4, Session 84/0-1).
 
 ### A3. The one write everything rests on (5 min, heard, not stored)
@@ -102,6 +102,12 @@ Open the **Rhythm Sets** mode. Keep the unit in **Performance mode** (or Rhythm 
 - [ ] **Store it:** Send to Temporary, then **Write to USER...** the spare set (a backup `RHYTHM-n-<time>.syx` appears, the status bar says "read back"), power-cycle, choose that set on the unit, Read Temporary: the edits are there. *First proof of* 65 DT1s at the 20 ms gap into `10 40/41 00 00`.
 - [ ] Restore it from the backup file (File > Open Rhythm Set .syx, then Write to USER) or leave the spare as it is.
 
+### B6. Universal SysEx: master volume and GM mode (4 min; plain MIDI messages, nothing is stored)
+- [ ] **Master volume:** open the audition bar (Cmd+K) and drag **Master** down to about 60 and let go: the unit gets quieter (play a note, or hold VOLUME for the phrase preview). Drag it back to 127. *First proof of* the Master Volume message `F0 7F 7F 04 01 00 mm F7`. Power-cycle the unit: it should be back at full whatever the slider says (`[guess]`: note whether it is).
+- [ ] **GM System On:** Hardware > **GM System On...** (it asks first). The unit should show its GM indicator and sound as General MIDI (Piano 1 on the parts). Then press Read Temporary Patch: the app must say the unit ignores data requests in GM mode (that is the expected result). *First proof of* the GM On message and of "GM mode ignores RQ1".
+- [ ] **GM System Off:** Hardware > **GM System Off**: the manual says the unit returns to Performance mode (which indicator lights?). Then Refresh All from Unit (Ctrl/Cmd+Shift+R): the reads work again. If GM On does not come back off, press the unit's VALUE knob until a mode other than GM shows.
+- [ ] Is the Master slider ignored while the unit is in GM mode, as the manual says?
+
 ---
 
 ## Tier C: if time is left
@@ -146,6 +152,7 @@ Hardware > Update Firmware... exists, but nobody has run it on a unit. You do no
 | USER patch write, 129-byte tone as 128 + 1, 20 ms gap | untested | B3 |
 | Performance reads, writes, `01 00 00 00` | untested | A1, B4 |
 | Rhythm sets: read, live edit at `02 09 00 00`, whole-key write, USER write | untested | B5 |
+| Universal SysEx (Master Volume, GM On/Off) | untested | B6 |
 | Restore | untested | C1 |
 | Firmware update | untested, optional | D |
 

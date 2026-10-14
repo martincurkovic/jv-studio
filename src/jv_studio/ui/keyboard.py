@@ -3,7 +3,8 @@
 
 Computer keys (QWERTY, the usual DAW layout), only while this widget has the focus so typing in a text box never plays a note: A W S E D F T G Y H U J K O L P ; are the notes
 from `typing_base` (C, C#, D ... E an octave up); Z and X move that base down and up an octave, C and V ask for a quieter / louder note (`velocity_step`, -1 / +1: the owner
-of the value decides the size of the step). The range those keys play is marked by a bar under the keyboard and a light tint on its keys. Every note that is held is released when the widget loses focus or is disabled.
+of the value decides the size of the step), `,` and `.` ask for the previous / next patch and `[` and `]` for the previous / next bank (`patch_step`, `bank_step`: -1 / +1; the owner
+of the list decides what that means; `,` and `.` repeat while held). The range those keys play is marked by a bar under the keyboard and a light tint on its keys. Every note that is held is released when the widget loses focus or is disabled.
 """
 
 from PySide6.QtCore import QEvent, QRectF, Qt, Signal
@@ -30,6 +31,8 @@ class PianoKeyboard(QWidget):
     note_off = Signal(int)
     typing_base_changed = Signal(int)
     velocity_step = Signal(int)  # -1 (quieter) or +1 (louder): the C and V keys
+    patch_step = Signal(int)  # -1 / +1: the , and . keys
+    bank_step = Signal(int)  # -1 / +1: the [ and ] keys
     held_changed = Signal(list)  # the notes held now, lowest first (for a live read-out)
 
     def __init__(self, parent=None, first=FIRST_NOTE, last=LAST_NOTE, typing=True):
@@ -170,7 +173,13 @@ class PianoKeyboard(QWidget):
     # -- computer keyboard -----------------------------------------------------------------------------------------------
 
     def keyPressEvent(self, event):
+        if self._typing and event.key() in (Qt.Key.Key_Comma, Qt.Key.Key_Period) and not event.modifiers() & ~Qt.KeyboardModifier.ShiftModifier:
+            self.patch_step.emit(-1 if event.key() == Qt.Key.Key_Comma else 1)  # (held, they keep stepping: unlike a note, a step is meant to repeat)
+            return
         if event.isAutoRepeat():
+            return
+        if self._typing and event.key() in (Qt.Key.Key_BracketLeft, Qt.Key.Key_BracketRight) and not event.modifiers() & ~Qt.KeyboardModifier.ShiftModifier:
+            self.bank_step.emit(-1 if event.key() == Qt.Key.Key_BracketLeft else 1)
             return
         text = event.text().lower()
         if text == "z":

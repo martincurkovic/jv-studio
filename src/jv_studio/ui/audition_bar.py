@@ -12,12 +12,13 @@ navigation key (Tab, arrows, Esc, Enter, F-keys) is routed to the piano, whateve
 from PySide6.QtCore import QEvent, Qt, Signal
 from PySide6.QtWidgets import QApplication, QComboBox, QHBoxLayout, QLabel, QPushButton, QSlider, QToolButton, QVBoxLayout, QWidget
 
-from jv_studio.core import audition, params, patch_groups
+from jv_studio.core import audition, params, patch_groups, universal
 from jv_studio.ui.keyboard import TYPING_KEYS, PianoKeyboard
 
 HELP = (
     "Play the unit from the keyboard below and choose its patches. Nothing here is stored on the unit.\n"
-    "While it is open the computer keyboard plays it: A W S E D F T G Y H U J K O L P ; are the notes, Z and X change the octave, C and V the velocity. "
+    "While it is open the computer keyboard plays it: A W S E D F T G Y H U J K O L P ; are the notes, Z and X change the octave, C and V the velocity, "
+    ", and . the patch, [ and ] the bank. "
     "Shortcuts such as Cmd+K (show or hide) still work."
 )
 
@@ -35,6 +36,7 @@ class AuditionBar(QWidget):
     midi_out = Signal(object)  # one complete channel message (bytes)
     patch_chosen = Signal(str, int)  # patch group key, number (0-based): Bank Select and Program Change were just emitted
     open_changed = Signal(bool)  # the bar was shown or hidden (the View menu item follows)
+    master_volume_changed = Signal(int)  # the Master slider was moved (and let go): send the Master Volume message
     unit_settings_requested = Signal()  # "From unit": read the receive channel and mode from the System block
 
     def __init__(self, parent=None):
@@ -59,7 +61,7 @@ class AuditionBar(QWidget):
         self.note.setObjectName("mutedLabel")
         self.note.setWordWrap(True)
         head = QHBoxLayout()
-        head.addWidget(self.toggle)
+        head.addWidget(self.toggle, 0, Qt.AlignmentFlag.AlignLeft)  # (left: with the note line hidden the button would otherwise be stretched across the row, its label in the middle)
         head.addWidget(self.note, 1)
         outer.addLayout(head)
 
@@ -85,6 +87,18 @@ class AuditionBar(QWidget):
         self.velocity.valueChanged.connect(lambda v: self.velocity_label.setText(str(v)))
         self.velocity_label.setText(str(self.velocity.value()))
         self.velocity_label.setMinimumWidth(26)
+        self.master = QSlider(Qt.Orientation.Horizontal)
+        self.master.setRange(0, 127)
+        self.master.setValue(universal.MASTER_VOLUME_FULL)
+        self.master.setMaximumWidth(110)
+        self.master.setToolTip(
+            "The unit's master volume (a MIDI message; it is not stored). The unit can't say what it is now, so this starts at full, as the unit does after power-on: "
+            "turn it down before you turn anything up. Not heard in GM mode."
+        )
+        self.master_label = QLabel(str(self.master.value()))
+        self.master_label.setMinimumWidth(26)
+        self.master.valueChanged.connect(self._master_moved)
+        self.master.sliderReleased.connect(lambda: self.master_volume_changed.emit(self.master.value()))
         self.typing_label = QLabel()
         self.typing_label.setObjectName("mutedLabel")
         self.playing_label = QLabel()  # the notes held right now (mouse or computer keys)
@@ -100,6 +114,10 @@ class AuditionBar(QWidget):
         row.addSpacing(12)
         row.addWidget(self.playing_label)
         row.addStretch()
+        row.addWidget(QLabel("Master"))
+        row.addWidget(self.master)
+        row.addWidget(self.master_label)
+        row.addSpacing(8)
         row.addWidget(self.panic_button)
         body.addLayout(row)
 
@@ -137,6 +155,8 @@ class AuditionBar(QWidget):
         self.keyboard.typing_base_changed.connect(lambda _n: self._show_typing())
         self.keyboard.held_changed.connect(self._show_playing)
         self.keyboard.velocity_step.connect(self.step_velocity)
+        self.keyboard.patch_step.connect(self._step)
+        self.keyboard.bank_step.connect(self._step_bank)
         body.addWidget(self.keyboard)
         self._show_typing()
         self._fill_patches()
@@ -226,6 +246,12 @@ class AuditionBar(QWidget):
         base = self.keyboard.typing_base
         self.typing_label.setText(f"Octave: {params.note_name(base)} to {params.note_name(base + len(TYPING_KEYS) - 1)}")
 
+    def _master_moved(self, value):
+        """The number follows the slider while it is dragged; the message goes out when it is let go (or at once for a key or wheel step)."""
+        self.master_label.setText(str(value))
+        if not self.master.isSliderDown():
+            self.master_volume_changed.emit(value)
+
     def step_velocity(self, direction):
         """Louder (+) or quieter (-): the next multiple of 10, or 1 / 127 at the ends (the C and V keys); the new value is shown in the read-out."""
         self.velocity.setValue(audition.step_velocity(self.velocity.value(), direction))
@@ -292,6 +318,15 @@ class AuditionBar(QWidget):
             self.patch_combo.setCurrentIndex(index)
             self._send_patch()
 
+    def _step_bank(self, direction):
+        """The previous / next entry of the bank box (the banks, then the categories; the separator between them is skipped), choosing its first patch on the unit."""
+        index = self.bank_combo.currentIndex() + direction
+        while 0 <= index < self.bank_combo.count() and self.bank_combo.itemData(index) is None:
+            index += direction  # (the separator)
+        if 0 <= index < self.bank_combo.count():
+            self.bank_combo.setCurrentIndex(index)
+            self._bank_chosen()
+
     def _send_patch(self):
         if self.patch_combo.currentData() is None:
             return
@@ -317,8 +352,22 @@ class AuditionBar(QWidget):
 
     # -- what the unit says about itself ---------------------------------------------------------------------------------
 
-    def show_system(self, info):
-        """Use the unit's Patch Receive Channel and say what would stop this working."""
+    def show_selected_patch(self, info):
+        """Show the patch the unit has selected in the bank and patch boxes, WITHOUT sending anything (the unit is already there). Only in Patch mode, and only for a patch group
+        the manual's table names (a Wave Expansion board's is left alone)."""
+        group = patch_groups.group_for(info.group_type, info.group_id)
+        if info.sound_mode != 1 or group is None or not 0 <= info.patch_number < group.count:
+            return
+        index = self.bank_combo.findData(group.key)
+        self.bank_combo.setCurrentIndex(index)
+        self._fill_patches(keep=info.patch_number)
+
+    def show_system(self, info, announce=True):
+        """Show the patch the unit has selected. With `announce` (the From Unit button) also use its Patch Receive Channel and say what would stop this working; without it (a refresh)
+        the channel box is left as the user set it (it may be on 10 for the rhythm part) and the note line stays as it is."""
+        self.show_selected_patch(info)
+        if not announce:
+            return
         self.set_channel(info.channel + 1)
         problems = info.problems()
         self._info_note = " ".join(problems) if problems else f"The unit is in {info.mode_name} mode and receives on channel {info.channel + 1}."
