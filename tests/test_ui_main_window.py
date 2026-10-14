@@ -942,3 +942,57 @@ def test_the_list_starts_as_wide_as_the_mode_switch_and_the_live_checkbox_is_sho
     assert w.live_check.text() == "Live edits" and not hasattr(w, "edit_hint")
     assert abs(w.live_check.geometry().center().y() - w.btn_revert.geometry().center().y()) <= 4 and w.live_check.x() > w.btn_revert.x()  # on the button row, right of Revert Edits
     assert w.performance_panel.live_check.text() == "Live edits" and not hasattr(w.performance_panel, "hint")
+
+
+# -- refreshing after the unit was changed from its front panel -----------------------------------------------------------------
+
+
+def loaded(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session, autoload=True)
+    w.worker.process_pending()
+    return w, ports
+
+
+def test_refresh_all_catches_up_with_changes_made_on_the_unit(env):
+    w, ports = loaded(env)
+    assert w.patch_label.text() == "Temporary patch · Init Patch" and w.names_list.item(2).text() == "003  User 003"
+    fake = ports.respond
+    fake.temporary.name = "Panel Edit"
+    fake.user[2].name = "On The Unit"
+    fake.user_performances[1].name = "Perf Renamed"
+    fake.temp_rhythm.name = "Kit Edit"
+    fake.user_rhythms[0].name = "Kit Stored"
+    assert w.refresh_action.shortcut().toString() == "Ctrl+Shift+R" and w.refresh_action.isEnabled()
+    w.refresh_all()
+    w.worker.process_pending()
+    assert w.patch_label.text() == "Temporary patch · Panel Edit" and w.names_list.item(2).text() == "003  On The Unit"
+    assert w.perf_list.item(1).text() == "02  Perf Renamed" and w.rhythm_list.item(0).text() == "1  Kit Stored"
+    assert w.rhythm_panel.label.text() == "Temporary rhythm set · Kit Edit" and w._temp_synced and fake.writes == []  # reads only
+
+
+def test_refresh_all_keeps_unsent_edits_unless_told_to_discard_them(env, monkeypatch):
+    w, ports = loaded(env)
+    w.editor.widget_for("patch_common", "patch_name").setText("Mine")
+    w.editor.widget_for("patch_common", "patch_name").editingFinished.emit()
+    w.worker.process_pending()
+    ports.respond.temporary.name = "Panel Edit"
+    ports.respond.user[0].name = "On The Unit"
+    answers = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: answers.append(a[2]) or QMessageBox.StandardButton.No)
+    w.refresh_all()
+    w.worker.process_pending()
+    assert "patch you are editing" in answers[0] and w._shown[1].name == "Mine" and w.names_list.item(0).text() == "001  On The Unit"  # the edit stays, the names refresh
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    w.refresh_all()
+    w.worker.process_pending()
+    assert w._shown[1].name == "Panel Edit" and not w._is_dirty() and not w._autoload_force
+
+
+def test_refresh_all_needs_open_ports_and_an_idle_worker(env):
+    _, session, _ = env
+    w = window(session, autoload=True)
+    assert not w.refresh_action.isEnabled()
+    w.refresh_all()
+    assert w.worker.is_idle()  # nothing was queued without ports

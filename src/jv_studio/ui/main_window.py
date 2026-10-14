@@ -56,6 +56,7 @@ class MainWindow(QMainWindow):
         self._autoload_enabled = autoload  # read the names and the temporary patch / performance as soon as ports are open (the app turns it on; tests call what they need)
         self._autoload_ports = None  # the (input, output) the last auto-load ran for: reopening the same ports after a diagnostic does not read again
         self._autoload_steps = []  # [(job label, function that submits it)]
+        self._autoload_force = False  # Refresh All was confirmed: read even a patch, performance or rhythm set with unsent edits
         self._autoload_job = None  # the label of the auto-load job in flight: its failure is a status line, not a dialog (a silent unit at startup is not an alarm)
         self.demo = demo  # a simulated unit on a fake connection (`--demo`): no real ports are listed, chosen or opened
         self.setWindowTitle("JV Studio (demo)" if demo else "JV Studio")
@@ -167,6 +168,11 @@ class MainWindow(QMainWindow):
         self.read_action.setShortcut("Ctrl+R")
         self.read_action.triggered.connect(self.read_temporary)
         hardware_menu.addAction(self.read_action)
+        self.refresh_action = QAction("Refresh All from Unit", self)
+        self.refresh_action.setShortcut("Ctrl+Shift+R")
+        self.refresh_action.setToolTip("Read the temporary patch, performance and rhythm set and the USER names again: for after something was changed on the unit's front panel.")
+        self.refresh_action.triggered.connect(self.refresh_all)
+        hardware_menu.addAction(self.refresh_action)
         hardware_menu.addSeparator()
         self.send_action = QAction("Send to Temporary Patch", self)
         self.send_action.setShortcut("Ctrl+Return")
@@ -420,6 +426,7 @@ class MainWindow(QMainWindow):
         for control in (self.send_action, self.write_action):
             control.setEnabled(ready and shown)
         self.read_action.setEnabled(ready)
+        self.refresh_action.setEnabled(ready)
         self.revert_action.setEnabled(panel.is_dirty() if panel else self.btn_revert.isEnabled())
         self.undo_action.setEnabled(panel.can_undo() if panel else bool(self._undo))
         self.redo_action.setEnabled(panel.can_redo() if panel else bool(self._redo))
@@ -582,8 +589,31 @@ class MainWindow(QMainWindow):
         if ports == self._autoload_ports:
             return
         self._autoload_ports = ports
-        self._autoload_steps = [("temporary", self._autoload_patch), ("names", self._read_patch_names), ("perf_names", self._read_performance_names), ("rhythm_names", self._read_rhythm_names),
-                                ("perf_temporary", self._autoload_performance), ("rhythm_temporary", self._autoload_rhythm)]
+        self._autoload_steps = self._reload_plan()
+        self._autoload_next()
+
+    def _reload_plan(self):
+        return [("temporary", self._autoload_patch), ("names", self._read_patch_names), ("perf_names", self._read_performance_names), ("rhythm_names", self._read_rhythm_names),
+                ("perf_temporary", self._autoload_performance), ("rhythm_temporary", self._autoload_rhythm)]
+
+    def refresh_all(self):
+        """Read everything the start-up read again (the unit does not announce changes made on its front panel, so this is how the window catches up): the temporary patch, performance and
+        rhythm set and the USER names. Edits that were never sent or written are asked about first (default No keeps them: only the names are then refreshed)."""
+        if not self.session.is_open or not self.worker.is_idle() or self._firmware_running:
+            return
+        unsent = [what for what, dirty in (("patch", self._is_dirty()), ("performance", self.performance_panel.is_dirty()), ("rhythm set", self.rhythm_panel.is_dirty())) if dirty]
+        self._autoload_force = False
+        if unsent:
+            answer = QMessageBox.question(
+                self, "Refresh from the unit",
+                f"The {' and '.join(unsent)} you are editing has changes that were not written to the unit. Discard them and read the unit's version?\n\nNo keeps your changes and only refreshes the rest.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No,
+            )
+            self._autoload_force = answer == QMessageBox.StandardButton.Yes
+        else:
+            self._autoload_force = True
+        self.statusBar().showMessage("Reading the unit again...")
+        self._autoload_steps = self._reload_plan()
         self._autoload_next()
 
     def _autoload_next(self, *_):
@@ -594,24 +624,26 @@ class MainWindow(QMainWindow):
                 return
         if not self._autoload_steps and self.worker.is_idle():
             self._autoload_job = None
+            self._autoload_force = False
 
     def _autoload_stop(self, *_):
         self._autoload_steps.clear()
+        self._autoload_force = False
 
     def _autoload_patch(self):
-        if self._shown is not None and self._is_dirty():  # never over someone's edits
+        if self._shown is not None and self._is_dirty() and not self._autoload_force:  # never over someone's edits
             return False
         self.statusBar().showMessage("Reading the temporary patch...")
         self.worker.submit("temporary")
 
     def _autoload_rhythm(self):
-        if self.rhythm_panel.has_shown() and self.rhythm_panel.is_dirty():
+        if self.rhythm_panel.has_shown() and self.rhythm_panel.is_dirty() and not self._autoload_force:
             return False
         self.statusBar().showMessage("Reading the temporary rhythm set...")
         self.worker.submit("rhythm_temporary")
 
     def _autoload_performance(self):
-        if self.performance_panel.has_shown() and self.performance_panel.is_dirty():
+        if self.performance_panel.has_shown() and self.performance_panel.is_dirty() and not self._autoload_force:
             return False
         self.statusBar().showMessage("Reading the temporary performance...")
         self.worker.submit("perf_temporary")
