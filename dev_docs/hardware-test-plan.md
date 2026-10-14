@@ -35,6 +35,7 @@ Do A completely. In B, go in the order given (each write path assumes the one be
   *First proof of:* the System block parses (`sound_mode`, channel, receive switches) and the table's offsets are right.
 
 ### A1. Reading (5 min, nothing is written)
+- [ ] **Startup auto-load:** with the unit on and the saved ports, opening the app alone fills the temporary patch, the 128 patch names, the 32 performance names and the temporary performance (the status bar walks through them). One error and the rest stop: note which read failed (the temporary performance in Patch mode is the likely one, `01 00 00 00` is unproven). The buttons below are then refreshes.
 - [ ] **Read Temporary Patch**: the name matches the unit's display and no "values outside the manual's ranges" line appears. If one does, the log lists which parameter: a bug in the table, not the unit.
 - [ ] **Read Patch Names**: 128 names; the status bar says how many differ from the factory list (you think "basically stock").
 - [ ] Open two or three USER patches (double-click) and compare names, level and tempo with the unit's display.
