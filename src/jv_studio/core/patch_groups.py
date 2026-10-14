@@ -22,13 +22,24 @@ class PatchGroup:
 
 GROUPS = (
     PatchGroup("USER", "USER", 0, 1, 128),
-    PatchGroup("PR-A", "PR-A", 0, 3, 128),
-    PatchGroup("PR-B", "PR-B", 0, 4, 128),
-    PatchGroup("PR-C", "PR-C", 0, 5, 128),
-    PatchGroup("PR-D", "PR-D (GM)", 0, 6, 128),
-    PatchGroup("PR-E", "PR-E", 0, 7, 128),
-    PatchGroup("XP-A", "SR-JV80-09 Session", 2, 9, 255),
+    PatchGroup("PR-A", "Preset A", 0, 3, 128),
+    PatchGroup("PR-B", "Preset B", 0, 4, 128),
+    PatchGroup("PR-C", "Preset C", 0, 5, 128),
+    PatchGroup("PR-D", "Preset D (GM)", 0, 6, 128),
+    PatchGroup("PR-E", "Preset E", 0, 7, 128),
+    PatchGroup("XP-A", "Session", 2, 9, 255),
 )
+
+#: what each group IS, from the Owner's Manual ("Choosing and Playing Patches"); the manual gives no theme for the individual banks, so none is made up here
+GROUP_HELP = {
+    "USER": "Your 128 patches: the only ones that can be overwritten.",
+    "PR-A": "Preset A: 128 factory patches (read-only). The unit's display calls it PrA.",
+    "PR-B": "Preset B: 128 factory patches (read-only). The unit's display calls it PrB.",
+    "PR-C": "Preset C: 128 factory patches (read-only). The unit's display calls it PrC.",
+    "PR-D": "Preset D: the 128 General MIDI patches (read-only). The unit's display calls it PrD (GM).",
+    "PR-E": "Preset E: 128 factory patches (read-only). The unit's display calls it PrE.",
+    "XP-A": "Session: 255 patches from the SR-JV80-09 Wave Expansion Board built into the unit (read-only).",
+}
 
 
 def group_for(group_type, group_id):

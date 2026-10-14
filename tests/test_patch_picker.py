@@ -11,7 +11,7 @@ def qapp():
 
 def test_it_opens_on_the_current_patch_and_returns_the_three_values(qapp):
     d = PatchPickerDialog(0, 3, 11)  # PR-A 012
-    assert d.group_combo.currentText() == "PR-A" and d.list.currentItem().text().startswith("012  ")
+    assert d.group_combo.currentText() == "Preset A" and d.list.currentItem().text().startswith("012  ")
     assert d.result_patch() == (0, 3, 11)
 
 
@@ -24,7 +24,7 @@ def test_user_patches_are_numbers_until_their_names_are_known(qapp):
 
 def test_filtering_by_name_or_number_and_choosing_another_group(qapp):
     d = PatchPickerDialog(0, 3, 0)
-    d.group_combo.setCurrentIndex(d.group_combo.findText("SR-JV80-09 Session"))
+    d.group_combo.setCurrentIndex(d.group_combo.findText("Session"))
     assert d.list.count() == 255
     d.filter_edit.setText("st.concert")
     assert d.list.count() >= 1 and d.list.item(0).text() == "001  St.Concert"

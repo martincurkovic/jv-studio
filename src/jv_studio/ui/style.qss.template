@@ -164,6 +164,23 @@ QPushButton[segment="last"] {
     border-left-width: 0;
 }
 
+/* the Audition button on the bar: flat, with only a soft highlight on hover (the platform's raised tool button looks like Windows 98) */
+QToolButton#auditionToggle {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: ${text};
+}
+
+QToolButton#auditionToggle:hover {
+    background-color: ${bg_button_hover};
+}
+
+QToolButton#auditionToggle:pressed {
+    background-color: ${bg_button_pressed};
+}
+
 /* ---------- Line edits (queue row names, dialog fields) ---------- */
 QLineEdit {
     background-color: ${bg_input};

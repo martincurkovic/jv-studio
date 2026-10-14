@@ -47,6 +47,7 @@ class AuditionBar(QWidget):
         outer.setSpacing(6)
 
         self.toggle = QToolButton()
+        self.toggle.setObjectName("auditionToggle")
         self.toggle.setText("Audition")
         self.toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.toggle.setAutoRaise(True)
@@ -104,6 +105,7 @@ class AuditionBar(QWidget):
         self.bank_combo = QComboBox()
         for group in patch_groups.GROUPS:
             self.bank_combo.addItem(group.title, group.key)
+            self.bank_combo.setItemData(self.bank_combo.count() - 1, patch_groups.GROUP_HELP[group.key], Qt.ItemDataRole.ToolTipRole)
         self.patch_combo = QComboBox()
         self.patch_combo.setMinimumWidth(260)
         self.prev_button = QPushButton("◀")

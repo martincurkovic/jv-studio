@@ -20,3 +20,8 @@ def test_describing_an_assignment():
     assert pg.describe(0, 1, 4, ["a", "b", "c", "d", "Viola"]) == "USER 005  Viola"
     assert pg.describe(2, 4, 6) == "Group type 2, ID 4, patch 007"
     assert pg.describe(0, 3, 999) == "PR-A 1000"  # outside the group: the number, never a wrong name
+
+
+def test_groups_have_readable_titles_and_every_one_is_explained():
+    assert [g.title for g in pg.GROUPS] == ["USER", "Preset A", "Preset B", "Preset C", "Preset D (GM)", "Preset E", "Session"]
+    assert set(pg.GROUP_HELP) == {g.key for g in pg.GROUPS} and all(text.endswith(".") for text in pg.GROUP_HELP.values())
