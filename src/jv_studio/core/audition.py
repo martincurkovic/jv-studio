@@ -78,6 +78,18 @@ def patch_select(channel, group_key, number):
     raise ValueError(f"no Bank Select / Program Change for patch {number + 1} of {group_key!r}")
 
 
+#: rhythm sets by Bank Select (MSB, LSB) and how many each holds, [manual p.68 and the Quick Start, "Changing a Rhythm Set"]: the Program Change counts from 0 in each
+RHYTHM_BANKS = {"USER": (80, 0, 2), "PR-A": (81, 0, 2), "PR-B": (81, 1, 2), "PR-C": (81, 2, 2), "PR-D": (81, 3, 2), "PR-E": (81, 4, 2), "XP-A": (84, 0, 8)}
+
+
+def rhythm_select(channel, group_key, number):
+    """The messages that choose rhythm set `number` (0-based) of `group_key` on the channel of Part 10: Bank Select MSB, LSB, Program Change. ValueError if the table has no such set."""
+    msb, lsb, count = RHYTHM_BANKS.get(group_key, (0, 0, 0))
+    if not 0 <= number < count:
+        raise ValueError(f"no Bank Select / Program Change for rhythm set {number + 1} of {group_key!r}")
+    return [control_change(channel, 0, msb), control_change(channel, 32, lsb), program_change(channel, number)]
+
+
 def note_name(note):
     """C4 is 60 here, as on the unit (the manual: note 0 is C-1)."""
     return params.note_name(note)

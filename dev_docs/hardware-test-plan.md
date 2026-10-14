@@ -11,14 +11,14 @@ it turns a `[guess]` into a measurement). Keep `~/.jv-studio/jv-studio.log` from
 | Tier | Time | What it buys | Needs |
 |---|---|---|---|
 | **A: essentials** | ~20 min | Reads work; one write path proven (the one everything else rests on); the keyboard plays | nothing spare |
-| **B: the new writes** | ~25 min | System settings, scale tune, USER patch write, performances | a spare USER slot and performance slot; a tuner or a good ear |
+| **B: the new writes** | ~35 min | System settings, scale tune, USER patch write, performances, rhythm sets | a spare USER slot, performance slot and rhythm set; a tuner or a good ear |
 | **C: if time is left** | ~15 min | Restore, small checks | the step-0 backup |
 | **D: optional** | n/a | Firmware | a different MIDI interface, see step 7 |
 
 Do A completely. In B, go in the order given (each write path assumes the one before it). If a step fails, **stop that tier**, note the log line, and move to the next tier's read-only steps instead.
 
 ## Before you leave the desk (5 min, no hardware)
-- [ ] `uv run pytest` passes (460 tests at the time of writing) and `uv run jv-studio --demo` opens: the demo walks through every window below.
+- [ ] `uv run pytest` passes (500 tests at the time of writing) and `uv run jv-studio --demo` opens: the demo walks through every window below.
 - [ ] Decide your interface. The Midiplus 2x2 is proven for everything except messages over 256 bytes, which only the firmware update uses (step 7).
 - [ ] Have something to hear it with (headphones are fine) and, for step B3, a tuner app or a reference pitch.
 - [ ] Open the log folder (Help > Open Log Folder) so it is one click away.
@@ -92,6 +92,16 @@ Open System Settings > **Scale Tune**. Patch mode is selected first. These go in
 - [ ] Open a USER performance, **Send to Temporary Performance**, then **Write to USER...** a spare slot; power-cycle and re-read.
 - [ ] What does **part 10** play? (Likely the rhythm setup.) Note what the unit shows.
 
+### B5. Rhythm sets (8 min; needs a spare USER rhythm set: 1 or 2)
+Open the **Rhythm Sets** mode. Keep the unit in **Performance mode** (or Rhythm mode) and set the audition **Part 10 channel** to what the unit uses (10 by default).
+- [ ] **Read:** right-click USER set 1 > **Choose on Unit (Part 10)** (Bank Select 80/0 + Program Change 0): the unit's display shows the set. Then **Read Temporary**: the name and the keys match the unit. A line "outside the manual's ranges" is a table bug. *First proof of:* RQ1 at `02 09 00 00` and the 65-block read (it may be refused in Patch mode: note which mode you were in).
+- [ ] **Hear a key:** click a key button (Play on click): the unit plays that drum on Part 10. If silent: is Part 10's receive switch on and its channel what you set?
+- [ ] **Live edit:** with Live edits on, change the chosen key's Tone Level, Coarse Tune or Filter Cutoff and click the key again: it sounds different. *First proof of* a single DT1 into the temporary rhythm set. Drag a level-envelope handle (decay): hear the key shorten.
+- [ ] **A whole key:** Copy Key To... (e.g. the snare to a spare key) and click both: identical. Undo: the spare key is back. *First proof of* a 58-byte block write at `02 09 kk 00`.
+- [ ] **Does it last?** Choose another rhythm set on the unit, then back: are your live edits gone (the unit re-reads the stored set) or kept? Record it.
+- [ ] **Store it:** Send to Temporary, then **Write to USER...** the spare set (a backup `RHYTHM-n-<time>.syx` appears, the status bar says "read back"), power-cycle, choose that set on the unit, Read Temporary: the edits are there. *First proof of* 65 DT1s at the 20 ms gap into `10 40/41 00 00`.
+- [ ] Restore it from the backup file (File > Open Rhythm Set .syx, then Write to USER) or leave the spare as it is.
+
 ---
 
 ## Tier C: if time is left
@@ -135,6 +145,7 @@ Hardware > Update Firmware... exists, but nobody has run it on a unit. You do no
 | Scale tune blocks, 12-byte DT1, which block Patch mode obeys | untested | B2 |
 | USER patch write, 129-byte tone as 128 + 1, 20 ms gap | untested | B3 |
 | Performance reads, writes, `01 00 00 00` | untested | A1, B4 |
+| Rhythm sets: read, live edit at `02 09 00 00`, whole-key write, USER write | untested | B5 |
 | Restore | untested | C1 |
 | Firmware update | untested, optional | D |
 

@@ -10,7 +10,7 @@ Rules that come from the manual and from AKAISDS's hardware lessons:
 import time
 from dataclasses import dataclass
 
-from . import params, patch, performance, scale_tune, sysex, system
+from . import params, patch, performance, rhythm, scale_tune, sysex, system
 
 DEFAULT_TIMEOUT = 1.0  # seconds to wait for one reply
 DEFAULT_RETRIES = 1  # extra attempts after a timeout (so two requests at most per block)
@@ -204,6 +204,59 @@ class JV1010Unit:
             self._wait(sysex.PACKET_GAP_MS / 1000)
             if self.read_performance(base) != new:
                 raise UnitError("the unit does not hold what was written (the read-back differs)")
+
+    # -- rhythm sets -----------------------------------------------------------------------------------------------------
+
+    def read_rhythm(self, base, progress=None):
+        """The whole rhythm set at `base`: 65 requests (the common block, then the 64 keys), one at a time. `progress(done, total)` after each."""
+        result = rhythm.RhythmSet.blank()
+        blocks = result.blocks()
+        for done, (offset, buffer) in enumerate(blocks, 1):
+            buffer[:] = self.read_block(sysex.add_to_address(base, offset), len(buffer))
+            if progress is not None:
+                progress(done, len(blocks))
+        return result
+
+    def read_temporary_rhythm(self, progress=None):
+        return self.read_rhythm(rhythm.TEMPORARY_BASE, progress)
+
+    def read_user_rhythm(self, number, progress=None):
+        return self.read_rhythm(rhythm.user_base(number), progress)
+
+    def read_user_rhythm_names(self):
+        """The names of the 2 USER rhythm sets, one request each (the common block: it holds only the name)."""
+        common = params.load_table().block(rhythm.COMMON)
+        name = common.param("rhythm_name")
+        return [params.read(self.read_block(rhythm.user_base(n), common.size), name) for n in range(rhythm.USER_RHYTHM_COUNT)]
+
+    def write_rhythm(self, base, new, verify=True):
+        """Write `new` to the rhythm set at `base` (65 DT1 messages, >= 20 ms apart) and, with `verify`, read it back: it must be identical."""
+        for message in new.to_messages(base):
+            self._send_dt1(message)
+        if verify:
+            self._wait(sysex.PACKET_GAP_MS / 1000)
+            if self.read_rhythm(base) != new:
+                raise UnitError("the unit does not hold what was written (the read-back differs)")
+
+    def write_rhythm_param(self, base, block, key, value, note=None, verify=False):
+        """Set ONE parameter of the rhythm set at `base` (a DT1 of just its bytes; a note parameter needs its key 35-98); with `verify`, read its block back and check. Returns the value sent."""
+        table = params.load_table()
+        param = table.block(block).param(key)
+        buffer = bytearray(table.block(block).size)
+        sent = params.write(buffer, param, value)
+        if block == rhythm.COMMON:
+            offset = 0
+        elif note is None:
+            raise ValueError("a note parameter needs a key (35-98)")
+        else:
+            offset = rhythm.note_offset(note)
+        wanted = params.param_bytes(buffer, param)
+        self._send_dt1(sysex.dt1(sysex.add_to_address(base, offset + param.offset), wanted))
+        if verify:
+            self._wait(sysex.PACKET_GAP_MS / 1000)
+            if params.param_bytes(self.read_block(sysex.add_to_address(base, offset), table.block(block).size), param) != wanted:
+                raise UnitError(f"the unit did not take {param.name} (the read-back differs)")
+        return sent
 
     def write_performance_param(self, base, block, key, value, part=None, verify=False):
         """Set ONE parameter of the performance at `base` (a DT1 of just its bytes); with `verify`, read its block back and check. Returns the value sent."""

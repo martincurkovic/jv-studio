@@ -63,7 +63,7 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
 ## The patch editor (phase 3, first cut)
 
 - **Auto-load** (`MainWindow(autoload=True)`, which `main.py` passes, demo included; the constructor default is False so tests read only what they ask for): when ports are open (the saved ones at startup, or new ones chosen in Settings; once per pair of port names, so a diagnostic's close/reopen does not repeat it)
-  the window queues, one job after another, the temporary patch, the 128 USER patch names, the 32 performance names and the temporary performance (`_autoload_steps`, advanced from `busy_changed`). Reads only. It stops at the first failure (`failed`), so a silent unit or GM mode gets one error, not four.
+  the window queues, one job after another, the temporary patch, the 128 USER patch names, the 32 performance names, the 2 rhythm set names, the temporary performance and the temporary rhythm set (`_autoload_steps`, advanced from `busy_changed`). Reads only. It stops at the first failure (`failed`), so a silent unit or GM mode gets one error, not four.
   A shown patch/performance with unsent edits is never replaced. The Read buttons stay as refreshes. `[guess]` The temporary performance read in Patch mode: the unit may not answer it (it is the last step, so nothing else is lost).
 
 - **Window layout** (`ui/main_window.py`, default 1260 x 880, minimum 1060 x 700: the editor pages need ~725 px, so anything narrower gets a horizontal scroll bar): a top bar (the logo left; Detect, Settings and the Detect result right; the MIDI ports are NOT printed (Settings has them), a muted prompt shows only while no ports are open), a fixed-width USER patch list on the left (no splitter: exactly as wide as the Patches / Performances switch, set in `showEvent`) and the patch on
@@ -116,7 +116,7 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
 - **USER list actions** (right-click, F2 renames): Rename, Copy To, Swap With, via the worker's slot jobs. EVERY overwritten slot is read and saved to `~/.jv-studio/backups/` first (a swap saves BOTH
   before writing either) and each write is read back; a slot that is open with unsent edits is refused. A rename is a whole-patch write (read, change the name, `write_patch`), NOT a single-parameter
   DT1 (that path is still unproven on patch parameters). Only USER slots can be renamed: the ROM presets are read-only on the unit.
-- Not done: the Rhythm setup editor, rename/copy/swap of performances, the PCM wave groups of the JV-1080 family, per-effect display mapping, a patch list that edits USER slots in place (double-click opens one),
+- Not done: rename/copy/swap of performances (the Rhythm set editor is below), the PCM wave groups of the JV-1080 family, per-effect display mapping, a patch list that edits USER slots in place (double-click opens one),
   copy/swap between USER slots.
 
 ## The parameter table
@@ -239,7 +239,7 @@ A performance is a common block (66 bytes: name, tempo, the performance's own ef
   JV-1010); PR-A..PR-E = ids 3-7 (PR-D is GM); the Session board = type 2 id 9 (255 patches). Names of PR-A..E and Session come from the manual's Patch List (`tools/extract_params.py preset_patches`: a complete count is enforced); USER names are the unit's
   (read in Patches mode and passed over); until they are read a USER patch shows as just `USER 005`. Other ids show as "Group type 2, ID 4, patch 007": never guessed.
 - **Live edits go to the TEMPORARY performance only** (`perf_write_param`: one DT1 + a read-back of the block), only while the shown performance is the one in it (`_temp_synced`); the unit must be in PERFORMANCE mode to play it. Writing a USER
-  performance (`perf_write_user`) saves the old one to `~/.jv-studio/backups/PERF-nn-<time>.syx` first and aborts if that fails. Rename/copy/swap of performances, the rhythm setups, and part 10's rhythm assignment are NOT done. **Unverified on a unit:**
+  performance (`perf_write_user`) saves the old one to `~/.jv-studio/backups/PERF-nn-<time>.syx` first and aborts if that fails. Rename/copy/swap of performances and part 10's rhythm assignment are NOT done. **Unverified on a unit:**
   the temporary performance address `01 00 00 00` for RQ1/DT1, single-parameter DT1 on performance parameters, and what part 10 plays.
 - The extractor now marks an angle bracket that spans several items (`<LAYER, SINGLE>`) correctly, so `keyboard_mode` and the JV-1080-only system choices are no longer offered; `groups.supported()` also hides a parameter whose choices are ALL unsupported.
 
@@ -289,6 +289,17 @@ Hardware > System Settings... (`core/system.py`, `ui/system_dialog.py`, the `sys
   Reading System Settings now reads the common block AND the 17 scale blocks (18 requests). Apply is ONE job: it saves the whole System section (18 blocks) as `SYSTEM-<time>.syx` (so **Restore Unit can read it**), writes the changed settings (one DT1 each) and the changed scale blocks (one 12-byte DT1 each),
   reads everything back and checks it. The confirmation warns when scale blocks changed while Scale Tune Switch is OFF.
   **Unknown `[guess]`:** which block Patch mode obeys (the manual only says scale tune messages "for any parts are recognized in the patch mode": the part blocks may apply on their channels), whether the settings survive a power cycle, and whether the switch gates all 17 (`dev_docs/hardware-test-plan.md` B2 tests all three).
+
+## The rhythm set editor (written 2026-10-14, NOT tried on a unit)
+
+The third mode of the window (`Patches | Performances | Rhythm Sets`; `MainWindow._side_panel()` routes the menu and buttons to the performance or rhythm panel, None in Patches mode). A rhythm set is a drum kit: a 12-byte common block (the name) and one 58-byte tone-like block per key 35-98 (64 keys), 65 DT1s to write.
+- **Addresses** `[manual p.74]`: the Temporary Rhythm Setup is `02 09 00 00` (the performance-mode temporary patch of Part 10, which plays the rhythm set); USER:1/2 are `10 40 00 00` / `10 41 00 00`; the note for key k is at `k << 7` (third address byte = the key number). `core/rhythm.py` (`RhythmSet`, the sibling of `Performance`), `memory.plan` already backed these up.
+  The manual's Bank Select table for rhythm sets: USER 80/0 (sets 1-2), PR-A..E 81/0..4 (2 each, PR-D = GM), Session 84/0 (1-8) `[manual p.68, Quick Start "Changing a Rhythm Set"]`: `audition.rhythm_select`. The unit also has a "Rhythm Set mode" (RHYTHM indicator) that plays Part 10's set `[manual]`.
+- **Editor** (`ui/rhythm_editor.py`): name, a 4x16 grid of key buttons (a key whose Tone Switch is OFF is greyed; the tooltip names its wave), then the chosen key's cards (Wave, Play, Controllers, Pitch, Filter, Level, Pan, Output: `groups._RHYTHM_NOTE`) with the same knobs and draggable envelopes as a patch tone. The controls are built ONCE and always show the chosen key (every handler reads `self._key` when it runs). Copy Key To... / Swap Key With... change a whole tone as one Undo step and go to the unit as one block per key (`rhythm_write_note`).
+  A rhythm key has no key/velocity range, LFO or structure (the manual gives it 55 parameters): Play has Bend Range, Mute Group (0 = OFF `[manual]`) and Envelope Mode (NO-SUS: a Rhythm Part ignores Note Off `[manual, MIDI Implementation: Note Off]`). The explanations in `hints.RHYTHM_NOTE` are general knowledge, the rest reuse the tone's.
+- **Panel** (`ui/rhythm_panel.py`): same rules as the performance panel. Live edits go to the TEMPORARY rhythm set only while it is the shown one (`_temp_synced`); Send to Temporary / Write to USER... (saves `RHYTHM-n-<time>.syx` first, nothing is written if that fails, read back); a clicked key plays on "Part 10 channel" (default 10) at the audition bar's velocity (a note-off 350 ms later); right-click a USER set > Choose on Unit sends Bank Select + Program Change on that channel (the unit then loads the set into its temporary rhythm set, so the panel is no longer in step). Raw Values shows the common block and the chosen key.
+- **Unknown `[guess]`:** that DT1 and RQ1 at `02 09 00 00` work in Patch mode (the temporary performance read at startup is the same kind of unknown), that part 10 plays what is written there, whether the unit re-reads USER:1/2 into it on a performance change (so live edits last only until then), and whether 65 back-to-back 58-byte writes are accepted at the 20 ms gap.
+- The demo unit holds two kits (`demo_unit.demo_rhythm`: every key an INT-A wave, hi-hats 42/44/46 in mute group 1). `SimulatedUnit` has `temp_rhythm` / `user_rhythms` and `block_data(start)` (a block's live bytes, for tests that change one).
 
 ## The audition bar (written 2026-10-14, NOT tried on a unit)
 

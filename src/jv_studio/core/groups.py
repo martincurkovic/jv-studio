@@ -1,7 +1,7 @@
 """Which card a parameter sits on in the patch editor (Qt-free). Rules by key prefix; the first match wins, and every shown parameter must match one
 (`tests/test_groups.py`), so a new parameter in the table can't silently disappear from the editor."""
 
-from . import params, patch, performance, system
+from . import params, patch, performance, rhythm, system
 
 _COMMON = [
     ("Patch", ("patch_name", "patch_category", "patch_level", "patch_pan", "analog_feel", "patch_tempo", "clock_source", "octave_shift", "stretch_tune_depth", "voice_priority")),
@@ -23,6 +23,17 @@ _TONE = [
     ("Filter", ("filter_", "cutoff_", "resonance")),
     ("Level", ("tone_level", "bias_", "level_")),
     ("Pan", ("tone_pan", "pan_", "random_pan_depth", "alternate_pan_depth")),
+    ("Output", ("output_assign", "mix_efx_send_level", "chorus_send_level", "reverb_send_level")),
+]
+
+_RHYTHM_NOTE = [
+    ("Wave", ("tone_switch", "wave_")),
+    ("Play", ("bend_range", "mute_group", "envelope_mode")),
+    ("Controllers", ("volume_control", "hold_1_", "pan_control")),
+    ("Pitch", ("coarse_tune", "fine_tune", "random_pitch_depth", "pitch_")),
+    ("Filter", ("filter_", "cutoff_", "resonance")),
+    ("Level", ("tone_level", "level_")),
+    ("Pan", ("tone_pan", "random_pan_depth", "alternate_pan_depth")),
     ("Output", ("output_assign", "mix_efx_send_level", "chorus_send_level", "reverb_send_level")),
 ]
 
@@ -55,6 +66,8 @@ RULES = {
     performance.COMMON: _PERFORMANCE_COMMON,
     performance.PART: _PERFORMANCE_PART,
     system.COMMON: _SYSTEM,
+    rhythm.COMMON: [("Rhythm Set", ("rhythm_name",))],
+    rhythm.NOTE: _RHYTHM_NOTE,
 }
 
 #: parameters the editor does not show as controls: a tone's wave is chosen BY NAME (the Wave card's Choose... button sets all three together), and the raw numbers stay
@@ -63,6 +76,10 @@ HIDDEN = {
     (patch.TONE, "wave_group_type"),
     (patch.TONE, "wave_group_id"),
     (patch.TONE, "wave_number"),
+    # a rhythm key's wave is chosen by name too
+    (rhythm.NOTE, "wave_group_type"),
+    (rhythm.NOTE, "wave_group_id"),
+    (rhythm.NOTE, "wave_number"),
     # a part's patch is chosen BY NAME too (the part's Choose... button sets all three together)
     (performance.PART, "patch_group_type"),
     (performance.PART, "patch_group_id"),

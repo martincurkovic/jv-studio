@@ -192,11 +192,11 @@ def test_backup_then_restore_roundtrip_through_a_file(qapp, tmp_path):
     worker.process_pending()
     assert more["backup"] == [(str(path), path.stat().st_size)]
     key = memory.plan([memory.RHYTHM])[3].start
-    original = bytes(fake.other[key])
-    fake.other[key][0] ^= 1
+    original = bytes(fake.block_data(key))
+    fake.block_data(key)[0] ^= 1
     worker.submit("restore", backup.parse_backup(path.read_bytes()), [memory.RHYTHM])
     worker.process_pending()
-    assert more["restore"] == [130] and bytes(fake.other[key]) == original
+    assert more["restore"] == [130] and bytes(fake.block_data(key)) == original
 
 
 def test_cancelling_a_backup_saves_nothing_and_is_not_an_error(qapp, tmp_path):

@@ -83,10 +83,10 @@ def test_a_whole_unit_backup_and_restore_work_on_it():
     saved = backup.read_backup(u, sections)
     assert saved.is_complete(sections)
     key = memory.plan([memory.RHYTHM])[2].start
-    original = bytes(ports.unit.other[key])
-    ports.unit.other[key][0] ^= 1
+    original = bytes(ports.unit.block_data(key))
+    ports.unit.block_data(key)[0] ^= 1
     backup.restore(u, saved, [memory.RHYTHM])  # (a small section: the writes wait 20 ms each, for real)
-    assert bytes(ports.unit.other[key]) == original
+    assert bytes(ports.unit.block_data(key)) == original
 
 
 def test_latency_makes_a_request_take_time_but_not_other_traffic(monkeypatch):

@@ -193,6 +193,14 @@ _CONTROLLER = re.compile(r"^controller_(\d)_(destination|depth)_(\d)$")
 _ENVELOPE_NAMES = {"pitch": "pitch", "filter": "filter", "level": "level"}
 
 
+#: what a rhythm key has that a tone does not (the rest is the tone's explanation: a key is a tone with its own pan, tuning, filter and envelopes)
+RHYTHM_NOTE = {
+    "bend_range": "How far the pitch bend wheel bends this key, in semitones.",
+    "mute_group": "Keys in the same mute group cut each other off (a closed hi-hat stops an open one). 0 = no group.",
+    "envelope_mode": "NO-SUS: the sound plays to its end even after the key is released (usual for drums). SUSTAIN: it is held while the key is down.",
+}
+
+
 def hint(block_key, key):
     """The one-sentence explanation for a parameter, or None."""
     if block_key == "performance_common":
@@ -209,10 +217,12 @@ def hint(block_key, key):
         return PERFORMANCE_PART.get(key)
     if block_key == "system_common":
         return SYSTEM.get(key)
-    table = COMMON if block_key == "patch_common" else TONE if block_key == "patch_tone" else {}
+    if block_key == "rhythm_note" and key in RHYTHM_NOTE:
+        return RHYTHM_NOTE[key]
+    table = COMMON if block_key == "patch_common" else TONE if block_key in ("patch_tone", "rhythm_note") else {}
     if key in table:
         return table[key]
-    if block_key == "patch_tone":
+    if block_key in ("patch_tone", "rhythm_note"):
         if m := _ENVELOPE.match(key):
             kind, what, stage = m[1], m[2], int(m[3])
             if what == "time":

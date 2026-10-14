@@ -36,7 +36,7 @@ def test_read_backup_gets_every_block_and_roundtrips_through_syx():
     parsed = backup.parse_backup(got.to_syx(SMALL))
     assert parsed.is_complete(SMALL)
     for block in memory.plan(SMALL):
-        assert parsed.data(block) == bytes(fake.other[block.start])
+        assert parsed.data(block) == bytes(fake.block_data(block.start))
 
 
 def test_full_backup_includes_patches_and_patch_parse_syx_still_works():

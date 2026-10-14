@@ -1,13 +1,20 @@
-from jv_studio.core import groups, params, patch, performance
+from jv_studio.core import groups, params, patch, performance, rhythm
 
 
 def test_every_shown_parameter_has_a_real_card():
-    for block in (patch.COMMON, patch.TONE):
+    for block in (patch.COMMON, patch.TONE, rhythm.COMMON, rhythm.NOTE):
         shown = [p for _, ps in groups.groups(block) for p in ps]
         assert groups.OTHER not in [t for t, _ in groups.groups(block)], [p.key for p in dict(groups.groups(block)).get(groups.OTHER, [])]
         assert len({p.key for p in shown}) == len(shown)  # nobody on two cards
         wanted = {p.key for p in params.load_table().block(block).param_list() if groups.supported(p) and (block, p.key) not in groups.HIDDEN}
         assert {p.key for p in shown} == wanted
+
+
+def test_a_rhythm_key_has_the_tone_cards_that_make_sense_for_a_drum():
+    cards = dict(groups.groups(rhythm.NOTE))
+    assert list(cards) == ["Wave", "Play", "Controllers", "Pitch", "Filter", "Level", "Pan", "Output"]
+    assert {p.key for p in cards["Play"]} == {"bend_range", "mute_group", "envelope_mode"} and "tone_switch" in {p.key for p in cards["Wave"]}
+    assert not {"wave_group_type", "wave_group_id", "wave_number"} & {p.key for ps in cards.values() for p in ps}  # chosen by name
 
 
 def test_a_few_placements():

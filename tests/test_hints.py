@@ -1,21 +1,21 @@
 
-from jv_studio.core import groups, hints, params, patch
+from jv_studio.core import groups, hints, params, patch, rhythm
 
 
 def test_every_hint_names_a_real_parameter():
     table = params.load_table()
-    for block, mapping in (("patch_common", hints.COMMON), ("patch_tone", hints.TONE), ("performance_common", hints.PERFORMANCE_COMMON), ("performance_part", hints.PERFORMANCE_PART)):
+    for block, mapping in (("patch_common", hints.COMMON), ("patch_tone", hints.TONE), ("performance_common", hints.PERFORMANCE_COMMON), ("performance_part", hints.PERFORMANCE_PART), ("rhythm_note", hints.RHYTHM_NOTE)):
         missing = [key for key in mapping if key not in table.block(block)]
         assert not missing, missing
 
 
 def test_hints_are_one_short_sentence():
-    for text in [*hints.COMMON.values(), *hints.TONE.values(), *hints.PERFORMANCE_COMMON.values(), *hints.PERFORMANCE_PART.values()]:
+    for text in [*hints.COMMON.values(), *hints.TONE.values(), *hints.PERFORMANCE_COMMON.values(), *hints.PERFORMANCE_PART.values(), *hints.RHYTHM_NOTE.values()]:
         assert text.endswith(".") and len(text) <= 170 and "\n" not in text, text
 
 
 def test_most_shown_parameters_have_an_explanation():
-    for block in (patch.COMMON, patch.TONE):
+    for block in (patch.COMMON, patch.TONE, rhythm.NOTE):
         shown = [p.key for _, members in groups.groups(block) for p in members]
         explained = [k for k in shown if hints.hint(block, k)]
         assert len(explained) >= 0.85 * len(shown), [k for k in shown if k not in explained]

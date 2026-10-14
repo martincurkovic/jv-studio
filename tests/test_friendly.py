@@ -1,8 +1,8 @@
-from jv_studio.core import friendly, groups, params, patch, performance, system
+from jv_studio.core import friendly, groups, params, patch, performance, rhythm, system
 
 
 def shown_choice_params():
-    for block in (patch.COMMON, patch.TONE, performance.COMMON, performance.PART, system.COMMON):
+    for block in (patch.COMMON, patch.TONE, performance.COMMON, performance.PART, system.COMMON, rhythm.NOTE):
         for _, members in groups.groups(block):
             for param in members:
                 if param.has_choices():

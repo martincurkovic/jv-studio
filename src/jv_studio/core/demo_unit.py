@@ -8,7 +8,7 @@ every write when the app quits.
 import time
 from functools import lru_cache
 
-from . import params, patch, performance, sysex
+from . import params, patch, performance, rhythm, sysex
 from .simulated_unit import SimulatedUnit
 
 DEFAULT_LATENCY_S = 0.004  # a real unit answers a request in a few milliseconds: this makes progress bars (names, a backup of ~1,300 requests) visible
@@ -132,6 +132,49 @@ def demo_patch(index, name, voices, key_assign):
     return p
 
 
+# -- rhythm sets ---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+@lru_cache(maxsize=None)
+def _neutral_rhythm():
+    r = rhythm.RhythmSet.blank()
+    _neutral(rhythm.COMMON, r.common)
+    for note in r.notes.values():
+        _neutral(rhythm.NOTE, note)
+    return r
+
+
+def demo_rhythm(index, name):
+    """A playable drum kit: every key has its own INT-A wave, a short level envelope and a little reverb; keys 42, 44 and 46 (the hi-hats) share mute group 1."""
+    r = _neutral_rhythm().copy()
+    r.name = name
+    for key in rhythm.KEYS:
+        def note(param, value, key=key):
+            r.set(rhythm.NOTE, param, value, key=key)
+
+        note("tone_switch", 1)
+        note("wave_group_type", 0)
+        note("wave_group_id", 1)  # INT-A
+        note("wave_number", (key * 5 + index * 17) % 255)
+        note("wave_gain", 1)
+        note("bend_range", 0)
+        note("mute_group", 1 if key in (42, 44, 46) else 0)
+        note("envelope_mode", 0)
+        for flag in ("volume_control_switch", "hold_1_control_switch"):
+            note(flag, 1)
+        note("filter_type", 0)
+        note("tone_level", 100)
+        for n, time_ in enumerate((0, 50, 60, 30), start=1):
+            note(f"level_envelope_time_{n}", time_)
+        for n, level in enumerate((127, 90, 80), start=1):
+            note(f"level_envelope_level_{n}", level)
+        note("tone_pan", 64 + (key % 9 - 4) * 4)
+        note("mix_efx_send_level", 127)
+        note("chorus_send_level", 0)
+        note("reverb_send_level", 30)
+    return r
+
+
 # -- performances -----------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -182,6 +225,8 @@ def make_demo_unit(**options):
     unit.temporary = unit.user[1].copy()  # "St.Concert": the patch the owner's own unit had selected
     unit.user_performances = [demo_performance(i) for i in range(performance.USER_PERFORMANCE_COUNT)]
     unit.temp_performance = unit.user_performances[0].copy()
+    unit.user_rhythms = [demo_rhythm(0, "Standard Kit"), demo_rhythm(1, "Hip Hop Kit")]
+    unit.temp_rhythm = unit.user_rhythms[0].copy()
     return unit
 
 

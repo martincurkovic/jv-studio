@@ -9,6 +9,8 @@ accepted; each setting is one small DT1 and each scale tune block one DT1, then 
 Reads: "system_midi" (the receive channel and sound mode, for the audition keyboard), "temporary", "user" n (0-based), "names" (the 128 USER patch summaries), "backup" path [sections] (the whole user memory into a .syx).
 Performances: "perf_temporary", "perf_user" n, "perf_names" (reads); "perf_send_temporary" perf, "perf_write_user" n perf (the slot's old performance is saved to a `.syx` first, the write
 read back), "perf_write_param" block key part value (one parameter of the TEMPORARY performance, verified).
+Rhythm sets: "rhythm_temporary", "rhythm_user" n, "rhythm_names" (reads); "rhythm_send_temporary" set, "rhythm_write_user" n set (the slot's old set is saved to a `.syx` first, the write read back),
+"rhythm_write_param" block key note value (one parameter of the TEMPORARY rhythm set, verified), "rhythm_write_note" note bytes (one whole key, verified).
 "firmware" set: play Roland's System Update files (`core/firmware.py`: UNVERIFIED on a unit; output only, nothing is read back). `cancel()` stops it between messages.
 Slot jobs (each overwritten slot is saved to a `.syx` first and the write read back): "write_user" n patch, "rename_user" n name, "copy_user" src dst,
 "swap_user" a b.
@@ -22,13 +24,15 @@ from collections import deque
 
 from PySide6.QtCore import QThread, Signal
 
-from jv_studio.core import app_config, audition, backup, debug_log, firmware, groups, memory, patch, performance, scale_tune, system, unit, validate
+from jv_studio.core import app_config, audition, backup, debug_log, firmware, groups, memory, patch, performance, rhythm, scale_tune, sysex, system, unit, validate
 
 
 class UnitWorker(QThread):
     patch_read = Signal(str, object, list)  # label ("temporary" or "user:N"), the Patch, its validate.Problems
     performance_read = Signal(str, object, list)  # label ("temporary" or "user:N"), the Performance, its validate.Problems
     performance_names_read = Signal(list)  # the 32 USER performance names
+    rhythm_read = Signal(str, object, list)  # label ("temporary" or "user:N"), the RhythmSet, its validate.Problems
+    rhythm_names_read = Signal(list)  # the 2 USER rhythm set names
     names_read = Signal(list)  # [unit.PatchSummary] x 128 (fewer when cancelled)
     backup_done = Signal(str, int)  # path, bytes written
     restore_done = Signal(int)  # blocks written
@@ -185,6 +189,26 @@ class UnitWorker(QThread):
             self.write_done.emit("perf:temporary", job[1].name, "")
         elif kind == "perf_write_user":
             self._write_user_performance(job[1], job[2])
+        elif kind == "rhythm_temporary":
+            self._finish_rhythm("temporary", self._unit().read_temporary_rhythm())
+        elif kind == "rhythm_user":
+            self._finish_rhythm(f"user:{job[1]}", self._unit().read_user_rhythm(job[1]))
+        elif kind == "rhythm_names":
+            self.rhythm_names_read.emit(self._unit().read_user_rhythm_names())
+        elif kind == "rhythm_write_param":
+            _, block, key, note, value = job
+            sent = self._unit().write_rhythm_param(rhythm.TEMPORARY_BASE, block, key, value, note=note, verify=True)
+            self.param_written.emit(block, key, -1 if note is None else note, sent)
+        elif kind == "rhythm_write_note":
+            _, note, data = job
+            self._unit().write_block(sysex.add_to_address(rhythm.TEMPORARY_BASE, rhythm.note_offset(note)), data)
+            self.param_written.emit(rhythm.NOTE, "(whole key)", note, 0)
+        elif kind == "rhythm_send_temporary":
+            self._unit().write_rhythm(rhythm.TEMPORARY_BASE, job[1])
+            debug_log.get_logger().info(f"UnitWorker: wrote {job[1].name!r} to the temporary rhythm set (read back identical)")
+            self.write_done.emit("rhythm:temporary", job[1].name, "")
+        elif kind == "rhythm_write_user":
+            self._write_user_rhythm(job[1], job[2])
         elif kind == "send_temporary":
             self._unit().write_patch(patch.TEMPORARY_BASE, job[1])
             debug_log.get_logger().info(f"UnitWorker: wrote {job[1].name!r} to the temporary patch (read back identical)")
@@ -322,6 +346,30 @@ class UnitWorker(QThread):
         unit_.write_performance(performance.user_base(number), new)
         log.info(f"UnitWorker: USER performance {number + 1:02d} written and read back identical")
         self.write_done.emit(f"perf:{number}", new.name, str(path))
+
+    def _write_user_rhythm(self, number, new):
+        """Save what USER rhythm set `number` holds now, then replace it. Without that backup on disk, nothing is written."""
+        log = debug_log.get_logger()
+        unit_ = self._unit()
+        old = unit_.read_user_rhythm(number)
+        path = backup.user_rhythm_backup_path(app_config.backups_dir(), number)
+        try:
+            backup.write_file(path, old.to_syx(rhythm.user_base(number)))
+        except OSError as e:
+            log.error(f"UnitWorker: couldn't back up USER rhythm set {number + 1} to {path}", exc_info=True)
+            raise unit.UnitError(f"Couldn't save a backup of USER rhythm set {number + 1} first ({e}); nothing was written.") from e
+        log.warning(f"UnitWorker: overwriting USER rhythm set {number + 1} {old.name!r} with {new.name!r} (backup {path})")
+        unit_.write_rhythm(rhythm.user_base(number), new)
+        log.info(f"UnitWorker: USER rhythm set {number + 1} written and read back identical")
+        self.write_done.emit(f"rhythm:{number}", new.name, str(path))
+
+    def _finish_rhythm(self, label, read):
+        problems = validate.out_of_range_rhythm(read)
+        log = debug_log.get_logger()
+        log.info(f"UnitWorker: read {label} rhythm set {read.name!r}: {len(problems)} value(s) outside the table's ranges")
+        for problem in problems[:40]:
+            log.warning(f"UnitWorker: rhythm set {label}: {problem}")
+        self.rhythm_read.emit(label, read, problems)
 
     def _finish_performance(self, label, read):
         problems = validate.out_of_range_performance(read)

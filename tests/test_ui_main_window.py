@@ -931,7 +931,7 @@ def test_the_mode_switch_is_a_segmented_control(env):
     assert w.mode_tabs.currentIndex() == 1 and seen == [1] and w._performance_mode()
     w.mode_tabs.setCurrentIndex(0)
     assert w.mode_tabs.currentIndex() == 0 and seen == [1, 0] and not w._performance_mode()
-    assert [b.property("segment") for b in w.mode_tabs._buttons] == ["first", "last"]
+    assert [b.property("segment") for b in w.mode_tabs._buttons] == ["first", "middle", "last"]
 
 
 def test_the_list_starts_as_wide_as_the_mode_switch_and_the_live_checkbox_is_short(env):

@@ -34,6 +34,7 @@ from jv_studio.ui.firmware_dialog import FirmwareDialog
 from jv_studio.ui.midi_session import MidiSession
 from jv_studio.ui.patch_editor import PatchEditor
 from jv_studio.ui.performance_panel import PerformancePanel
+from jv_studio.ui.rhythm_panel import RhythmPanel
 from jv_studio.ui.qt_helpers import item_heading, set_enabled_without_scrolling
 from jv_studio.ui.segmented import SegmentedControl
 from jv_studio.ui.settings_dialog import SettingsDialog
@@ -68,6 +69,7 @@ class MainWindow(QMainWindow):
         self.worker.patch_read.connect(self._on_patch_read)
         self.worker.names_read.connect(self._on_names_read)
         self.worker.performance_names_read.connect(self._on_performance_names_read)
+        self.worker.rhythm_names_read.connect(self._on_rhythm_names_read)
         self.worker.backup_done.connect(self._on_backup_done)
         self.worker.restore_done.connect(self._on_restore_done)
         self.worker.firmware_done.connect(self._on_firmware_done)
@@ -260,9 +262,15 @@ class MainWindow(QMainWindow):
         self.perf_list = QListWidget()
         self.perf_list.itemDoubleClicked.connect(self._open_perf_from_item)
         self.perf_list.itemActivated.connect(self._open_perf_from_item)
-        self.list_stack = QStackedWidget()  # the USER patches or the USER performances, by mode
+        self.rhythm_list = QListWidget()
+        self.rhythm_list.itemDoubleClicked.connect(self._open_rhythm_from_item)
+        self.rhythm_list.itemActivated.connect(self._open_rhythm_from_item)
+        self.rhythm_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.rhythm_list.customContextMenuRequested.connect(self._rhythm_context_menu)
+        self.list_stack = QStackedWidget()  # the USER patches, performances or rhythm sets, by mode
         self.list_stack.addWidget(self.names_list)
         self.list_stack.addWidget(self.perf_list)
+        self.list_stack.addWidget(self.rhythm_list)
         library_layout.addWidget(self.library_header)
         library_layout.addWidget(self.btn_read_names)
         library_layout.addWidget(self.list_stack, 1)
@@ -315,9 +323,12 @@ class MainWindow(QMainWindow):
 
         self.performance_panel = PerformancePanel(self)
         self.performance_panel.slot_changed.connect(self._perf_slot_changed)
-        self.right_stack = QStackedWidget()  # the patch editor or the performance editor, by mode
+        self.rhythm_panel = RhythmPanel(self)
+        self.rhythm_panel.slot_changed.connect(self._rhythm_slot_changed)
+        self.right_stack = QStackedWidget()  # the patch, performance or rhythm set editor, by mode
         self.right_stack.addWidget(patch_panel)
         self.right_stack.addWidget(self.performance_panel)
+        self.right_stack.addWidget(self.rhythm_panel)
 
         body = QHBoxLayout()
         body.setContentsMargins(0, 0, 0, 0)
@@ -333,8 +344,12 @@ class MainWindow(QMainWindow):
         mode_row = QHBoxLayout()
         mode_row.setContentsMargins(15, 0, 15, 6)
         self.mode_tabs = SegmentedControl(
-            ["Patches", "Performances"],
-            ["Edit single patches (the unit's Patch mode).", "Edit performances: 16 parts, each playing a patch (the unit's Performance mode)."],
+            ["Patches", "Performances", "Rhythm Sets"],
+            [
+                "Edit single patches (the unit's Patch mode).",
+                "Edit performances: 16 parts, each playing a patch (the unit's Performance mode).",
+                "Edit the two USER rhythm sets: a drum kit with its own sound on each of 64 keys (played by Part 10).",
+            ],
         )
         self.mode_tabs.currentChanged.connect(self._set_mode)
         mode_row.addWidget(self.mode_tabs)
@@ -399,14 +414,15 @@ class MainWindow(QMainWindow):
         self.open_action.setEnabled(idle)
         self.btn_revert.setEnabled(self._shown is not None and self._is_dirty())
         self.performance_panel.refresh_state(ready)
-        perf = self._performance_mode()  # the menu acts on whichever editor is showing
-        shown = self.performance_panel.has_shown() if perf else self._shown is not None
+        self.rhythm_panel.refresh_state(ready)
+        panel = self._side_panel()  # the menu acts on whichever editor is showing
+        shown = panel.has_shown() if panel else self._shown is not None
         for control in (self.send_action, self.write_action):
             control.setEnabled(ready and shown)
         self.read_action.setEnabled(ready)
-        self.revert_action.setEnabled(self.performance_panel.is_dirty() if perf else self.btn_revert.isEnabled())
-        self.undo_action.setEnabled(self.performance_panel.can_undo() if perf else bool(self._undo))
-        self.redo_action.setEnabled(self.performance_panel.can_redo() if perf else bool(self._redo))
+        self.revert_action.setEnabled(panel.is_dirty() if panel else self.btn_revert.isEnabled())
+        self.undo_action.setEnabled(panel.can_undo() if panel else bool(self._undo))
+        self.redo_action.setEnabled(panel.can_redo() if panel else bool(self._redo))
         for control in (self.btn_settings, self.settings_action):
             control.setEnabled(idle)  # Settings closes and reopens the connection: never under a running job
         self.audition.set_available(
@@ -422,29 +438,60 @@ class MainWindow(QMainWindow):
     def _performance_mode(self):
         return self.mode_tabs.currentIndex() == 1
 
+    def _side_panel(self):
+        """The performance or rhythm set panel when one is showing (the menu and the buttons act on it), None in Patches mode."""
+        return {1: self.performance_panel, 2: self.rhythm_panel}.get(self.mode_tabs.currentIndex())
+
+    _MODES = {
+        0: ("USER Patches", "The unit's 128 user patches. Double-click (or press Enter) to open one; right-click to rename, copy or swap.",
+            "Read Patch Names", "Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a patch to open it.", "Patch"),
+        1: ("USER Performances", "The unit's 32 user performances. Double-click (or press Enter) to open one.",
+            "Read Performance Names", "Reads the 32 USER performance names, one request each (read-only). Double-click a performance to open it.", "Performance"),
+        2: ("USER Rhythm Sets", "The unit's 2 user rhythm sets. Double-click (or press Enter) to open one; right-click to choose it on the unit.",
+            "Read Rhythm Set Names", "Reads the 2 USER rhythm set names (read-only). Double-click a set to open it.", "Rhythm Set"),
+    }
+
     def _set_mode(self, index):
-        """Patches or Performances: swap the list and the editor, and say what the menu and buttons now act on."""
-        perf = index == 1
+        """Patches, Performances or Rhythm Sets: swap the list and the editor, and say what the menu and buttons now act on."""
+        header, header_tip, button, button_tip, noun = self._MODES[index]
         self.list_stack.setCurrentIndex(index)
         self.right_stack.setCurrentIndex(index)
-        if perf:
-            self.library_header.setText("USER Performances")
-            self.library_header.setToolTip("The unit's 32 user performances. Double-click (or press Enter) to open one.")
-            self.btn_read_names.setText("Read Performance Names")
-            self.btn_read_names.setToolTip("Reads the 32 USER performance names, one request each (read-only). Double-click a performance to open it.")
-        else:
-            self.library_header.setText("USER Patches")
-            self.library_header.setToolTip("The unit's 128 user patches. Double-click (or press Enter) to open one; right-click to rename, copy or swap.")
-            self.btn_read_names.setText("Read Patch Names")
-            self.btn_read_names.setToolTip(
-                "Reads the 128 USER patch names, one request each (read-only), and checks them against the factory list. Double-click a patch to open it."
-            )
-        noun = "Performance" if perf else "Patch"
+        self.library_header.setText(header)
+        self.library_header.setToolTip(header_tip)
+        self.btn_read_names.setText(button)
+        self.btn_read_names.setToolTip(button_tip)
         self.open_action.setText(f"Open {noun} .syx...")
         self.save_action.setText(f"Save {noun} as .syx...")
         self.read_action.setText(f"Read Temporary {noun}")
         self.send_action.setText(f"Send to Temporary {noun}")
         self._refresh_connection()
+
+    def _open_rhythm_from_item(self, item):
+        self.rhythm_panel.open_user(item.data(Qt.ItemDataRole.UserRole))
+
+    def _rhythm_context_menu(self, pos):
+        item = self.rhythm_list.itemAt(pos)
+        if item is None:
+            return
+        menu = QMenu(self)
+        select = menu.addAction("Choose on Unit (Part 10)")
+        select.setEnabled(self.session.is_open and not self._long_job)
+        if menu.exec(self.rhythm_list.viewport().mapToGlobal(pos)) is select:
+            self.rhythm_panel.select_on_unit(item.data(Qt.ItemDataRole.UserRole))
+
+    def _on_rhythm_names_read(self, names):
+        self.rhythm_list.clear()
+        for number, name in enumerate(names):
+            item = QListWidgetItem(f"{number + 1}  {name}")
+            item.setData(Qt.ItemDataRole.UserRole, number)
+            self.rhythm_list.addItem(item)
+        self.rhythm_panel.set_names(names)
+        self.statusBar().showMessage(f"Read {len(names)} USER rhythm set names", 5000)
+        self._refresh_connection()
+
+    def _rhythm_slot_changed(self, number, name):
+        if number < self.rhythm_list.count():
+            self.rhythm_list.item(number).setText(f"{number + 1}  {name}")
 
     def _open_perf_from_item(self, item):
         self.performance_panel.open_user(item.data(Qt.ItemDataRole.UserRole))
@@ -499,18 +546,20 @@ class MainWindow(QMainWindow):
     # -- reading (read-only) -----------------------------------------------------------------------------------------------
 
     def read_temporary(self):
-        if self._performance_mode():
-            return self.performance_panel.read_temporary()
+        if panel := self._side_panel():
+            return panel.read_temporary()
         if not self._confirm_discard():
             return
         self.statusBar().showMessage("Reading the temporary patch...")
         self.worker.submit("temporary")
 
     def read_names(self):
-        if self._performance_mode():
-            self._read_performance_names()
-        else:
-            self._read_patch_names()
+        {0: self._read_patch_names, 1: self._read_performance_names, 2: self._read_rhythm_names}[self.mode_tabs.currentIndex()]()
+
+    def _read_rhythm_names(self):
+        self.rhythm_list.clear()
+        self.statusBar().showMessage("Reading the USER rhythm set names...")
+        self.worker.submit("rhythm_names")
 
     def _read_performance_names(self):
         self.perf_list.clear()
@@ -533,7 +582,8 @@ class MainWindow(QMainWindow):
         if ports == self._autoload_ports:
             return
         self._autoload_ports = ports
-        self._autoload_steps = [("temporary", self._autoload_patch), ("names", self._read_patch_names), ("perf_names", self._read_performance_names), ("perf_temporary", self._autoload_performance)]
+        self._autoload_steps = [("temporary", self._autoload_patch), ("names", self._read_patch_names), ("perf_names", self._read_performance_names), ("rhythm_names", self._read_rhythm_names),
+                                ("perf_temporary", self._autoload_performance), ("rhythm_temporary", self._autoload_rhythm)]
         self._autoload_next()
 
     def _autoload_next(self, *_):
@@ -553,6 +603,12 @@ class MainWindow(QMainWindow):
             return False
         self.statusBar().showMessage("Reading the temporary patch...")
         self.worker.submit("temporary")
+
+    def _autoload_rhythm(self):
+        if self.rhythm_panel.has_shown() and self.rhythm_panel.is_dirty():
+            return False
+        self.statusBar().showMessage("Reading the temporary rhythm set...")
+        self.worker.submit("rhythm_temporary")
 
     def _autoload_performance(self):
         if self.performance_panel.has_shown() and self.performance_panel.is_dirty():
@@ -598,6 +654,9 @@ class MainWindow(QMainWindow):
             self._firmware_running = False
         if label == "perf_write_param":
             self.performance_panel.on_live_failed(message)
+            return
+        if label in ("rhythm_write_param", "rhythm_write_note"):
+            self.rhythm_panel.on_live_failed(message)
             return
         if label == "write_param":  # a live edit the unit didn't take: stop sending live (one message, not one per queued edit)
             if self.live_check.isChecked():
@@ -683,13 +742,13 @@ class MainWindow(QMainWindow):
         self._refresh_connection()
 
     def undo(self):
-        if self._performance_mode():
-            return self.performance_panel.undo()
+        if panel := self._side_panel():
+            return panel.undo()
         self._step(self._undo, self._redo, reverse=True)
 
     def redo(self):
-        if self._performance_mode():
-            return self.performance_panel.redo()
+        if panel := self._side_panel():
+            return panel.redo()
         self._step(self._redo, self._undo, reverse=False)
 
     def _step(self, take_from, put_on, reverse):
@@ -714,8 +773,8 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Sent to the unit", 1500)
 
     def revert_edits(self):
-        if self._performance_mode():
-            return self.performance_panel.revert_edits()
+        if panel := self._side_panel():
+            return panel.revert_edits()
         if self._shown is None or not self._is_dirty():
             return
         label, _, base = self._shown
@@ -756,8 +815,8 @@ class MainWindow(QMainWindow):
         self.tree.resizeColumnToContents(0)
 
     def save_shown_patch(self):
-        if self._performance_mode():
-            return self.performance_panel.save_syx()
+        if panel := self._side_panel():
+            return panel.save_syx()
         if self._shown is None:
             return
         label, read, base = self._shown
@@ -777,8 +836,8 @@ class MainWindow(QMainWindow):
     # -- opening a file ----------------------------------------------------------------------------------------------------
 
     def open_syx(self):
-        if self._performance_mode():
-            return self.performance_panel.open_syx()
+        if panel := self._side_panel():
+            return panel.open_syx()
         if not self._confirm_discard():
             return
         path, _ = QFileDialog.getOpenFileName(self, "Open patch .syx", str(Path.home()), "SysEx files (*.syx);;All files (*)")
@@ -833,8 +892,8 @@ class MainWindow(QMainWindow):
         return True
 
     def send_temporary(self):
-        if self._performance_mode():
-            return self.performance_panel.send_temporary()
+        if panel := self._side_panel():
+            return panel.send_temporary()
         if self._shown is None or not self.session.is_open or not self.worker.is_idle():
             return
         _, shown, _ = self._shown
@@ -843,8 +902,8 @@ class MainWindow(QMainWindow):
         self.worker.submit("send_temporary", self._sent_snapshot)
 
     def write_user(self):
-        if self._performance_mode():
-            return self.performance_panel.write_user()
+        if panel := self._side_panel():
+            return panel.write_user()
         if self._shown is None or not self.session.is_open or not self.worker.is_idle():
             return
         label, shown, base = self._shown
@@ -956,8 +1015,8 @@ class MainWindow(QMainWindow):
         self._refresh_connection()
 
     def _on_write_done(self, label, name, backup_path):
-        if label.startswith("perf:"):
-            return  # a performance: the performance panel handles it
+        if label.startswith(("perf:", "rhythm:")):
+            return  # a performance or a rhythm set: its panel handles it
         if label == "temporary":
             self.statusBar().showMessage(f'"{name}" sent to the temporary patch and read back', 5000)
             # edits made while it was being sent are not on the unit: only a patch equal to what was sent counts as in step

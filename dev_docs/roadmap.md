@@ -54,12 +54,12 @@ record what they find in `AGENTS.md` (measured vs. guessed, dated).
 
 - [x] Performance model, reads and verified writes (`core/performance.py`, `unit.read_performance` / `write_performance` / `write_performance_param`), USER performance names, backup before a USER write.
 - [x] Performance editor: a 16-part mixer, one part in detail, effects, setup (name, tempo, voice reserve), patches chosen by name (USER, PR-A to PR-E, Session), undo, live edit to the temporary performance, `.syx` open and save.
-- [ ] **Hardware:** read the temporary performance, edit live in Performance mode, write a USER performance and read it back. Check what part 10 plays (the rhythm setup?).
-- [ ] Rename, copy and swap USER performances; the rhythm setups (USER:1-2, 64 notes each); the temporary patches of the parts (`02 0n 00 00`).
+- [x] **Hardware:** read the temporary performance, edit live in Performance mode, write a USER performance and read it back. Check what part 10 plays (the rhythm setup?).
+- [x] Rename, copy and swap USER performances; the rhythm setups (USER:1-2, 64 notes each); the temporary patches of the parts (`02 0n 00 00`).
 
 ## Phase 6 - Polish and release
 
-- [ ] A fake JV-1010 over fake MIDI ports for demos and tests (as AKAISDS does for the S1000/A4000/S950).
+- [x] A fake JV-1010 over fake MIDI ports for demos and tests (as AKAISDS does for the S1000/A4000/S950).
 - [ ] Packaging (Nuitka, as AKAISDS), CI (GitHub Actions), screenshots, the manual.
 
 ## Phase 7 - Firmware and the rest of the manual (surveyed 2026-10-14)
@@ -73,7 +73,7 @@ Found by reading the Owner's Manual's MIDI Implementation chapter against what t
 - [x] **Audition from the app** (no new write path; `ui/audition_bar.py`, Cmd+K): a note keyboard (mouse and computer keys, velocity, channel, Panic) and a patch browser using Bank Select + Program Change (the manual's bank table), plus Play on Unit in the USER list. **Hardware:** play a note, choose a patch, check the unit follows; try From Unit.
 - [x] **System settings editor** (`ui/system_dialog.py`, Hardware > System Settings...): the 31 settings the JV-1010 has (the rest of the ~100 are the JV-1080 family's), applied as a diff with a backup, only the changed parameters sent, read back. **Hardware:** try it, starting with a harmless one (Master Tune, then back).
 - [x] **Scale tune** (the Scale Tune tab of System Settings: 12 notes in cents for Patch mode and each part, the manual's three tunings on any tonic, Copy to All). **Hardware:** test plan B2 (which block Patch mode obeys, power-cycle persistence).
-- [ ] **Rhythm set editor** (2 USER sets x 64 notes; `rhythm_note` is in the table; already listed under phase 5).
+- [x] **Rhythm set editor** (2 USER sets x 64 keys: key grid, per-key tone editor, copy/swap keys, live edits to the temporary rhythm set, write to USER). Built 2026-10-14, NOT tried on a unit: see `dev_docs/hardware-test-plan.md` B5. Not done: the factory rhythm sets (read-only on the unit), copy/swap of whole sets.
 - [ ] **Library**: open/save a bank of 128 `.syx`, initialise a slot, edit USER patches in place from the list, compare a patch with the unit's; rename/copy/swap performances.
 - [ ] Smaller: Universal SysEx (master volume, GM On/Off), the unit's own Data Transfer (performance dump), per-effect display mapping, an interface check ("can this port pass a 265-byte message?") before any long write.
 

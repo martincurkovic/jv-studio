@@ -150,6 +150,11 @@ def user_performance_backup_path(directory, number, now=None):
     return Path(directory) / f"PERF-{number + 1:02d}-{(now or datetime.now()):%Y%m%d-%H%M%S}.syx"
 
 
+def user_rhythm_backup_path(directory, number, now=None):
+    """Where the backup of USER rhythm set `number` (0-based) goes: `<directory>/RHYTHM-1-20261013-090507.syx`."""
+    return Path(directory) / f"RHYTHM-{number + 1}-{(now or datetime.now()):%Y%m%d-%H%M%S}.syx"
+
+
 def system_backup_path(directory, now=None):
     """Where the backup of the System settings goes before they are changed: `<directory>/SYSTEM-20261013-090507.syx`."""
     return Path(directory) / f"SYSTEM-{(now or datetime.now()):%Y%m%d-%H%M%S}.syx"
