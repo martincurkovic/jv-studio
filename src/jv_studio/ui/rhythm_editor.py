@@ -25,7 +25,7 @@ from jv_studio.core import groups, params, rhythm, waves
 from jv_studio.ui.envelope_graph import GRAPH_FOR_CARD
 from jv_studio.ui.keyboard import KeySelector
 from jv_studio.ui.knob_control import KnobControl, origin_value
-from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, ChoiceCombo, PatchEditor
+from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, ChoiceCombo, PatchEditor, SwitchBox
 from jv_studio.ui.qt_helpers import FullWidthTabBar, build_editor_card, build_two_column_page
 from jv_studio.ui.wave_picker import WavePickerDialog
 
@@ -127,11 +127,15 @@ class RhythmEditor(QWidget):
             grid.setVerticalSpacing(6)
             compact = sum(1 for p in members if not p.string and not p.has_choices()) >= COMPACT_FROM
             knobs = 0
+            header = []
             if title == "Wave":
                 form.addRow("Wave", self._wave_row())
             for param in members:
                 control, is_knob = self._make_control(param, compact)
                 self._widgets[param.key] = control
+                if param.key == "tone_switch":  # on/off in the card's heading, as on a patch's tones
+                    header.append(control)
+                    continue
                 if is_knob:
                     grid.addWidget(control, knobs // KNOBS_PER_ROW, knobs % KNOBS_PER_ROW, Qt.AlignmentFlag.AlignTop)
                     knobs += 1
@@ -141,7 +145,7 @@ class RhythmEditor(QWidget):
             rows = [layout_ for layout_, used in ((form, form.rowCount()), (grid, knobs)) if used]
             if title in GRAPH_FOR_CARD:
                 rows.insert(0, self._graph_row(GRAPH_FOR_CARD[title]))
-            cards.append(build_editor_card("rhythm_editor", title, *rows))
+            cards.append(build_editor_card("rhythm_editor", title, *rows, header_widgets=header))
             weights.append(form.rowCount() + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2)
         self._holder.layout().addWidget(build_two_column_page(cards, weights))
 
@@ -180,6 +184,11 @@ class RhythmEditor(QWidget):
         return row
 
     def _make_control(self, param, compact):
+        if param.key == "tone_switch":
+            control = SwitchBox(param)
+            control.clicked.connect(lambda checked, p=param: self._edited(p, 1 if checked else 0))
+            control.setToolTip(PatchEditor._tooltip(rhythm.NOTE, param, False) + "\nOff: this key makes no sound (its wave and settings are kept).")
+            return control, False
         if param.has_choices():
             control = ChoiceCombo(param)
             control.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)

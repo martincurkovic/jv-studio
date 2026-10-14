@@ -379,7 +379,7 @@ def test_no_wave_turns_the_tone_off_and_keeps_the_wave(editor, monkeypatch):
     assert editor.working.get(patch.TONE, "tone_switch", tone=0) == 0 and editor.working.get(patch.TONE, "wave_number", tone=0) == 9
     assert editor._wave_labels[0].text() == "No wave (tone off)" and "Piano Thump" in editor._wave_labels[0].toolTip()
     assert [e[1] for e in recorded[0]] == ["tone_switch"]
-    assert editor.widget_for(patch.TONE, "tone_switch", 0).currentText() == "Off"  # the Tone Switch box follows
+    assert not editor.widget_for(patch.TONE, "tone_switch", 0).isChecked()  # the tone's check box follows
 
 
 def test_switching_the_tone_back_on_restores_the_wave_label(editor):
@@ -388,10 +388,8 @@ def test_switching_the_tone_back_on_restores_the_wave_label(editor):
     editor.working.set(patch.TONE, "wave_number", 9, tone=0)
     editor.refresh()
     assert editor._wave_labels[0].text() == "No wave (tone off)"
-    combo = editor.widget_for(patch.TONE, "tone_switch", 0)
-    combo.setCurrentIndex(combo.findData(1))
-    combo.activated.emit(combo.currentIndex())
-    assert editor._wave_labels[0].text() == "INT-A 010  Piano Thump"
+    editor.widget_for(patch.TONE, "tone_switch", 0).click()  # the check box in the Wave heading
+    assert editor._wave_labels[0].text() == "INT-A 010  Piano Thump" and editor.working.get(patch.TONE, "tone_switch", tone=0) == 1
 
 
 def test_the_picker_has_a_no_wave_button(qapp):
@@ -464,3 +462,65 @@ def test_an_ampersand_in_a_parameter_name_is_shown_not_taken_for_a_mnemonic(qapp
     editor.widget_for("patch_common", "structure_type_1and2")
     labels = [label.text() for label in editor.findChildren(QLabel)]
     assert "Structure Type 1&&2" in labels  # (Qt shows "&&" as one "&")
+
+
+# -- the tone's on/off beside the Wave heading, and the Tone Mixer ---------------------------------------------------------------
+
+
+def test_a_tones_switch_is_a_check_box_in_the_wave_cards_heading(editor):
+    from PySide6.QtWidgets import QCheckBox
+
+    from jv_studio.ui.patch_editor import SwitchBox
+    from jv_studio.ui.section_card import SectionCard
+
+    editor.tabs.setCurrentIndex(2)  # tone 2
+    box = editor.widget_for(patch.TONE, "tone_switch", 1)
+    assert isinstance(box, SwitchBox) and isinstance(box, QCheckBox) and box.text() == "On" and not isinstance(box, ChoiceCombo)
+    wave_card = next(c for c in editor.tabs.currentWidget().findChildren(SectionCard) if c.title() == "Wave")
+    assert box.parent() is not None and wave_card.isAncestorOf(box)
+    assert box.isChecked() is False  # a minimum patch has its tones off
+    seen = len(editor.seen)
+    box.click()
+    assert editor.working.get(patch.TONE, "tone_switch", tone=1) == 1 and editor.seen[seen:] == [(patch.TONE, "tone_switch", 1, 1)] and box.isChecked()
+    box.click()
+    assert editor.working.get(patch.TONE, "tone_switch", tone=1) == 0 and editor.seen[-1] == (patch.TONE, "tone_switch", 1, 0)
+    editor.working.set(patch.TONE, "tone_switch", 1, tone=1)
+    editor.refresh()  # an outside change shows, and tells no one
+    assert box.isChecked() and editor.seen[-1] == (patch.TONE, "tone_switch", 1, 0)
+
+
+def test_the_common_page_has_a_tone_mixer_with_a_knob_for_each_tone(editor):
+    from jv_studio.ui.section_card import SectionCard
+
+    editor.tabs.setCurrentIndex(0)
+    titles = [c.title() for c in editor.tabs.widget(0).findChildren(SectionCard)]
+    assert titles.count("Tone Mixer") == 1 and "Patch" in titles and "Structure" in titles
+    for tone in range(4):
+        editor.working.set(patch.TONE, "tone_level", 20 * (tone + 1), tone=tone)
+    editor.refresh()
+    assert [editor.mixer_knob(t).value() for t in range(4)] == [20, 40, 60, 80] and [editor.mixer_knob(t).name_label.text() for t in range(4)] == ["Tone 1", "Tone 2", "Tone 3", "Tone 4"]
+
+
+def test_a_mixer_knob_edits_that_tones_level_and_the_level_card_follows(editor):
+    editor.tabs.setCurrentIndex(2)  # build tone 2's page first
+    level_knob = editor.widget_for(patch.TONE, "tone_level", 1)
+    editor.tabs.setCurrentIndex(0)
+    seen, recorded = len(editor.seen), []
+    editor.edits_recorded.connect(recorded.append)
+    editor.mixer_knob(1).setValue(99)
+    assert editor.working.get(patch.TONE, "tone_level", tone=1) == 99 and editor.working.get(patch.TONE, "tone_level", tone=0) == 0
+    assert editor.seen[seen:] == [(patch.TONE, "tone_level", 1, 99)] and recorded == [[(patch.TONE, "tone_level", 1, 0, 99)]]  # the same signal and undo step as the Level card's knob
+    assert level_knob.value() == 99  # the knob on the tone's own Level card shows it
+    level_knob.setValue(55)
+    assert editor.mixer_knob(1).value() == 55 and editor.working.get(patch.TONE, "tone_level", tone=1) == 55  # and the other way round
+
+
+def test_a_mixer_knob_is_greyed_while_its_tone_is_off_and_keeps_its_level(editor):
+    editor.working.set(patch.TONE, "tone_level", 70, tone=2)
+    editor.working.set(patch.TONE, "tone_switch", 1, tone=0)
+    editor.refresh()
+    assert editor.mixer_knob(0).isEnabled() and not editor.mixer_knob(2).isEnabled() and editor.mixer_knob(2).value() == 70
+    assert "switched off" in editor.mixer_knob(2).toolTip()
+    editor.tabs.setCurrentIndex(3)  # tone 3
+    editor.widget_for(patch.TONE, "tone_switch", 2).click()
+    assert editor.mixer_knob(2).isEnabled() and "switched off" not in editor.mixer_knob(2).toolTip()

@@ -120,8 +120,7 @@ def test_the_wave_card_names_the_wave_and_a_tone_that_is_off_looks_off(win):
     panel, editor = shown(w)
     assert "INT-A 003" in editor.key_label.text() and "INT-A 003" in editor._key_tooltip(36)
     assert 36 not in editor.selector._dimmed and 37 in editor.selector._dimmed and "tone off" in editor._key_tooltip(37)
-    editor.widget_for("tone_switch").setCurrentIndex(0)
-    editor.widget_for("tone_switch").activated.emit(0)
+    editor.widget_for("tone_switch").click()  # (it was on: now off)
     assert 36 in editor.selector._dimmed and "tone off" in editor.key_label.text()
 
 

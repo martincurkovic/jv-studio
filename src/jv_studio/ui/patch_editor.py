@@ -5,6 +5,7 @@ and the window decides what to do with it (the owner's rule: the UI is live, MID
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QFormLayout,
     QGridLayout,
@@ -66,6 +67,23 @@ class ChoiceCombo(QComboBox):
             event.ignore()
 
 
+class SwitchBox(QCheckBox):
+    """An ON/OFF parameter as a check box (a tone's switch, in its card's heading): it says what it does, and it takes one click. Same small interface as the knobs (`set_value`, `value`)."""
+
+    def __init__(self, param, text="On", parent=None):
+        super().__init__(text, parent)
+        self.param = param
+
+    def set_value(self, value):
+        """Show `value` (0 or 1) without telling anyone."""
+        self.blockSignals(True)
+        self.setChecked(bool(value))
+        self.blockSignals(False)
+
+    def value(self):
+        return 1 if self.isChecked() else 0
+
+
 class PatchEditor(QWidget):
     #: block key, parameter key, tone (0-3, or -1 for the common block), the value now in the patch (an int, or the text of the name)
     param_committed = Signal(str, str, int, object)
@@ -80,6 +98,7 @@ class PatchEditor(QWidget):
         self._graphs = []  # (tone, the envelope graph)
         self._graph_of = {}  # (tone, parameter key) -> the graph that draws and edits it
         self._wave_labels = {}  # tone -> the label that names the tone's wave
+        self._mixer = {}  # tone -> the Tone Mixer knob on the Common page (built with it)
         self._gesture = None  # while a graph commit applies several values: the edits so far, recorded together afterwards
         self.tabs = QTabWidget()
         self.tabs.setTabBar(FullWidthTabBar(self.tabs))
@@ -123,11 +142,15 @@ class PatchEditor(QWidget):
             grid.setVerticalSpacing(6)
             compact = sum(1 for p in members if not p.string and not p.has_choices()) >= COMPACT_FROM
             knobs = 0
+            header = []  # small controls beside the card's title
             if block_key == patch.TONE and title == "Wave":
                 form.addRow("Wave", self._wave_row(tone))
             for param in members:
                 widget, control, is_knob = self._make_widget(block_key, tone, param, compact)
                 self._widgets[(block_key, tone, param.key)] = control
+                if param.key == "tone_switch":  # the tone's on/off sits in the Wave card's heading: "Wave [x] On"
+                    header.append(control)
+                    continue
                 if is_knob:
                     grid.addWidget(widget, knobs // KNOBS_PER_ROW, knobs % KNOBS_PER_ROW, Qt.AlignmentFlag.AlignTop)
                     knobs += 1
@@ -137,9 +160,40 @@ class PatchEditor(QWidget):
             rows = [layout_ for layout_, used in ((form, form.rowCount()), (grid, knobs)) if used]
             if block_key == patch.TONE and title in GRAPH_FOR_CARD:
                 rows.insert(0, self._graph_row(tone, GRAPH_FOR_CARD[title]))
-            cards.append(build_editor_card(scope, title, *rows, key=f"{title}"))
+            cards.append(build_editor_card(scope, title, *rows, header_widgets=header, key=f"{title}"))
             weights.append(form.rowCount() + (2 if compact else 3) * -(-knobs // KNOBS_PER_ROW) + 2)
+        if block_key == patch.COMMON:  # the four tones' levels side by side, next to the patch's own settings
+            cards.insert(1, self._mixer_card())
+            weights.insert(1, 7)
         return build_two_column_page(cards, weights)
+
+    def _mixer_card(self):
+        """"Tone Mixer": a knob for each tone's Tone Level (the same parameter as Tone Level on that tone's Level card), so the balance between the four tones is one glance."""
+        param = params.load_table().block(patch.TONE).param("tone_level")
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(2)
+        for tone in range(patch.TONE_COUNT):
+            knob = KnobControl(param)
+            knob.name_label.setText(f"Tone {tone + 1}")
+            knob.setToolTip(f"The level of tone {tone + 1}: the same as Tone Level on that tone's Level card.\n" + self._tooltip(patch.TONE, param, True))
+            knob.committed.connect(lambda v, t=tone, p=param: self._edited(patch.TONE, t, p, v))
+            grid.addWidget(knob, 0, tone, Qt.AlignmentFlag.AlignTop)
+            self._mixer[tone] = knob
+        return build_editor_card("patch_editor_common", "Tone Mixer", grid)
+
+    def mixer_knob(self, tone):
+        """The Tone Mixer knob of `tone` (builds the Common page if it has not been shown yet)."""
+        self._build_tab(0)
+        return self._mixer[tone]
+
+    def _apply_mixer_states(self):
+        """A tone that is switched off has its mixer knob greyed (its level is kept)."""
+        if self._patch is None:
+            return
+        for tone, knob in self._mixer.items():
+            on = bool(self._patch.get(patch.TONE, "tone_switch", tone=tone))
+            knob.setEnabled(on)
+            knob.setToolTip(knob.toolTip().split("\n(")[0] + ("" if on else f"\n(Tone {tone + 1} is switched off: its level is kept.)"))
 
     def _wave_row(self, tone):
         """The tone's wave by name, and a button to choose another."""
@@ -245,7 +299,12 @@ class PatchEditor(QWidget):
 
     def _make_widget(self, block_key, tone, param, compact=False):
         """(widget to place, the control the editor reads and sets, is it a knob). A number is a `KnobControl` (name, knob, value readout: below the knob, or beside it when
-        `compact`); a name or a choice list goes in a form row."""
+        `compact`); a name or a choice list goes in a form row; a tone's switch is a check box (placed in its card's heading by `_page`)."""
+        if param.key == "tone_switch":
+            control = SwitchBox(param)
+            control.clicked.connect(lambda checked, b=block_key, t=tone, p=param: self._edited(b, t, p, 1 if checked else 0))
+            control.setToolTip(self._tooltip(block_key, param, False) + "\nOff: the tone makes no sound (its wave and settings are kept).")
+            return control, control, False
         if param.string:
             control = QLineEdit()
             control.setMaxLength(param.size)
@@ -308,6 +367,9 @@ class PatchEditor(QWidget):
                     widget.set_value(value)
         finally:
             self._loading = False
+        for tone, knob in self._mixer.items():
+            knob.set_value(self._patch.get(patch.TONE, "tone_level", tone=tone))
+        self._apply_mixer_states()
         self._apply_efx_labels()
         self._apply_structure_states()
         self._sync_graphs()
@@ -350,6 +412,13 @@ class PatchEditor(QWidget):
             self._apply_structure_states()
         if param.key in ("tone_switch", "wave_group_type", "wave_group_id", "wave_number"):
             self._update_wave_labels()
+        if param.key == "tone_switch":
+            self._apply_mixer_states()
+        if block_key == patch.TONE and param.key == "tone_level":  # the mixer knob and the Level card's knob are one parameter: keep both showing it
+            if tone in self._mixer:
+                self._mixer[tone].set_value(stored)
+            if (patch.TONE, tone, "tone_level") in self._widgets:
+                self._widgets[(patch.TONE, tone, "tone_level")].set_value(stored)
         graph = self._graph_of.get((tone, param.key))
         if graph is not None:
             self._sync_graphs(only=graph)
