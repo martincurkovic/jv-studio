@@ -182,13 +182,13 @@ class RhythmPanel(QWidget):
     def read_temporary(self):
         if not self.confirm_discard():
             return
-        self.host.statusBar().showMessage("Reading the temporary rhythm set...")
+        self.host._start_progress("Reading the temporary rhythm set...", cancellable=False)
         self.worker.submit("rhythm_temporary")
 
     def open_user(self, number):
         if number is None or not self.worker.is_idle() or not self.confirm_discard():
             return
-        self.host.statusBar().showMessage(f"Reading USER rhythm set {number + 1}...")
+        self.host._start_progress(f"Reading USER rhythm set {number + 1}...", cancellable=False)
         self.worker.submit("rhythm_user", number)
 
     def _on_read(self, label, read, problems):

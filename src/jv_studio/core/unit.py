@@ -131,9 +131,10 @@ class JV1010Unit:
     def read_user_patch(self, number):
         return self.read_patch(patch.user_base(number))
 
-    def read_user_patch_summaries(self, progress=None, cancelled=None):
+    def read_user_patch_summaries(self, progress=None, cancelled=None, each=None):
         """The 128 USER patches as `PatchSummary(name, key_assign)`, one request each (the common block holds both). `progress(done, total)` after
-        each; `cancelled()` is polled before each request and stops early, returning the summaries read so far."""
+        each; `cancelled()` is polled before each request and stops early, returning the summaries read so far. `each(number, summary)` is called as every one arrives,
+        so a window can show the list filling up."""
         common = params.load_table().block(patch.COMMON)
         name, assign = common.param("patch_name"), common.param("key_assign_mode")
         summaries = []
@@ -142,6 +143,8 @@ class JV1010Unit:
                 break
             data = self.read_block(patch.user_base(number), common.size)
             summaries.append(PatchSummary(params.read(data, name), params.format_value(assign, params.read(data, assign))))
+            if each is not None:
+                each(number, summaries[-1])
             if progress is not None:
                 progress(number + 1, patch.USER_PATCH_COUNT)
         return summaries
@@ -170,21 +173,25 @@ class JV1010Unit:
 
     # -- performances ----------------------------------------------------------------------------------------------------
 
-    def read_performance(self, base):
-        """The whole performance at `base`: 17 requests (the common block, then the 16 parts), one at a time."""
+    def read_performance(self, base, progress=None):
+        """The whole performance at `base`: 17 requests (the common block, then the 16 parts), one at a time. `progress(done, total)` after each."""
         result = performance.Performance.blank()
-        for offset, buffer in result.blocks():
+        blocks = result.blocks()
+        for done, (offset, buffer) in enumerate(blocks, 1):
             buffer[:] = self.read_block(sysex.add_to_address(base, offset), len(buffer))
+            if progress is not None:
+                progress(done, len(blocks))
         return result
 
-    def read_temporary_performance(self):
-        return self.read_performance(performance.TEMPORARY_BASE)
+    def read_temporary_performance(self, progress=None):
+        return self.read_performance(performance.TEMPORARY_BASE, progress)
 
-    def read_user_performance(self, number):
-        return self.read_performance(performance.user_base(number))
+    def read_user_performance(self, number, progress=None):
+        return self.read_performance(performance.user_base(number), progress)
 
-    def read_user_performance_names(self, progress=None, cancelled=None):
-        """The 32 USER performance names, one request each (the common block: its first 12 bytes are the name). Stops early, returning what it has, if cancelled."""
+    def read_user_performance_names(self, progress=None, cancelled=None, each=None):
+        """The 32 USER performance names, one request each (the common block: its first 12 bytes are the name). Stops early, returning what it has, if cancelled.
+        `each(number, name)` is called as every name arrives, so a window can show them as they come."""
         common = params.load_table().block(performance.COMMON)
         name = common.param("performance_name")
         names = []
@@ -192,6 +199,8 @@ class JV1010Unit:
             if cancelled is not None and cancelled():
                 break
             names.append(params.read(self.read_block(performance.user_base(number), common.size), name))
+            if each is not None:
+                each(number, names[-1])
             if progress is not None:
                 progress(number + 1, performance.USER_PERFORMANCE_COUNT)
         return names

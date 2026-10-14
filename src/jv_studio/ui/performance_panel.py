@@ -155,13 +155,13 @@ class PerformancePanel(QWidget):
     def read_temporary(self):
         if not self.confirm_discard():
             return
-        self.host.statusBar().showMessage("Reading the temporary performance...")
+        self.host._start_progress("Reading the temporary performance...", cancellable=False)
         self.worker.submit("perf_temporary")
 
     def open_user(self, number):
         if number is None or not self.worker.is_idle() or not self.confirm_discard():
             return
-        self.host.statusBar().showMessage(f"Reading USER performance {number + 1:02d}...")
+        self.host._start_progress(f"Reading USER performance {number + 1:02d}...", cancellable=False)
         self.worker.submit("perf_user", number)
 
     def _on_read(self, label, read, problems):

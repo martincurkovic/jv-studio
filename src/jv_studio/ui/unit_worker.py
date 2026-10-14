@@ -34,6 +34,8 @@ class UnitWorker(QThread):
     rhythm_read = Signal(str, object, list)  # label ("temporary" or "user:N"), the RhythmSet, its validate.Problems
     rhythm_names_read = Signal(list)  # the 2 USER rhythm set names
     names_read = Signal(list)  # [unit.PatchSummary] x 128 (fewer when cancelled)
+    name_read = Signal(int, object)  # number, unit.PatchSummary: each USER patch name as it arrives, before names_read
+    performance_name_read = Signal(int, str)  # number, name: each USER performance name as it arrives, before performance_names_read
     backup_done = Signal(str, int)  # path, bytes written
     restore_done = Signal(int)  # blocks written
     system_read = Signal(object, list)  # the System settings, their validate.Problems
@@ -157,7 +159,7 @@ class UnitWorker(QThread):
             self._finish_patch(f"user:{job[1]}", self._unit().read_user_patch(job[1]))
         elif kind == "names":
             self._cancel = False
-            self.names_read.emit(self._unit().read_user_patch_summaries(progress=self.progress.emit, cancelled=lambda: self._cancel))
+            self.names_read.emit(self._unit().read_user_patch_summaries(progress=self.progress.emit, cancelled=lambda: self._cancel, each=self.name_read.emit))
         elif kind == "backup":
             self._backup(job[1], job[2] if len(job) > 2 else memory.SECTIONS)
         elif kind == "restore":
@@ -177,12 +179,12 @@ class UnitWorker(QThread):
             sent = self._unit().write_param(patch.TEMPORARY_BASE, block, key, value, tone=tone, verify=True)
             self.param_written.emit(block, key, -1 if tone is None else tone, sent)
         elif kind == "perf_temporary":
-            self._finish_performance("temporary", self._unit().read_temporary_performance())
+            self._finish_performance("temporary", self._unit().read_temporary_performance(self.progress.emit))
         elif kind == "perf_user":
-            self._finish_performance(f"user:{job[1]}", self._unit().read_user_performance(job[1]))
+            self._finish_performance(f"user:{job[1]}", self._unit().read_user_performance(job[1], self.progress.emit))
         elif kind == "perf_names":
             self._cancel = False
-            self.performance_names_read.emit(self._unit().read_user_performance_names(progress=self.progress.emit, cancelled=lambda: self._cancel))
+            self.performance_names_read.emit(self._unit().read_user_performance_names(progress=self.progress.emit, cancelled=lambda: self._cancel, each=self.performance_name_read.emit))
         elif kind == "perf_write_param":
             _, block, key, part, value = job
             sent = self._unit().write_performance_param(performance.TEMPORARY_BASE, block, key, value, part=part, verify=True)
@@ -194,9 +196,9 @@ class UnitWorker(QThread):
         elif kind == "perf_write_user":
             self._write_user_performance(job[1], job[2])
         elif kind == "rhythm_temporary":
-            self._finish_rhythm("temporary", self._unit().read_temporary_rhythm())
+            self._finish_rhythm("temporary", self._unit().read_temporary_rhythm(self.progress.emit))
         elif kind == "rhythm_user":
-            self._finish_rhythm(f"user:{job[1]}", self._unit().read_user_rhythm(job[1]))
+            self._finish_rhythm(f"user:{job[1]}", self._unit().read_user_rhythm(job[1], self.progress.emit))
         elif kind == "rhythm_names":
             self.rhythm_names_read.emit(self._unit().read_user_rhythm_names())
         elif kind == "rhythm_write_param":

@@ -63,6 +63,7 @@ class MainWindow(QMainWindow):
         self._pending_check = None  # label ("user:N") of the patch just opened that the unit was told to select: the next step is to check that it did
         self._open_to_play = None  # label of a USER patch being read because it was double-clicked: when it arrives the unit is told to select it too
         self._announce_system = True  # the next System read is the From Unit button's (it says what it found); a refresh's is quiet
+        self._loaded_tabs = set()  # the Performances (1) / Rhythm Sets (2) tabs that have been read from this unit: Refresh All refreshes those too
         self._autoload_force = False  # Refresh All was confirmed: read even a patch, performance or rhythm set with unsent edits
         self._autoload_job = None  # the label of the auto-load job in flight: its failure is a status line, not a dialog (a silent unit at startup is not an alarm)
         self.demo = demo  # a simulated unit on a fake connection (`--demo`): no real ports are listed, chosen or opened
@@ -76,6 +77,10 @@ class MainWindow(QMainWindow):
         self.session.changed.connect(self._maybe_autoload)
         self.worker.patch_read.connect(self._on_patch_read)
         self.worker.names_read.connect(self._on_names_read)
+        self.worker.name_read.connect(self._on_name_read)
+        self.worker.performance_name_read.connect(self._on_performance_name_read)
+        self.worker.performance_read.connect(self._end_progress)  # (connected before the panels', which refresh the window's state after this)
+        self.worker.rhythm_read.connect(self._end_progress)
         self.worker.performance_names_read.connect(self._on_performance_names_read)
         self.worker.rhythm_names_read.connect(self._on_rhythm_names_read)
         self.worker.backup_done.connect(self._on_backup_done)
@@ -98,6 +103,7 @@ class MainWindow(QMainWindow):
         self._temp_synced = False  # the unit's temporary patch holds the working copy as it was last sent/read: only then can edits be heard live
         self._sent_snapshot = None  # a copy of the patch at the moment Send to Temporary Patch was queued
         self._long_job = False  # a job with a progress bar is running (names, backup, restore)
+        self._cancellable = True  # ...and whether its Cancel button does anything
         self._summaries = []  # unit.PatchSummary of the USER patches read so far
         self._backed_up = False  # a whole-unit backup was saved in this session
         self.system_dialog = None  # built the first time System Settings is opened
@@ -454,7 +460,7 @@ class MainWindow(QMainWindow):
             self.session.is_open and not self._long_job,
             "Open the MIDI ports in Settings to play the unit." if not self.session.is_open else "Busy: the keyboard is off until the job is done.",
         )
-        self.btn_cancel.setVisible(self._long_job and not idle)
+        self.btn_cancel.setVisible(self._long_job and self._cancellable and not idle)
         self.names_progress.setVisible(self._long_job)
         self.save_action.setEnabled(shown)
 
@@ -490,6 +496,7 @@ class MainWindow(QMainWindow):
         self.read_action.setText(f"Read Temporary {noun}")
         self.send_action.setText(f"Send to Temporary {noun}")
         self._refresh_connection()
+        self._load_tab(index)
 
     def _open_rhythm_from_item(self, item):
         self.rhythm_panel.open_user(item.data(Qt.ItemDataRole.UserRole))
@@ -521,13 +528,20 @@ class MainWindow(QMainWindow):
     def _open_perf_from_item(self, item):
         self.performance_panel.open_user(item.data(Qt.ItemDataRole.UserRole))
 
+    def _on_performance_name_read(self, number, name):
+        """One USER performance name arrived: it joins the list at once."""
+        item = QListWidgetItem(f"{number + 1:02d}  {name}")
+        item.setData(Qt.ItemDataRole.UserRole, number)
+        self.perf_list.addItem(item)
+
     def _on_performance_names_read(self, names):
         self._long_job = False
-        self.perf_list.clear()
-        for number, name in enumerate(names):
-            item = QListWidgetItem(f"{number + 1:02d}  {name}")
-            item.setData(Qt.ItemDataRole.UserRole, number)
-            self.perf_list.addItem(item)
+        if self.perf_list.count() != len(names):  # (they were not shown as they came: show them now)
+            self.perf_list.clear()
+            for number, name in enumerate(names):
+                item = QListWidgetItem(f"{number + 1:02d}  {name}")
+                item.setData(Qt.ItemDataRole.UserRole, number)
+                self.perf_list.addItem(item)
         self.performance_panel.set_names(names)
         self.statusBar().showMessage(f"Read {len(names)} USER performance names", 5000)
         self._refresh_connection()
@@ -593,26 +607,48 @@ class MainWindow(QMainWindow):
 
     def _read_patch_names(self):
         self.names_list.clear()
+        self._summaries = []
         self._start_progress("Reading the USER patch names...")
         self.worker.submit("names")
 
     # -- reading everything at startup -------------------------------------------------------------------------------------
 
     def _maybe_autoload(self, *_):
-        """When ports are open (at startup, or newly chosen in Settings), read what is needed to start editing: the temporary patch, the USER patch and performance
-        names and the temporary performance, one job after another. Reads only; it stops at the first failure (a silent unit is not asked three more times)."""
+        """When ports are open (at startup, or newly chosen in Settings), read what is needed to start editing PATCHES: the temporary patch, which patch the unit has selected and the USER
+        patch names, one job after another. The performance and rhythm set sides are read the first time their tab is opened (`_load_tab`), so a start-up is as short as it can be.
+        Reads only; it stops at the first failure (a silent unit is not asked three more times)."""
         if not self._autoload_enabled or not self.session.is_open:
             return
         ports = (self.session.input_name, self.session.output_name)
         if ports == self._autoload_ports:
             return
         self._autoload_ports = ports
+        self._loaded_tabs = set()  # a new connection: the other tabs have not been read from THIS unit yet
         self._autoload_steps = self._reload_plan()
         self._autoload_next()
 
+    def _tab_steps(self, index):
+        """What the Performances (1) or Rhythm Sets (2) tab needs read: its temporary performance / rhythm set first (to start editing), then the USER names."""
+        return {
+            1: [("perf_temporary", self._autoload_performance), ("perf_names", self._read_performance_names)],
+            2: [("rhythm_temporary", self._autoload_rhythm), ("rhythm_names", self._read_rhythm_names)],
+        }.get(index, [])
+
     def _reload_plan(self):
-        return [("temporary", self._autoload_patch), ("system_midi", self._autoload_selection), ("names", self._read_patch_names), ("perf_names", self._read_performance_names), ("rhythm_names", self._read_rhythm_names),
-                ("perf_temporary", self._autoload_performance), ("rhythm_temporary", self._autoload_rhythm)]
+        """The patches, always, then every other tab that has been opened (or is open now): what Refresh All and a new connection read."""
+        plan = [("temporary", self._autoload_patch), ("system_midi", self._autoload_selection), ("names", self._read_patch_names)]
+        for index in sorted(self._loaded_tabs | {self.mode_tabs.currentIndex()}):
+            plan += self._tab_steps(index)
+            self._loaded_tabs.add(index)
+        return plan
+
+    def _load_tab(self, index):
+        """The first time the Performances or Rhythm Sets tab is shown with a unit connected: read its side now (queued behind anything still running)."""
+        if not self._autoload_enabled or not self.session.is_open or index in self._loaded_tabs or not self._tab_steps(index):
+            return
+        self._loaded_tabs.add(index)
+        self._autoload_steps.extend(self._tab_steps(index))
+        self._autoload_next()
 
     def refresh_all(self):
         """Read everything the start-up read again (the unit does not announce changes made on its front panel, so this is how the window catches up): the temporary patch, performance and
@@ -657,20 +693,27 @@ class MainWindow(QMainWindow):
     def _autoload_rhythm(self):
         if self.rhythm_panel.has_shown() and self.rhythm_panel.is_dirty() and not self._autoload_force:
             return False
-        self.statusBar().showMessage("Reading the temporary rhythm set...")
+        self._start_progress("Reading the temporary rhythm set...", cancellable=False)
         self.worker.submit("rhythm_temporary")
 
     def _autoload_performance(self):
         if self.performance_panel.has_shown() and self.performance_panel.is_dirty() and not self._autoload_force:
             return False
-        self.statusBar().showMessage("Reading the temporary performance...")
+        self._start_progress("Reading the temporary performance...", cancellable=False)
         self.worker.submit("perf_temporary")
 
-    def _start_progress(self, message):
+    def _start_progress(self, message, cancellable=True):
+        """A read with a progress bar in the status bar. `cancellable` False for the whole-performance and whole-rhythm-set reads (a second or two, and not interruptible)."""
         self._long_job = True
+        self._cancellable = cancellable
         self.names_progress.setRange(0, 100)
         self.names_progress.setValue(0)
         self.statusBar().showMessage(message)
+
+    def _end_progress(self, *_):
+        """A performance or a rhythm set arrived: the progress bar goes (the panel that asked shows it)."""
+        self._long_job = False
+        self._refresh_connection()
 
     def _read_user_from_item(self, item):
         number = item.data(Qt.ItemDataRole.UserRole)
@@ -683,17 +726,29 @@ class MainWindow(QMainWindow):
         self.names_progress.setRange(0, total)
         self.names_progress.setValue(done)
 
+    def _on_name_read(self, number, summary):
+        """One USER patch name arrived: it joins the list at once, so the list fills up while the rest is read."""
+        if number == 0:
+            self._summaries = []
+        self._summaries.append(summary)
+        item = QListWidgetItem()
+        item.setData(Qt.ItemDataRole.UserRole, number)
+        self.names_list.addItem(item)
+        self._style_name_row(item, number)
+
     def _on_names_read(self, summaries):
         self._long_job = False
         self._summaries = list(summaries)
         self.performance_panel.set_user_patch_names([s.name for s in summaries])
         self.audition.set_user_names([s.name for s in summaries])
-        self.names_list.clear()
+        if self.names_list.count() != len(summaries):  # (they were not shown as they came: show them now)
+            self.names_list.clear()
+            for number in range(len(summaries)):
+                item = QListWidgetItem()
+                item.setData(Qt.ItemDataRole.UserRole, number)
+                self.names_list.addItem(item)
         for number in range(len(summaries)):
-            item = QListWidgetItem()
-            item.setData(Qt.ItemDataRole.UserRole, number)
-            self.names_list.addItem(item)
-            self._style_name_row(item, number)
+            self._style_name_row(self.names_list.item(number), number)
         differing = len(summaries) - stock.count_same(summaries)
         note = f"; {differing} differ from the factory list (highlighted)" if differing else "; all match the factory list"
         self.statusBar().showMessage(f"Read {len(summaries)} USER patch names{note}", 8000)

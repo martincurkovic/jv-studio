@@ -151,15 +151,63 @@ def test_the_user_names_are_listed_and_a_double_click_reads_that_patch(env):
     assert not w.names_progress.isVisible() and not w.btn_cancel.isVisible()
 
 
-def test_opening_the_ports_reads_everything_needed_to_start_editing(env):
+def addresses_read(ports, first_byte):
+    return [r for r in ports.respond.requests if r[0][0] == first_byte]
+
+
+def test_opening_the_ports_reads_only_what_patch_editing_needs(env):
     ports, session, _ = env
     app_config.save_ports("JV In", "JV Out")
     w = window(session, autoload=True)
-    w.worker.process_pending()  # the four reads run one after another
-    assert w.patch_label.text() == 'Temporary patch · Init Patch' and w._temp_synced
-    assert w.names_list.count() == 128 and w.perf_list.count() == 32
-    assert w.performance_panel.label.text().startswith("Temporary performance") and ports.respond.writes == []
-    assert not w._autoload_steps and not w._long_job
+    w.worker.process_pending()  # the temporary patch, the selected patch and the 128 USER names, one after another
+    assert w.patch_label.text() == 'Temporary patch · Init Patch' and w._temp_synced and w.names_list.count() == 128
+    assert w.perf_list.count() == 0 and w.rhythm_list.count() == 0 and not w.performance_panel.has_shown() and not w.rhythm_panel.has_shown()
+    assert addresses_read(ports, 0x01) == [] and addresses_read(ports, 0x02) == [] and not [r for r in addresses_read(ports, 0x10)]  # no performance, rhythm set or their names
+    assert ports.respond.writes == [] and not w._autoload_steps and not w._long_job
+
+
+def test_the_performances_and_rhythm_sets_are_read_the_first_time_their_tab_is_opened(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session, autoload=True)
+    w.worker.process_pending()
+    w.mode_tabs.setCurrentIndex(1)
+    w.worker.process_pending()
+    assert w.performance_panel.label.text().startswith("Temporary performance") and w.perf_list.count() == 32 and w.rhythm_list.count() == 0 and not w.rhythm_panel.has_shown()
+    reads = len(ports.respond.requests)
+    w.mode_tabs.setCurrentIndex(0)
+    w.mode_tabs.setCurrentIndex(1)  # back again: nothing is read twice
+    w.worker.process_pending()
+    assert len(ports.respond.requests) == reads
+    w.mode_tabs.setCurrentIndex(2)
+    w.worker.process_pending()
+    assert w.rhythm_panel.label.text().startswith("Temporary rhythm set") and w.rhythm_list.count() == 2 and ports.respond.writes == []
+
+
+def test_a_tab_opened_while_something_is_still_loading_waits_its_turn(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session, autoload=True)  # (the start-up reads are queued, not yet run)
+    w.mode_tabs.setCurrentIndex(2)
+    w.worker.process_pending()
+    assert w.names_list.count() == 128 and w.rhythm_list.count() == 2 and w.rhythm_panel.has_shown() and w.perf_list.count() == 0
+
+
+def test_a_new_connection_reads_the_tabs_again_but_only_the_one_that_is_open(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session, autoload=True)
+    w.worker.process_pending()
+    w.mode_tabs.setCurrentIndex(1)
+    w.worker.process_pending()
+    w.mode_tabs.setCurrentIndex(0)
+    w._autoload_ports = None  # other ports were chosen in Settings
+    w._maybe_autoload()
+    w.worker.process_pending()
+    assert w._loaded_tabs == {0}  # the performance side is read again only when its tab is opened
+    w.mode_tabs.setCurrentIndex(1)
+    w.worker.process_pending()
+    assert 1 in w._loaded_tabs and w.perf_list.count() == 32
 
 
 def test_the_auto_load_runs_once_per_set_of_ports_and_never_over_edits(env):
@@ -957,6 +1005,9 @@ def loaded(env):
 
 def test_refresh_all_catches_up_with_changes_made_on_the_unit(env):
     w, ports = loaded(env)
+    for tab in (1, 2, 0):  # (refresh updates the sides that have been opened)
+        w.mode_tabs.setCurrentIndex(tab)
+        w.worker.process_pending()
     assert w.patch_label.text() == "Temporary patch · Init Patch" and w.names_list.item(2).text() == "003  User 003"
     fake = ports.respond
     fake.temporary.name = "Panel Edit"
@@ -970,6 +1021,18 @@ def test_refresh_all_catches_up_with_changes_made_on_the_unit(env):
     assert w.patch_label.text() == "Temporary patch · Panel Edit" and w.names_list.item(2).text() == "003  On The Unit"
     assert w.perf_list.item(1).text() == "02  Perf Renamed" and w.rhythm_list.item(0).text() == "1  Kit Stored"
     assert w.rhythm_panel.label.text() == "Temporary rhythm set · Kit Edit" and w._temp_synced and fake.writes == []  # reads only
+
+
+def test_refresh_all_leaves_a_tab_that_was_never_opened_alone(env):
+    w, ports = loaded(env)
+    ports.respond.user_performances[1].name = "Perf Renamed"
+    reads = len(addresses_read(ports, 0x01)) + len(addresses_read(ports, 0x10))
+    w.refresh_all()
+    w.worker.process_pending()
+    assert w.perf_list.count() == 0 and len(addresses_read(ports, 0x01)) + len(addresses_read(ports, 0x10)) == reads
+    w.mode_tabs.setCurrentIndex(1)  # opened now: read now, with the new name
+    w.worker.process_pending()
+    assert w.perf_list.item(1).text() == "02  Perf Renamed"
 
 
 def test_refresh_all_keeps_unsent_edits_unless_told_to_discard_them(env, monkeypatch):
@@ -1085,3 +1148,85 @@ def test_a_single_patch_file_with_a_wrong_checksum_opens_at_once_with_a_notice(w
     monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(path), ""))
     w.open_syx()
     assert "Slipped" in w.patch_label.text() and "USER:004" in w.patch_label.text() and "wrong checksums" in w.statusBar().currentMessage()
+
+
+# -- feedback while the unit is being read ----------------------------------------------------------------------------------------
+
+
+def test_the_patch_names_join_the_list_as_they_arrive(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session)
+    counts = []
+    w.worker.name_read.connect(lambda number, summary: counts.append((number, w.names_list.count(), w.names_list.item(number).text())))  # (after the window's own slot: the row is already there)
+    w.read_names()
+    w.worker.process_pending()
+    assert [c[1] for c in counts] == list(range(1, 129)) and counts[0][2] == "001  User 001" and counts[-1][2] == "128  User 128"
+    assert w.names_list.count() == 128 and w._summaries[127].name == "User 128" and "Read 128 USER patch names" in w.statusBar().currentMessage()
+
+
+def test_the_performance_names_join_the_list_as_they_arrive(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session)
+    w.mode_tabs.setCurrentIndex(1)
+    counts = []
+    w.worker.performance_name_read.connect(lambda number, name: counts.append((w.perf_list.count(), w.perf_list.item(number).text())))
+    w.read_names()
+    w.worker.process_pending()
+    assert [c[0] for c in counts] == list(range(1, 33)) and counts[0][1] == "01  Perf 01" and w.perf_list.count() == 32 and w.performance_panel._names[31] == "Perf 32"
+
+
+def test_a_cancelled_names_read_keeps_what_arrived(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session)
+    w.worker.name_read.connect(lambda number, summary: w.worker.cancel() if number == 9 else None)
+    w.read_names()
+    w.worker.process_pending()
+    assert w.names_list.count() == 10 and len(w._summaries) == 10
+
+
+def test_reading_a_rhythm_set_shows_a_progress_bar_that_cannot_be_cancelled(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session)
+    w.mode_tabs.setCurrentIndex(2)
+    seen = []
+    w.worker.progress.connect(lambda done, total: seen.append((done, total, w._long_job, w.names_progress.maximum(), w.btn_cancel.isHidden())))
+    w.read_temporary()
+    assert w._long_job and "temporary rhythm set" in w.statusBar().currentMessage()  # the bar is up as soon as the read is asked for
+    w.worker.process_pending()
+    assert seen[0][:2] == (1, 65) and seen[-1][:2] == (65, 65) and all(s[2] for s in seen) and all(s[3] == 65 for s in seen[1:])
+    assert all(s[4] for s in seen)  # no Cancel button: this read cannot be interrupted
+    assert not w._long_job and w.rhythm_panel.has_shown()
+
+
+def test_reading_a_performance_shows_progress_too_and_a_failure_clears_it(env, monkeypatch):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session)
+    w.mode_tabs.setCurrentIndex(1)
+    seen = []
+    w.worker.progress.connect(lambda done, total: seen.append((done, total)))
+    w.read_temporary()
+    w.worker.process_pending()
+    assert seen[0] == (1, 17) and seen[-1] == (17, 17) and not w._long_job
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a: QMessageBox.StandardButton.Ok)
+    ports.respond.gm_mode = True
+    w.read_temporary()
+    w.worker.process_pending()
+    assert not w._long_job and w.btn_cancel.isHidden()  # (a failed read does not leave the bar up)
+
+
+def test_the_tab_that_loads_by_itself_shows_the_bar_too(env):
+    ports, session, _ = env
+    app_config.save_ports("JV In", "JV Out")
+    w = window(session, autoload=True)
+    w.worker.process_pending()
+    seen = []
+    w.worker.progress.connect(lambda done, total: seen.append((total, w._long_job)))
+    w.mode_tabs.setCurrentIndex(2)  # first time: loads by itself
+    assert w._long_job
+    w.worker.process_pending()
+    assert (65, True) in seen and w.rhythm_list.count() == 2 and not w._long_job
