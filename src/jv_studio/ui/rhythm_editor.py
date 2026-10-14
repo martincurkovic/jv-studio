@@ -1,4 +1,4 @@
-"""The rhythm set editor: a grid of the 64 keys (35-98), the shown key's tone in cards built from the parameter table (`core/groups.py`), and the set's name.
+"""The rhythm set editor: a mini keyboard of the 64 keys (35-98) that chooses the key to edit, the shown key's tone in cards built from the parameter table (`core/groups.py`), and the set's name.
 
 A rhythm set is a drum kit: every key has its own wave, tuning, filter, envelopes, level, pan and effect sends. The editor edits a `RhythmSet` IN PLACE (the caller's working copy) and
 never talks to the unit: it emits `param_committed(block, key, note, value)` for each user edit and `keys_changed` after a copy or swap, and the panel decides what to send. The controls
@@ -7,7 +7,6 @@ are built once and always show the CHOSEN key: every handler reads `self._key` w
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QButtonGroup,
     QCheckBox,
     QComboBox,
     QFormLayout,
@@ -24,12 +23,12 @@ from PySide6.QtWidgets import (
 
 from jv_studio.core import groups, params, rhythm, waves
 from jv_studio.ui.envelope_graph import GRAPH_FOR_CARD
+from jv_studio.ui.keyboard import KeySelector
 from jv_studio.ui.knob_control import KnobControl, origin_value
 from jv_studio.ui.patch_editor import COMPACT_FROM, KNOBS_PER_ROW, ChoiceCombo, PatchEditor
 from jv_studio.ui.qt_helpers import FullWidthTabBar, build_editor_card, build_two_column_page
 from jv_studio.ui.wave_picker import WavePickerDialog
 
-KEYS_PER_ROW = 16
 DEFAULT_KEY = 36
 
 
@@ -59,7 +58,6 @@ class RhythmEditor(QWidget):
         self._graph_of = {}  # parameter key -> graph
         self._wave_label = None
         self._gesture = None
-        self._buttons = {}
 
         self.name_edit = QLineEdit()
         self.name_edit.setMaxLength(12)
@@ -84,20 +82,10 @@ class RhythmEditor(QWidget):
         header.addWidget(self.copy_button)
         header.addWidget(self.swap_button)
 
-        grid = QGridLayout()
-        grid.setSpacing(2)
-        group = QButtonGroup(self)
-        group.setExclusive(True)
-        for index, key in enumerate(rhythm.KEYS):
-            button = QPushButton(params.note_name(key))
-            button.setCheckable(True)
-            button.setProperty("drumKey", True)
-            button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-            button.clicked.connect(lambda _checked=False, k=key: self._key_pressed(k))
-            group.addButton(button, key)
-            grid.addWidget(button, index // KEYS_PER_ROW, index % KEYS_PER_ROW)
-            self._buttons[key] = button
-        self._buttons[DEFAULT_KEY].setChecked(True)
+        self.selector = KeySelector(rhythm.FIRST_KEY, rhythm.LAST_KEY)
+        self.selector.set_selected(DEFAULT_KEY)
+        self.selector.key_picked.connect(self._key_pressed)
+        self.selector.set_tooltip_provider(self._key_tooltip)
         self.key_label = QLabel()
         self.key_label.setObjectName("sectionHeader")
         self.key_label.setWordWrap(True)
@@ -110,7 +98,7 @@ class RhythmEditor(QWidget):
         page_layout = QVBoxLayout(key_page)
         page_layout.setContentsMargins(0, 6, 0, 0)
         page_layout.addLayout(header)
-        page_layout.addLayout(grid)
+        page_layout.addWidget(self.selector)
         page_layout.addWidget(self.key_label)
         page_layout.addWidget(self._holder, 1)
         self.tabs.addTab(key_page, "Key")
@@ -220,14 +208,15 @@ class RhythmEditor(QWidget):
 
     def choose_key(self, key):
         """Show `key` (35-98) in the cards without playing it."""
-        if key in self._buttons:
+        if key in rhythm.KEYS:
             self._key = key
-            self._buttons[key].setChecked(True)
+            self.selector.set_selected(key)
             self.refresh()
             self.key_changed.emit(key)
 
     def _key_pressed(self, key):
         self._key = key
+        self.selector.set_selected(key)
         self.refresh()
         self.key_changed.emit(key)
         if self.play_check.isChecked():
@@ -251,7 +240,7 @@ class RhythmEditor(QWidget):
                     widget.set_value(value)
             self._sync_graphs()
             self._update_wave_label()
-            self._update_buttons()
+            self._update_keys()
         finally:
             self._loading = False
 
@@ -269,15 +258,17 @@ class RhythmEditor(QWidget):
             self._wave_label.setToolTip("" if on else f"The tone is switched off. Its wave is still {described}.")
         self.key_label.setText(f"Key {key_title(self._key)} · {described if on else 'tone off'}")
 
-    def _update_buttons(self):
-        """A key whose tone is off is greyed; every button's tooltip names its wave."""
-        for key, button in self._buttons.items():
-            on = bool(self._set.get(rhythm.NOTE, "tone_switch", key=key))
-            if button.property("toneOff") != (not on):
-                button.setProperty("toneOff", not on)
-                button.style().unpolish(button)
-                button.style().polish(button)
-            button.setToolTip(f"Key {key_title(key)}: {self._wave_text(key) if on else 'tone off'}")
+    def _update_keys(self):
+        """A key whose tone is off is drawn greyed on the keyboard."""
+        if self._set is not None:
+            self.selector.set_dimmed([key for key in rhythm.KEYS if not self._set.get(rhythm.NOTE, "tone_switch", key=key)])
+
+    def _key_tooltip(self, key):
+        """What the pointer is over: the key and its wave (or that its tone is off)."""
+        if self._set is None or key not in rhythm.KEYS:
+            return f"Key {key_title(key)}"
+        on = self._set.get(rhythm.NOTE, "tone_switch", key=key)
+        return f"Key {key_title(key)}: {self._wave_text(key) if on else 'tone off'}"
 
     def _sync_graphs(self):
         for graph in self._graphs:
@@ -301,7 +292,7 @@ class RhythmEditor(QWidget):
         stored = self._set.set(rhythm.NOTE, param.key, value, key=note)
         if param.key in ("tone_switch", "wave_group_type", "wave_group_id", "wave_number"):
             self._update_wave_label()
-            self._update_buttons()
+            self._update_keys()
         graph = self._graph_of.get(param.key)
         if graph is not None:
             graph.set_values({name: self._set.get(rhythm.NOTE, name, key=note) for name in graph.NAMES})

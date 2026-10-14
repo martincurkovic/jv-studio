@@ -1,4 +1,6 @@
 import pytest
+from PySide6.QtCore import Qt
+from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from fakes import FakeJV1010, FakePorts
@@ -29,6 +31,12 @@ def win(qapp, monkeypatch, tmp_path):
     w = MainWindow(session, worker=UnitWorker(session, timeout=0.05), start_worker=False)
     w.mode_tabs.setCurrentIndex(2)
     return w, fake, tmp_path
+
+
+def click_key(editor, key):
+    """A real mouse click on the mini keyboard, in the middle of `key`."""
+    editor.selector.resize(1000, 66)
+    QTest.mouseClick(editor.selector, Qt.MouseButton.LeftButton, pos=editor.selector._key_rect(key).center().toPoint())
 
 
 def shown(w):
@@ -110,11 +118,11 @@ def test_the_wave_card_names_the_wave_and_a_tone_that_is_off_looks_off(win):
     fake.temp_rhythm.set(NOTE, "wave_group_id", 1, key=36)  # INT-A
     fake.temp_rhythm.set(NOTE, "wave_number", 2, key=36)
     panel, editor = shown(w)
-    assert "INT-A 003" in editor.key_label.text() and "INT-A 003" in editor._buttons[36].toolTip()
-    assert editor._buttons[36].property("toneOff") is False and editor._buttons[37].property("toneOff") is True and "tone off" in editor._buttons[37].toolTip()
+    assert "INT-A 003" in editor.key_label.text() and "INT-A 003" in editor._key_tooltip(36)
+    assert 36 not in editor.selector._dimmed and 37 in editor.selector._dimmed and "tone off" in editor._key_tooltip(37)
     editor.widget_for("tone_switch").setCurrentIndex(0)
     editor.widget_for("tone_switch").activated.emit(0)
-    assert editor._buttons[36].property("toneOff") is True and "tone off" in editor.key_label.text()
+    assert 36 in editor.selector._dimmed and "tone off" in editor.key_label.text()
 
 
 def test_copying_a_key_sends_the_whole_key_and_undo_puts_it_back(win):
@@ -186,11 +194,11 @@ def test_clicking_a_key_plays_it_on_the_channel_of_part_10_and_choosing_a_set_se
     panel, editor = shown(w)
     monkeypatch.setattr(rp.QTimer, "singleShot", lambda ms, fn: fn())  # no waiting: the note-off at once
     w.audition.velocity.setValue(80)
-    editor._buttons[38].click()
+    click_key(editor, 38)
     assert fake.channel_messages == [audition.note_on(9, 38, 80), audition.note_off(9, 38)] and editor.chosen_key() == 38
     editor.play_check.setChecked(False)
     fake.channel_messages.clear()
-    editor._buttons[39].click()
+    click_key(editor, 39)
     assert fake.channel_messages == [] and editor.chosen_key() == 39  # chosen, not played
     panel.channel_combo.setCurrentIndex(11)
     panel.select_on_unit(1)
@@ -241,3 +249,25 @@ def test_the_demo_unit_holds_two_playable_kits():
     unit = demo_unit.make_demo_unit()
     assert [r.name for r in unit.user_rhythms] == ["Standard Kit", "Hip Hop Kit"] and all(validate.out_of_range_rhythm(r) == [] for r in unit.user_rhythms)
     assert all(r.get(NOTE, "tone_switch", key=k) == 1 for r in unit.user_rhythms for k in rhythm.KEYS)
+
+
+def test_the_mini_keyboard_chooses_keys_by_click_and_drag_and_shows_the_chosen_one(win):
+    w, fake, _ = win
+    panel, editor = shown(w)
+    selector = editor.selector
+    assert selector._first == 35 and selector._last == 98 and selector.selected() == 36 and not selector.hasFocus()
+    editor.play_check.setChecked(False)
+    picked = []
+    selector.key_picked.connect(picked.append)
+    selector.resize(1000, 66)
+    black = selector._key_rect(37).center().toPoint()  # C#2: a black key wins where it overlaps a white one
+    QTest.mouseClick(selector, Qt.MouseButton.LeftButton, pos=black)
+    assert picked == [37] and editor.chosen_key() == 37 and selector.selected() == 37
+    QTest.mousePress(selector, Qt.MouseButton.LeftButton, pos=selector._key_rect(40).center().toPoint())
+    QTest.mouseMove(selector, selector._key_rect(41).center().toPoint())
+    QTest.mouseRelease(selector, Qt.MouseButton.LeftButton, pos=selector._key_rect(41).center().toPoint())
+    assert picked[1:] == [40, 41] and editor.chosen_key() == 41  # a drag browses the keys
+    editor.choose_key(98)
+    assert selector.selected() == 98
+    selector.grab()  # paints (with dimmed keys: every tone of the minimum set is off)
+    assert fake.channel_messages == []  # choosing is not playing when "Play on click" is off

@@ -143,16 +143,6 @@ QPushButton:checked:hover {
     background-color: ${accent};
 }
 
-/* the 64 key buttons of the rhythm set editor: small, and greyed when the key's tone is off */
-QPushButton[drumKey] {
-    padding: 4px 0;
-    min-width: 0;
-}
-
-QPushButton[drumKey][toneOff="true"]:!checked {
-    color: ${text_disabled};
-}
-
 /* the joined buttons of a segmented control (the Patches | Performances switch): square where they meet, no double border, a little roomier than an ordinary button */
 QPushButton[segment] {
     padding: 6px 20px;

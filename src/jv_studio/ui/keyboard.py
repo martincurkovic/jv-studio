@@ -6,9 +6,9 @@ from `typing_base` (C, C#, D ... E an octave up); Z and X move that base down an
 of the value decides the size of the step). The range those keys play is marked by a bar under the keyboard and a light tint on its keys. Every note that is held is released when the widget loses focus or is disabled.
 """
 
-from PySide6.QtCore import QRectF, Qt, Signal
+from PySide6.QtCore import QEvent, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
-from PySide6.QtWidgets import QSizePolicy, QWidget
+from PySide6.QtWidgets import QSizePolicy, QToolTip, QWidget
 
 from jv_studio.core import params
 from jv_studio.ui import theme
@@ -21,8 +21,8 @@ BLACK = {1, 3, 6, 8, 10}
 RANGE_BAR = 7  # the strip under the keys that marks the octave the computer keys play
 
 
-def _white_notes():
-    return [n for n in range(FIRST_NOTE, LAST_NOTE + 1) if n % 12 not in BLACK]
+def _white_notes(first, last):
+    return [n for n in range(first, last + 1) if n % 12 not in BLACK]
 
 
 class PianoKeyboard(QWidget):
@@ -32,15 +32,20 @@ class PianoKeyboard(QWidget):
     velocity_step = Signal(int)  # -1 (quieter) or +1 (louder): the C and V keys
     held_changed = Signal(list)  # the notes held now, lowest first (for a live read-out)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, first=FIRST_NOTE, last=LAST_NOTE, typing=True):
+        """`first`..`last` is the range drawn (it must start and end on a white key, or a black key would have no white key below it); `typing` False is a keyboard that
+        the computer keys do not play (no octave bar)."""
         super().__init__(parent)
+        self._first, self._last, self._typing = first, last, typing
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.setMinimumHeight(82)
-        self.setMaximumHeight(82)
+        height = 82 if typing else 66
+        self.setMinimumHeight(height)
+        self.setMaximumHeight(height)
         self.setMouseTracking(False)
         self.typing_base = DEFAULT_TYPING_BASE
-        self._whites = _white_notes()
+        self._dimmed = set()  # keys drawn greyed (a rhythm key whose tone is off)
+        self._whites = _white_notes(first, last)
         self._down = {}  # note -> how many sources hold it (mouse, typing key)
         self._mouse_note = None
         self._typed = {}  # Qt key -> the note it started
@@ -52,11 +57,13 @@ class PianoKeyboard(QWidget):
         return self.width() / len(self._whites)
 
     def _keys_height(self):
-        return self.height() - RANGE_BAR - 2
+        return self.height() - RANGE_BAR - 2 if self._typing else self.height()
 
     def _typing_notes(self):
         """The notes the computer keys play now (clipped to the keyboard)."""
-        return [n for n in range(self.typing_base, self.typing_base + len(TYPING_KEYS)) if FIRST_NOTE <= n <= LAST_NOTE]
+        if not self._typing:
+            return []
+        return [n for n in range(self.typing_base, self.typing_base + len(TYPING_KEYS)) if self._first <= n <= self._last]
 
     def _typing_span(self):
         """(left, right) in pixels of the keys the computer keys play, from the first key's left edge to the last white key's right edge."""
@@ -78,7 +85,7 @@ class PianoKeyboard(QWidget):
         """The note under a point: a black key wins where it overlaps a white one."""
         if not 0 <= x < self.width() or not 0 <= y < self._keys_height():
             return None
-        for note in range(FIRST_NOTE, LAST_NOTE + 1):
+        for note in range(self._first, self._last + 1):
             if note % 12 in BLACK and self._key_rect(note).contains(x, y):
                 return note
         index = int(x / self._white_width())
@@ -120,12 +127,16 @@ class PianoKeyboard(QWidget):
         self._typed.clear()
         self.update()
 
+    def set_dimmed(self, notes):
+        self._dimmed = set(notes)
+        self.update()
+
     def set_live(self, live):
         self._live = live
         self.update()
 
     def set_typing_base(self, note):
-        note = max(FIRST_NOTE, min(LAST_NOTE - 12, note))
+        note = max(self._first, min(self._last - 12, note))
         if note != self.typing_base:
             self.typing_base = note
             self.typing_base_changed.emit(note)
@@ -172,7 +183,7 @@ class PianoKeyboard(QWidget):
             self.velocity_step.emit(1)
         elif len(text) == 1 and text in TYPING_KEYS and event.modifiers() in (Qt.KeyboardModifier.NoModifier, Qt.KeyboardModifier.ShiftModifier):
             note = self.typing_base + TYPING_KEYS.index(text)
-            if FIRST_NOTE <= note <= LAST_NOTE and event.key() not in self._typed:
+            if self._first <= note <= self._last and event.key() not in self._typed:
                 self._typed[event.key()] = note
                 self._press(note)
         else:
@@ -220,7 +231,7 @@ class PianoKeyboard(QWidget):
         for note in self._whites:
             rect = self._key_rect(note)
             colour = accent if self.is_down(note) else QColor(palette["key_white"])
-            if not enabled:
+            if not enabled or (note in self._dimmed and not self.is_down(note)):
                 colour = QColor(palette["bg_disabled"])
             painter.setBrush(colour)
             painter.drawRect(rect)
@@ -231,11 +242,12 @@ class PianoKeyboard(QWidget):
                 painter.setPen(QColor(palette["key_black"] if not self.is_down(note) else palette["text_on_accent"]))
                 painter.drawText(rect.adjusted(2, 0, 0, -3), Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft, params.note_name(note))
                 painter.setPen(edge)
-        for note in range(FIRST_NOTE, LAST_NOTE + 1):
+        for note in range(self._first, self._last + 1):
             if note % 12 in BLACK:
-                painter.setBrush(accent if self.is_down(note) else QColor(palette["key_black"] if enabled else palette["border_disabled"]))
+                dim = not enabled or (note in self._dimmed and not self.is_down(note))
+                painter.setBrush(accent if self.is_down(note) else QColor(palette["border_disabled"] if dim else palette["key_black"]))
                 painter.drawRect(self._key_rect(note))
-        if enabled:  # the bar under the keys: which keys the computer keyboard plays (solid while the computer keyboard is routed here)
+        if enabled and self._typing:  # the bar under the keys: which keys the computer keyboard plays (solid while the computer keyboard is routed here)
             left, right = self._typing_span()
             bar = QColor(accent)
             bar.setAlpha(255 if self._live or self.hasFocus() else 110)
@@ -247,3 +259,59 @@ class PianoKeyboard(QWidget):
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRect(self.rect().adjusted(1, 1, -1, -1))
         painter.end()
+
+
+class KeySelector(PianoKeyboard):
+    """A small keyboard that CHOOSES a key rather than playing one (the rhythm set editor: keys 35-98, one tone each). A click or a drag over the keys emits `key_picked`; the chosen
+    key stays drawn as a pressed one. It takes no focus and no computer keys."""
+
+    key_picked = Signal(int)
+
+    def __init__(self, first, last, parent=None):
+        super().__init__(parent, first=first, last=last, typing=False)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._selected = None
+        self._tooltip_for = None
+        self._picked = None  # the key the mouse last picked, so a drag emits once per key
+
+    def set_selected(self, note):
+        self._selected = note
+        self.update()
+
+    def selected(self):
+        return self._selected
+
+    def set_tooltip_provider(self, provider):
+        """`provider(note)` returns the text for the key under the pointer."""
+        self._tooltip_for = provider
+
+    def is_down(self, note):  # (the chosen key is painted the way a pressed one is)
+        return note == self._selected
+
+    def _pick(self, event):
+        note = self.note_at(event.position().x(), event.position().y())
+        if note is not None and note != self._picked:
+            self._picked = note
+            self.key_picked.emit(note)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._picked = None
+            self._pick(event)
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            self._pick(event)
+
+    def mouseReleaseEvent(self, event):
+        self._picked = None
+
+    def event(self, event):
+        if event.type() == QEvent.Type.ToolTip and self._tooltip_for is not None:
+            note = self.note_at(event.pos().x(), event.pos().y())
+            if note is None:
+                QToolTip.hideText()
+            else:
+                QToolTip.showText(event.globalPos(), self._tooltip_for(note), self)
+            return True
+        return super().event(event)

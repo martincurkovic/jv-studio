@@ -95,7 +95,7 @@ Open System Settings > **Scale Tune**. Patch mode is selected first. These go in
 ### B5. Rhythm sets (8 min; needs a spare USER rhythm set: 1 or 2)
 Open the **Rhythm Sets** mode. Keep the unit in **Performance mode** (or Rhythm mode) and set the audition **Part 10 channel** to what the unit uses (10 by default).
 - [ ] **Read:** right-click USER set 1 > **Choose on Unit (Part 10)** (Bank Select 80/0 + Program Change 0): the unit's display shows the set. Then **Read Temporary**: the name and the keys match the unit. A line "outside the manual's ranges" is a table bug. *First proof of:* RQ1 at `02 09 00 00` and the 65-block read (it may be refused in Patch mode: note which mode you were in).
-- [ ] **Hear a key:** click a key button (Play on click): the unit plays that drum on Part 10. If silent: is Part 10's receive switch on and its channel what you set?
+- [ ] **Hear a key:** click a key on the mini keyboard (Play on click): the unit plays that drum on Part 10. If silent: is Part 10's receive switch on and its channel what you set?
 - [ ] **Live edit:** with Live edits on, change the chosen key's Tone Level, Coarse Tune or Filter Cutoff and click the key again: it sounds different. *First proof of* a single DT1 into the temporary rhythm set. Drag a level-envelope handle (decay): hear the key shorten.
 - [ ] **A whole key:** Copy Key To... (e.g. the snare to a spare key) and click both: identical. Undo: the spare key is back. *First proof of* a 58-byte block write at `02 09 kk 00`.
 - [ ] **Does it last?** Choose another rhythm set on the unit, then back: are your live edits gone (the unit re-reads the stored set) or kept? Record it.
