@@ -163,11 +163,11 @@ class AuditionBar(QWidget):
 
     def _show_typing(self):
         base = self.keyboard.typing_base
-        self.typing_label.setText(f"Keys {TYPING_KEYS[0].upper()}-{TYPING_KEYS[-1]}: {params.note_name(base)} to {params.note_name(base + len(TYPING_KEYS) - 1)}")
+        self.typing_label.setText(f"Computer keys: {params.note_name(base)} to {params.note_name(base + len(TYPING_KEYS) - 1)}")
 
-    def step_velocity(self, delta):
-        """Louder or quieter by `delta` (the C and V keys: -10 / +10), within 1-127; the new value is shown in the read-out."""
-        self.velocity.setValue(max(1, min(127, self.velocity.value() + delta)))
+    def step_velocity(self, direction):
+        """Louder (+) or quieter (-): the next multiple of 10, or 1 / 127 at the ends (the C and V keys); the new value is shown in the read-out."""
+        self.velocity.setValue(audition.step_velocity(self.velocity.value(), direction))
         self.playing_label.setText(f"Velocity {self.velocity.value()}")
 
     def _show_playing(self, notes):

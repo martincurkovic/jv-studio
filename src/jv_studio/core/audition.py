@@ -24,6 +24,15 @@ BANKS = {
 }
 
 DEFAULT_VELOCITY = 100
+VELOCITY_STEPS = [1, *range(10, 121, 10), 127]  # what C and V walk through: multiples of 10, with the two ends of the range kept
+
+
+def step_velocity(current, direction):
+    """Snap `current` to the nearest stop on VELOCITY_STEPS (a tie goes up), then move one stop up (direction > 0) or down: 97 -> 100 -> 110 or 90."""
+    index = VELOCITY_STEPS.index(min(VELOCITY_STEPS, key=lambda v: (abs(v - current), -v)))
+    return VELOCITY_STEPS[max(0, min(len(VELOCITY_STEPS) - 1, index + (1 if direction > 0 else -1)))]
+
+
 SOUND_MODES = {0: "Performance", 1: "Patch", 2: "GM"}
 
 

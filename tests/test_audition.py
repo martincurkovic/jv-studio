@@ -282,18 +282,29 @@ def test_the_list_menu_can_play_a_user_patch(win):
 # -- shortcuts and the live read-out -----------------------------------------------------------------------------------------
 
 
-def test_c_and_v_make_notes_quieter_and_louder_by_ten_within_1_to_127(bar):
+def test_velocity_steps_snap_to_the_nearest_multiple_of_ten_then_move_one():
+    up = [audition.step_velocity(v, 1) for v in (1, 5, 10, 94, 95, 97, 100, 123, 124, 127)]
+    assert up == [10, 10, 20, 100, 110, 110, 110, 127, 127, 127]
+    down = [audition.step_velocity(v, -1) for v in (127, 125, 120, 94, 95, 97, 100, 11, 10, 5, 1)]
+    assert down == [120, 120, 110, 80, 90, 90, 90, 1, 1, 1, 1]
+
+
+def test_c_and_v_snap_the_velocity_to_a_multiple_of_ten_then_step(bar):
     bar, out, _ = bar
     keyboard = bar.keyboard
-    start = bar.velocity.value()
+    bar.velocity.setValue(97)
     QTest.keyClick(keyboard, Qt.Key.Key_V)
-    assert bar.velocity.value() == start + 10 and bar.playing_label.text() == f"Velocity {start + 10}"
+    assert bar.velocity.value() == 110 and bar.playing_label.text() == "Velocity 110"  # 97 is nearest to 100, one step up
+    bar.velocity.setValue(97)
     QTest.keyClick(keyboard, Qt.Key.Key_C)
+    assert bar.velocity.value() == 90
     QTest.keyClick(keyboard, Qt.Key.Key_C)
-    assert bar.velocity.value() == start - 10
+    assert bar.velocity.value() == 80
     for _ in range(30):
         QTest.keyClick(keyboard, Qt.Key.Key_C)
     assert bar.velocity.value() == 1
+    QTest.keyClick(keyboard, Qt.Key.Key_V)
+    assert bar.velocity.value() == 10
     for _ in range(30):
         QTest.keyClick(keyboard, Qt.Key.Key_V)
     assert bar.velocity.value() == 127
@@ -322,10 +333,18 @@ def test_the_notes_being_played_are_shown_live(bar):
     assert bar.playing_label.text() == ""
 
 
-def test_the_keys_show_their_letters_while_the_keyboard_has_focus(keys):
+def test_a_bar_under_the_keyboard_marks_the_octave_the_computer_keys_play(keys):
     keyboard, _ = keys
+    left, right = keyboard._typing_span()
+    assert left == keyboard._key_rect(60).left() and right == keyboard._key_rect(76).right()  # C4 to E5
+    QTest.keyClick(keyboard, Qt.Key.Key_Z)
+    assert keyboard._typing_span()[0] == keyboard._key_rect(48).left()  # it follows Z at once (a repaint is queued without a note)
+    for _ in range(8):
+        QTest.keyClick(keyboard, Qt.Key.Key_X)
+    left, right = keyboard._typing_span()
+    assert keyboard.typing_base == 84 and right == keyboard._key_rect(96).right()  # (clipped to the last key)
     QApplication.sendEvent(keyboard, QFocusEvent(QEvent.Type.FocusIn))
-    keyboard.grab()  # paints without error (the letters are drawn only when focused; offscreen windows rarely are, so this at least runs the normal path)
+    keyboard.grab()  # paints without error (offscreen windows are rarely focused, so this runs the normal path)
 
 
 def test_cmd_k_shows_and_hides_the_keyboard_and_the_menu_item_follows(win):
