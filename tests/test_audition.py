@@ -69,7 +69,7 @@ def test_the_systems_midi_settings_are_read_from_the_block_and_explained():
 @pytest.fixture
 def keys(qapp):
     keyboard = PianoKeyboard()
-    keyboard.resize(1080, 74)  # 36 white keys: 30 px each
+    keyboard.resize(1000, 74)  # 57 white keys: about 17.5 px each
     events = []
     keyboard.note_on.connect(lambda n: events.append(("on", n)))
     keyboard.note_off.connect(lambda n: events.append(("off", n)))
@@ -88,7 +88,7 @@ def test_clicking_a_key_plays_it_and_letting_go_releases_it(keys):
 
 def test_black_keys_sit_above_white_ones_and_the_range_is_covered(keys):
     keyboard, _ = keys
-    assert keyboard.note_at(0.5, 70) == FIRST_NOTE and keyboard.note_at(1079, 70) == LAST_NOTE
+    assert keyboard.note_at(0.5, 70) == FIRST_NOTE and keyboard.note_at(999, 70) == LAST_NOTE
     c_sharp = keyboard._key_rect(FIRST_NOTE + 1)
     assert keyboard.note_at(c_sharp.center().x(), 10) == FIRST_NOTE + 1  # near the top: the black key
     assert keyboard.note_at(c_sharp.center().x(), 70) in (FIRST_NOTE, FIRST_NOTE + 2)  # near the bottom: a white one
@@ -97,10 +97,10 @@ def test_black_keys_sit_above_white_ones_and_the_range_is_covered(keys):
 
 def test_dragging_across_keys_is_a_glissando(keys):
     keyboard, events = keys
-    QTest.mousePress(keyboard, Qt.MouseButton.LeftButton, pos=QPoint(15, 70))
-    QTest.mouseMove(keyboard, QPoint(45, 70))
-    QTest.mouseRelease(keyboard, Qt.MouseButton.LeftButton, pos=QPoint(45, 70))
-    assert events == [("on", 36), ("off", 36), ("on", 38), ("off", 38)]
+    QTest.mousePress(keyboard, Qt.MouseButton.LeftButton, pos=QPoint(10, 70))
+    QTest.mouseMove(keyboard, QPoint(30, 70))
+    QTest.mouseRelease(keyboard, Qt.MouseButton.LeftButton, pos=QPoint(30, 70))
+    assert events == [("on", FIRST_NOTE), ("off", FIRST_NOTE), ("on", FIRST_NOTE + 2), ("off", FIRST_NOTE + 2)]
 
 
 def test_the_computer_keyboard_plays_from_c4_and_z_x_change_the_octave(keys):
@@ -421,7 +421,7 @@ def test_a_bar_under_the_keyboard_marks_the_octave_the_computer_keys_play(keys):
     for _ in range(8):
         QTest.keyClick(keyboard, Qt.Key.Key_X)
     left, right = keyboard._typing_span()
-    assert keyboard.typing_base == 84 and right == keyboard._key_rect(96).right()  # (clipped to the last key)
+    assert keyboard.typing_base == LAST_NOTE - 12 and right == keyboard._key_rect(LAST_NOTE).right()  # (the highest octave: clipped to the last key)
     QApplication.sendEvent(keyboard, QFocusEvent(QEvent.Type.FocusIn))
     keyboard.grab()  # paints without error (offscreen windows are rarely focused, so this runs the normal path)
 

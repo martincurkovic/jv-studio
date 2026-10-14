@@ -94,6 +94,17 @@ def save_collapsed_cards(keys):
 # -- backups ----------------------------------------------------------------------------------------------------------------
 
 
+def get_middle_c():
+    """Which octave note 60 is named in: 3 (Ableton, Yamaha: the default) or 4 (Roland's own, the manual and the unit)."""
+    return 4 if load_config().get("middle_c") == 4 else 3
+
+
+def save_middle_c(octave):
+    config = load_config()
+    config["middle_c"] = 4 if octave == 4 else 3
+    save_config(config)
+
+
 def demo_backup_path():
     """Where `--demo` looks for a whole-unit backup (`.syx` from File > Back Up Unit) to fill the simulated unit with: the owner's own unit, for realism. It stays on the machine (it is
     Roland's factory sounds plus whatever the owner stored), never in the repo or an app bundle. Absent = the built-in demo contents. Read at call time so tests can redirect it."""

@@ -217,9 +217,25 @@ def param_bytes(block_bytes, param):
 # -- showing a value ----------------------------------------------------------------------------------------------------
 
 
+_MIDDLE_C_OCTAVE = 4  # which octave number note 60 is in: 4 is Roland's (the manual's "C-1 - G9", its Rhythm Set List: key 36 = C2), 3 is Ableton's and Yamaha's
+
+
+def set_middle_c(octave):
+    """Name note 60 `C<octave>`: 4 (Roland, as the manual and the unit) or 3 (Ableton, Yamaha). Only the NAMES change, never a note number. Call it once at start-up, before any
+    widget shows or parses a note name (the app reads it from the settings in `main`)."""
+    global _MIDDLE_C_OCTAVE
+    if octave not in (3, 4):
+        raise ValueError(f"middle C is C3 or C4, not C{octave}")
+    _MIDDLE_C_OCTAVE = octave
+
+
+def middle_c_octave():
+    return _MIDDLE_C_OCTAVE
+
+
 def note_name(note):
-    """Roland's convention (the manual's "C-1 - G9"): note 60 is C4."""
-    return f"{_NOTE_NAMES[note % 12]}{note // 12 - 1}"
+    """The name of a MIDI note: Roland's convention by default (the manual's "C-1 - G9": note 60 is C4); `set_middle_c(3)` makes it Ableton's (60 is C3)."""
+    return f"{_NOTE_NAMES[note % 12]}{note // 12 - 1 + (_MIDDLE_C_OCTAVE - 4)}"
 
 
 def format_value(param, value):

@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
@@ -56,6 +56,12 @@ class MainWindow(QMainWindow):
         self._autoload_enabled = autoload  # read the names and the temporary patch / performance as soon as ports are open (the app turns it on; tests call what they need)
         self._autoload_ports = None  # the (input, output) the last auto-load ran for: reopening the same ports after a diagnostic does not read again
         self._autoload_steps = []  # [(job label, function that submits it)]
+        self._sound_mode = None  # the unit's sound mode (0 performance, 1 patch, 2 GM) as of the last System read; None until one
+        self._audition_timer = QTimer(self)  # a patch chosen in the audition bar is read back this long after the LAST choice (scrubbing with , and . must not read every patch)
+        self._audition_timer.setSingleShot(True)
+        self._audition_timer.timeout.connect(self._after_audition_choice)
+        self._pending_check = None  # label ("user:N") of the patch just opened that the unit was told to select: the next step is to check that it did
+        self._open_to_play = None  # label of a USER patch being read because it was double-clicked: when it arrives the unit is told to select it too
         self._announce_system = True  # the next System read is the From Unit button's (it says what it found); a refresh's is quiet
         self._autoload_force = False  # Refresh All was confirmed: read even a patch, performance or rhythm set with unsent edits
         self._autoload_job = None  # the label of the auto-load job in flight: its failure is a status line, not a dialog (a silent unit at startup is not an alarm)
@@ -670,6 +676,7 @@ class MainWindow(QMainWindow):
         number = item.data(Qt.ItemDataRole.UserRole)
         if number is not None and self.worker.is_idle() and self._confirm_discard():
             self.statusBar().showMessage(f"Reading USER:{number + 1:03d}...")
+            self._open_to_play = f"user:{number}"  # (when it arrives the unit is told to play it too: see `_on_patch_read`)
             self.worker.submit("user", number)
 
     def _on_progress(self, done, total):
@@ -696,6 +703,11 @@ class MainWindow(QMainWindow):
         self._long_job = False
         if label == "firmware":
             self._firmware_running = False
+        if label in ("temporary_follow", "check_temporary"):  # started by the window, not by a click: a status line, not a dialog
+            self._pending_check = None
+            self.statusBar().showMessage(f"Couldn't read the patch the unit now plays: {message}", 10000)
+            self._refresh_connection()
+            return
         if label == "perf_write_param":
             self.performance_panel.on_live_failed(message)
             return
@@ -721,9 +733,14 @@ class MainWindow(QMainWindow):
         self._refresh_connection()
 
     def _on_patch_read(self, label, read, problems):
+        if label == "check":
+            return self._on_follow_checked(read)
         base = patch.TEMPORARY_BASE if label == "temporary" else patch.user_base(int(label.split(":")[1]))
         where = "the temporary patch" if label == "temporary" else f"USER:{int(label.split(':')[1]) + 1:03d}"
         self._show_patch(label, read, base, problems, where)
+        if label == self._open_to_play:
+            self._open_to_play = None
+            self._play_shown_on_unit(int(label.split(":")[1]))
 
     def _show_patch(self, label, read, base, problems, where):
         self._shown = (label, read, base)
@@ -1227,13 +1244,61 @@ class MainWindow(QMainWindow):
         debug_log.get_logger().info("universal: GM System Off sent")
         self.statusBar().showMessage("GM System Off sent: the unit returns to Performance mode. Refresh All from Unit (Ctrl/Cmd+Shift+R) reads it again.", 15000)
 
+    # -- the audition bar and the editor follow each other ------------------------------------------------------------------
+
+    AUDITION_READ_DELAY_MS = 350  # the unit needs a moment to load a patch before its temporary patch can be read
+
     def _on_audition_patch(self, group, number):
-        """A patch was chosen on the unit by Program Change: the unit's current patch is no longer what the editor last sent or read."""
+        """A patch was chosen on the unit by Program Change: the unit's current patch is no longer what the editor last sent or read. A moment after the LAST choice the window reads
+        the temporary patch into the editor (`_after_audition_choice`), unless that would replace edits that were never sent."""
         self._temp_synced = False
-        self.statusBar().showMessage(f"Chose {self.audition.current_label()} on the unit. Read Temporary Patch to edit what you hear.", 8000)
+        if self._pending_check is None:
+            self.statusBar().showMessage(f"Chose {self.audition.current_label()} on the unit...", 8000)
+        self._audition_timer.start(self.AUDITION_READ_DELAY_MS)
+        self._refresh_connection()
+
+    def _after_audition_choice(self):
+        if not self.session.is_open or self._firmware_running:
+            self._pending_check = None
+            return
+        if not self.worker.is_idle():  # a job is running: try again shortly (the choice is not forgotten)
+            self._audition_timer.start(200)
+            return
+        if self._sound_mode not in (None, 1):
+            self._pending_check = None
+            self.statusBar().showMessage("The unit is not in Patch mode: a patch chosen here goes to a part (Performance mode) or is ignored (GM mode), so there is no patch to load into the editor.", 10000)
+            return
+        if self._pending_check is not None:
+            self.worker.submit("check_temporary")
+        elif self._shown is not None and self._is_dirty():
+            self.statusBar().showMessage(f"Chose {self.audition.current_label()} on the unit. Your unsent edits stay in the editor: Read Temporary Patch (Ctrl/Cmd+R) loads what you hear instead.", 12000)
+        else:
+            self.statusBar().showMessage(f"Chose {self.audition.current_label()}: reading it into the editor...")
+            self.worker.submit("temporary_follow")
+
+    def _play_shown_on_unit(self, number):
+        """A USER patch was just opened by double-click: have the unit select it too (Bank Select + Program Change: a plain MIDI message, nothing is written) and check that it did."""
+        if not self.session.is_open or self._sound_mode not in (None, 1):
+            return
+        self._pending_check = f"user:{number}"
+        self.audition.choose("USER", number)
+
+    def _on_follow_checked(self, unit_has):
+        """The unit's temporary patch, read after it was told to select the patch the editor shows: if they are the same patch, live edits can start at once."""
+        pending, self._pending_check = self._pending_check, None
+        if pending is None or self._shown is None or self._shown[0] != pending:
+            return  # something else was opened meanwhile
+        where = self._where
+        if unit_has == self._shown[1] and not self._is_dirty():
+            self._temp_synced = True
+            self.statusBar().showMessage(f"{where} is playing on the unit: your edits are heard as you make them.", 8000)
+        else:
+            self._temp_synced = False
+            self.statusBar().showMessage(f"{where} is open, but the unit is not playing it (it needs Patch mode, Receive Program Change ON and the right channel). Send to Temporary Patch to hear it.", 12000)
         self._refresh_connection()
 
     def _on_system_midi(self, info):
+        self._sound_mode = info.sound_mode
         announce, self._announce_system = self._announce_system, True
         self.audition.show_system(info, announce=announce)  # (a bound method, so the worker's signal is delivered on the GUI thread)
 

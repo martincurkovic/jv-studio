@@ -7,7 +7,7 @@ Options for testing the app's safety nets: `gm_mode` (the unit ignores RQ1/DT1 i
 check) and `drop_first_replies=n` (the first n RQ1s get no answer, to test retries).
 """
 
-from . import memory, patch, performance, rhythm, scale_tune, sysex, system, universal
+from . import audition, memory, patch, patch_groups, performance, rhythm, scale_tune, sysex, system, universal
 
 IDENTITY_REPLY = bytes.fromhex("F0 7E 10 06 02 41 6A 00 05 00 00 00 00 00 F7")
 
@@ -40,6 +40,7 @@ class SimulatedUnit:
         self.writes = []  # every DT1 received, parsed
         self.master_volume = None  # the last Master Volume received (None: never set)
         self.universal_messages = []  # every Universal SysEx received: "gm_on", "gm_off", ("master_volume", n)
+        self._bank = {}  # channel -> [Bank Select MSB, LSB] last received
         self.channel_messages = []  # every non-SysEx message received (notes, Bank Select, Program Change...): the unit would play or switch, here they are just kept
         # the System settings: VALID ones (a block of the pattern would hold values outside every range): Patch mode on USER 001, A = 440.0 Hz, channel 1, program change and bank select ON
         initial = system.System.minimum()
@@ -70,6 +71,34 @@ class SimulatedUnit:
             return self.user_rhythms[address[1] - 0x40], (0x10, address[1], 0, 0)
         return None
 
+    def _channel_message(self, message):
+        """Bank Select and Program Change as the real unit takes them in PATCH mode (`[manual p.68]`): on the Patch Receive Channel, with Receive Program Change ON (and Bank Select ON to change
+        bank), the chosen patch is LOADED INTO THE TEMPORARY PATCH and the System block's selection follows. In Performance or GM mode, or on another channel, nothing happens here."""
+        status, channel = message[0] & 0xF0, message[0] & 0x0F
+        if status == 0xB0 and len(message) == 3 and message[1] in (0, 32):
+            self._bank.setdefault(channel, [80, 0])[0 if message[1] == 0 else 1] = message[2]
+            return
+        if status != 0xC0 or len(message) < 2 or self.gm_mode:
+            return
+        settings = system.System(self.other[0])
+        if settings.get("sound_mode") != 1 or channel != settings.get("patch_receive_channel") or not settings.get("receive_program_change"):
+            return
+        msb, lsb = self._bank.get(channel, [80, 0]) if settings.get("receive_bank_select") else (80, 0)
+        for key, entries in audition.BANKS.items():
+            for bank_msb, bank_lsb, count, first in entries:
+                number = first + message[1]
+                if (bank_msb, bank_lsb) == (msb, lsb) and number < first + count:
+                    group = next(g for g in patch_groups.GROUPS if g.key == key)
+                    if key == "USER":
+                        self.temporary = self.user[number].copy()
+                    else:
+                        self.temporary = patch.Patch.minimum()
+                        self.temporary.name = patch_groups.names_of(group)[number]
+                    for param, value in (("patch_group_type", group.type), ("patch_group_id", group.id), ("patch_number", number)):
+                        settings.set(param, value)
+                    self.other[0][:] = settings.common
+                    return
+
     def block_data(self, start):
         """The bytes of the block that starts at `start` (an int address, `memory.MemBlock.start`) as the unit holds them: a live bytearray, so a test can change it."""
         if start in self.other:
@@ -86,6 +115,7 @@ class SimulatedUnit:
     def __call__(self, message):
         if message and message[0] != 0xF0:
             self.channel_messages.append(bytes(message))
+            self._channel_message(bytes(message))
             return []
         if message == sysex.IDENTITY_REQUEST:
             return [self.identity]

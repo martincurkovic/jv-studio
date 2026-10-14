@@ -3,7 +3,7 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
-from jv_studio.core import debug_log, diagnostics, midi
+from jv_studio.core import app_config, debug_log, diagnostics, midi, params
 from jv_studio.ui import demo as demo_mode
 from jv_studio.ui import diagnostics_ui, theme
 from jv_studio.ui._version import APP_VERSION
@@ -43,6 +43,7 @@ def main(argv=None):
     app.setApplicationName("JV Studio")
     diagnostics_ui.install_dialog_logging()
     theme.apply_to_app(app)
+    params.set_middle_c(app_config.get_middle_c())  # (before any widget shows or reads a note name)
     if demo:
         session, _unit = demo_mode.build_demo()
         window = MainWindow(session=session, demo=True, autoload=True)

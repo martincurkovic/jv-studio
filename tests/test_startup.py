@@ -3,13 +3,14 @@
 from PySide6.QtWidgets import QApplication
 
 from jv_studio import main as app_main
-from jv_studio.core import midi
+from jv_studio.core import app_config, midi, params
 
 
 def test_main_builds_and_shows_the_window_without_touching_real_midi(monkeypatch):
     monkeypatch.setattr(midi, "list_input_names", lambda: [])
     monkeypatch.setattr(midi, "list_output_names", lambda: [])
     shown = []
+    monkeypatch.setattr(params, "_MIDDLE_C_OCTAVE", 4)  # (main() sets the naming from the settings: put it back afterwards)
     monkeypatch.setattr(QApplication, "exec", lambda self=None: shown.append(True) or 0)
     # these two patch process-wide state (sys.excepthook, QMessageBox's static methods) for the rest of the run
     monkeypatch.setattr(app_main.diagnostics, "install_crash_handlers", lambda: None)
@@ -19,3 +20,19 @@ def test_main_builds_and_shows_the_window_without_touching_real_midi(monkeypatch
     monkeypatch.setattr(app_main, "MainWindow", lambda **kw: real(start_worker=False, **kw))
     assert app_main.main() == 0 and shown
     assert QApplication.instance().applicationName() == "JV Studio"
+
+
+def test_start_up_names_notes_the_way_the_settings_say(monkeypatch):
+    monkeypatch.setattr(midi, "list_input_names", lambda: [])
+    monkeypatch.setattr(midi, "list_output_names", lambda: [])
+    monkeypatch.setattr(params, "_MIDDLE_C_OCTAVE", 4)
+    monkeypatch.setattr(QApplication, "exec", lambda self=None: 0)
+    monkeypatch.setattr(app_main.diagnostics, "install_crash_handlers", lambda: None)
+    monkeypatch.setattr(app_main.diagnostics_ui, "install_dialog_logging", lambda: None)
+    real = app_main.MainWindow
+    monkeypatch.setattr(app_main, "MainWindow", lambda **kw: real(start_worker=False, **kw))
+    app_main.main()
+    assert params.note_name(60) == "C3"  # the default is Ableton's: middle C is C3
+    app_config.save_middle_c(4)
+    app_main.main()
+    assert params.note_name(60) == "C4"

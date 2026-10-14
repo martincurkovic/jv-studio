@@ -149,6 +149,10 @@ class UnitWorker(QThread):
         kind = job[0]
         if kind == "temporary":
             self._finish_patch("temporary", self._unit().read_temporary_patch())
+        elif kind == "temporary_follow":  # the same read, started by the window itself after a patch was chosen on the unit (a failure is a status line, not a dialog)
+            self._finish_patch("temporary", self._unit().read_temporary_patch())
+        elif kind == "check_temporary":  # does the temporary patch hold what the editor shows? (the answer comes as a patch_read labelled "check")
+            self._finish_patch("check", self._unit().read_temporary_patch())
         elif kind == "user":
             self._finish_patch(f"user:{job[1]}", self._unit().read_user_patch(job[1]))
         elif kind == "names":

@@ -9,13 +9,14 @@ of the list decides what that means; `,` and `.` repeat while held). The range t
 
 from PySide6.QtCore import QEvent, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
-from PySide6.QtWidgets import QSizePolicy, QToolTip, QWidget
+from PySide6.QtWidgets import QFrame, QScrollArea, QSizePolicy, QToolTip, QWidget
 
 from jv_studio.core import params
 from jv_studio.ui import theme
 
-FIRST_NOTE = 36  # C2
-LAST_NOTE = 96  # C7: five octaves, 36 white keys (the unit's own range is wider; this is for auditioning)
+FIRST_NOTE = 12  # C0 in Roland's naming (C-1 in Ableton's)
+LAST_NOTE = 108  # C8 (C7 in Ableton's): eight octaves, 57 white keys (the unit's own range is wider; this is for auditioning)
+MIN_WHITE_WIDTH = 20  # px: below this the audition keyboard scrolls sideways instead of squeezing its keys (`ScrollableKeyboard`)
 TYPING_KEYS = "awsedftgyhujkolp;"  # semitones 0, 1, 2 ...
 DEFAULT_TYPING_BASE = 60  # C4
 BLACK = {1, 3, 6, 8, 10}
@@ -324,3 +325,47 @@ class KeySelector(PianoKeyboard):
                 QToolTip.showText(event.globalPos(), self._tooltip_for(note), self)
             return True
         return super().event(event)
+
+
+class ScrollableKeyboard(QScrollArea):
+    """A `PianoKeyboard` that keeps its keys at least `MIN_WHITE_WIDTH` px wide: in a window too narrow for all of them it scrolls sideways (a trackpad swipe, the scroll bar, or the octave
+    keys, which bring the octave the computer keys play into view) instead of squeezing the keys until they are hard to hit. Wider than that, it is just the keyboard, scaled to the width."""
+
+    def __init__(self, keyboard, parent=None):
+        super().__init__(parent)
+        self.keyboard = keyboard
+        keyboard.setMinimumWidth(len(keyboard._whites) * MIN_WHITE_WIDTH)
+        self.setWidget(keyboard)
+        self.setWidgetResizable(True)
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setStyleSheet("QScrollArea { background: transparent; }")
+        self.viewport().setAutoFillBackground(False)
+        self._sized_for_bar = None
+        self._fit_height()
+        keyboard.typing_base_changed.connect(lambda _n: self.show_typing_range())
+
+    def _fit_height(self):
+        """Room for the keyboard and, when it scrolls, the scroll bar under it (a bar that squeezed the keyboard would push the octave marker out of sight)."""
+        needed = self.keyboard.minimumWidth() > self.width()
+        height = self.keyboard.maximumHeight() + (self.horizontalScrollBar().sizeHint().height() + 2 if needed else 0)
+        if height != self.maximumHeight():
+            self.setFixedHeight(height)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._fit_height()
+        if self._sized_for_bar is None and self.width() > 1:
+            self._sized_for_bar = True
+            self.show_typing_range()
+
+    def show_typing_range(self):
+        """Scroll so that the octave the computer keys play is in the middle (nothing to do when everything fits)."""
+        bar = self.horizontalScrollBar()
+        if bar.maximum() <= 0:
+            return
+        left, right = self.keyboard._typing_span()
+        bar.setValue(int((left + right) / 2 - self.viewport().width() / 2))

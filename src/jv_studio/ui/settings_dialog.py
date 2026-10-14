@@ -94,6 +94,16 @@ class SettingsDialog(QDialog):
         self.combo_theme.setToolTip(tooltips.THEME)
         self.combo_theme.activated.connect(self._on_theme_chosen)
         appearance_form.addRow(QLabel("Theme:"), self.combo_theme)
+        self.combo_middle_c = QComboBox()
+        self.combo_middle_c.addItem("C3 (Ableton, Yamaha)", 3)
+        self.combo_middle_c.addItem("C4 (Roland: the manual and the unit)", 4)
+        self.combo_middle_c.setCurrentIndex(self.combo_middle_c.findData(app_config.get_middle_c()))
+        self.combo_middle_c.setToolTip("What note 60 is called. Only the names change, never the notes that are sent. Takes effect the next time JV Studio starts.")
+        self.combo_middle_c.activated.connect(lambda i: app_config.save_middle_c(self.combo_middle_c.itemData(i)))
+        appearance_form.addRow(QLabel("Middle C is:"), self.combo_middle_c)
+        note = QLabel("Note names change the next time JV Studio starts.")
+        note.setObjectName("mutedLabel")
+        appearance_form.addRow(QLabel(""), note)
         appearance_card = build_section_card("Appearance", appearance_form)
 
         align_form_label_columns(midi_form, appearance_form)  # one label width, so the fields of both cards start at the same x

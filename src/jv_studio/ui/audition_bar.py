@@ -13,7 +13,7 @@ from PySide6.QtCore import QEvent, Qt, Signal
 from PySide6.QtWidgets import QApplication, QComboBox, QHBoxLayout, QLabel, QPushButton, QSlider, QToolButton, QVBoxLayout, QWidget
 
 from jv_studio.core import audition, params, patch_groups, universal
-from jv_studio.ui.keyboard import TYPING_KEYS, PianoKeyboard
+from jv_studio.ui.keyboard import TYPING_KEYS, PianoKeyboard, ScrollableKeyboard
 
 HELP = (
     "Play the unit from the keyboard below and choose its patches. Nothing here is stored on the unit.\n"
@@ -157,7 +157,8 @@ class AuditionBar(QWidget):
         self.keyboard.velocity_step.connect(self.step_velocity)
         self.keyboard.patch_step.connect(self._step)
         self.keyboard.bank_step.connect(self._step_bank)
-        body.addWidget(self.keyboard)
+        self.keyboard_scroll = ScrollableKeyboard(self.keyboard)  # (scrolls sideways when the window is too narrow for the keys)
+        body.addWidget(self.keyboard_scroll)
         self._show_typing()
         self._fill_patches()
         self.set_open(False)  # always starts closed: an open bar takes over the computer keyboard
