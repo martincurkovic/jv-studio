@@ -2,6 +2,7 @@
 
 [![Build](https://github.com/martincurkovic/jv-studio/actions/workflows/build.yml/badge.svg)](https://github.com/martincurkovic/jv-studio/actions/workflows/build.yml)
 [![Tests](https://github.com/martincurkovic/jv-studio/actions/workflows/test.yml/badge.svg)](https://github.com/martincurkovic/jv-studio/actions/workflows/test.yml)
+[![Downloads](https://img.shields.io/github/downloads/martincurkovic/jv-studio/total?label=downloads)](https://github.com/martincurkovic/AKAISDS/releases)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Qt 6.12 LTS](https://img.shields.io/badge/Qt-6.12%20LTS-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
