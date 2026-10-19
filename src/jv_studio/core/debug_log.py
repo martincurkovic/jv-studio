@@ -31,3 +31,14 @@ def get_logger():
         print(f"[WARN] Couldn't open the log at {LOG_PATH}: {e}")
     _logger = logger
     return logger
+
+
+def close():
+    """Close the log file and forget the logger (the next `get_logger()` reopens it). Windows can't delete a folder holding an open file, which the smoke test's scratch folder would be."""
+    global _logger
+    if _logger is None:
+        return
+    for handler in list(_logger.handlers):
+        handler.close()
+        _logger.removeHandler(handler)
+    _logger = None

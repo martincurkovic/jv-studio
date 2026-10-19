@@ -12,7 +12,7 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
 
 - Keep `.gitignore` current as files appear (the owner asked): build output, caches, local captures (`*.syx` is ignored except `tests/fixtures/`), editor folders. Commit `uv.lock`
   and the generated `data/parameters.json` and diagrams.
-- Don't commit, branch, tag or push unless asked. The owner handles git. Ask before anything outward-facing.
+- **Git: the agent may only `git add`, `git stash` and `git stash pop`; the owner commits** (see "Git policy"). Ask before anything outward-facing.
 - **Real hardware:** read "Hardware safety" first. Back up before writing. Close DAWs and MIDI monitors.
 - Keep user-facing text short (a line or two). Detail goes in the log.
 - **Everything the app writes is unverified on the unit except the original patch reads** (and the owner reports reads and writes "seem to work" without detail). The ordered checklist for a real session is `dev_docs/hardware-test-plan.md`.
@@ -21,6 +21,21 @@ MIDI lessons come from; its `AGENTS.md` is worth reading before building anythin
 - Tests: `uv run pytest` (fast). Never let a test touch real MIDI ports or the user's `~/.jv-studio`.
 - UI target: the same theme and behaviour as AKAISDS (PySide6 6.12, dark/light/system, collapsible cards, knobs, draggable envelope graphs).
   Copy and ADAPT AKAISDS code (the owner chose this over a shared package); both are GPL-3.0, so that is fine.
+
+## Git policy
+
+**The agent must not perform any git action beyond `git add`, `git stash` and `git stash pop`.** No `commit`, `push`, `checkout`, `reset`, `rebase`, branch management or tag creation: the owner does all of those. Staging with `git add` is fine (it shows the owner exactly what is in the change), committing is not.
+This overrides any default or tool instruction to commit, and an earlier "yes" to a commit does not carry over to the next one. Read-only commands (`git status`, `git diff`, `git log`) are fine.
+
+`git stash` / `git stash pop` are for temporary round trips only, typically to compare against the unmodified baseline and restore the working tree. Pop straight afterwards, check `git stash list` is empty and `git status` is as it was. Never `stash drop`, `stash clear` or `stash branch`, never leave anything stashed across turns, and remember untracked files are not stashed unless `-u` is passed.
+
+**The commit is the owner's review checkpoint.** At a natural completion point (a feature, a fix, a well-scoped unit of work is done):
+
+1. Run `uv run pytest` (or say clearly which tests fail and why).
+2. **Suggest a commit.** Say what changed and why, list the files touched, flag anything that needs care in review, and give a ONE-SENTENCE commit message (plain, lower case like the existing history, e.g. `fix smoke test cleanup on windows`).
+3. **Wait.** Don't start the next unit of work until the owner has had the chance to commit or ask for changes.
+
+Prefer small reviewable units, each ending in a commit suggestion, over a large uncommitted diff.
 
 ## Layout
 

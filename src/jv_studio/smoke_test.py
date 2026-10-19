@@ -27,7 +27,7 @@ def run(report_path=None):
     from PySide6.QtWidgets import QApplication
 
     original = (app_config.CONFIG_PATH, debug_log.LOG_PATH)
-    with tempfile.TemporaryDirectory() as scratch:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as scratch:
         app_config.CONFIG_PATH = Path(scratch) / "config.json"
         debug_log.LOG_PATH = Path(scratch) / "jv-studio.log"
         try:
@@ -122,6 +122,7 @@ def run(report_path=None):
             ):
                 check(name, fn)
         finally:
+            debug_log.close()  # (the scratch folder can't be deleted on Windows while the log in it is open)
             app_config.CONFIG_PATH, debug_log.LOG_PATH = original
 
     report = "\n".join(lines) + ("\nSMOKE TEST FAILED" if failures else "\nsmoke test passed")
