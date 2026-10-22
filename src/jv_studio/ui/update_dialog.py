@@ -1,0 +1,171 @@
+import shutil
+import subprocess
+import sys
+
+from PySide6.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextBrowser,
+    QVBoxLayout,
+)
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QColor, QDesktopServices, QTextCharFormat, QTextCursor
+
+from jv_studio.ui import theme
+
+try:
+    from jv_studio.ui._version import APP_VERSION
+except ImportError:
+    APP_VERSION = "0.0.0-dev"
+
+
+def _open_url(url):
+    """QDesktopServices.openUrl() can report success on Linux while doing
+    nothing - observed on a Hyprland/Wayland session where it neither opens
+    a browser nor falls back to xdg-open itself (likely an
+    xdg-desktop-portal-hyprland OpenURI quirk; QDesktopServices.openUrl()
+    called standalone, outside a running QApplication, worked fine on the
+    same machine, so this isn't an xdg-open/browser config problem). Shell
+    out to xdg-open directly first on Linux, since that was confirmed
+    reliable there, and only fall back to QDesktopServices for everything
+    else (including Linux systems without xdg-open on PATH).
+    """
+    if sys.platform.startswith("linux") and shutil.which("xdg-open"):
+        try:
+            subprocess.Popen(
+                ["xdg-open", url],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            return
+        except OSError:
+            pass  # fall through to QDesktopServices below
+    QDesktopServices.openUrl(QUrl(url))
+
+
+def _recolor_links(document, color):
+    # walks every text fragment in the document and gives each link run
+    # (anchor) the same foreground color
+    cursor = QTextCursor(document)
+    block = document.begin()
+    while block.isValid():
+        iterator = block.begin()
+        while not iterator.atEnd():
+            fragment = iterator.fragment()
+            if fragment.isValid() and fragment.charFormat().isAnchor():
+                cursor.setPosition(fragment.position())
+                cursor.setPosition(
+                    fragment.position() + fragment.length(),
+                    QTextCursor.MoveMode.KeepAnchor,
+                )
+                link_format = QTextCharFormat()
+                link_format.setForeground(color)
+                cursor.mergeCharFormat(link_format)
+            iterator += 1
+        block = block.next()
+
+
+class UpdateAvailableDialog(QDialog):
+    """Non-nagging "a new version exists" notice.
+
+    Deliberately doesn't offer to download/install anything itself - it
+    just points the user at the GitHub release page. See the update
+    checker's design discussion for why (no code signing/notarization in
+    the build pipeline yet, so a downloaded asset needs the user's own
+    Gatekeeper/SmartScreen click-through regardless).
+    """
+
+    def __init__(self, update_info, parent=None):
+        super().__init__(parent)
+        self.update_info = update_info
+        self.setWindowTitle("Update Available")
+
+        layout = QVBoxLayout(self)
+
+        heading = QLabel(f"JV Studio {update_info.version} is available")
+        heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        heading_font = heading.font()
+        heading_font.setBold(True)
+        heading.setFont(heading_font)
+        layout.addWidget(heading)
+
+        current_label = QLabel(f"You have version {APP_VERSION} installed.")
+        current_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(current_label)
+
+        # shown (and left selectable) in addition to the "View Release..."
+        # button below so a click that silently does nothing - see
+        # _open_url()'s docstring - still leaves the user a URL they can
+        # select/copy-paste themselves, same link text as about_dialog.py
+        # (inline style: the default link blue is close to unreadable on the dark theme)
+        accent = theme.current_palette()["accent"]
+        link_label = QLabel(f'<a href="{update_info.html_url}" style="color: {accent};">{update_info.html_url}</a>')
+        link_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        link_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        link_label.linkActivated.connect(_open_url)
+        layout.addWidget(link_label)
+
+        # the release's own notes, rendered from the Markdown they were
+        # written in on GitHub (QTextBrowser.setMarkdown understands
+        # CommonMark/GFM headings, lists, links, code). Left out entirely
+        # for a release with no description, rather than an empty box.
+        # Links open in the system browser, never inside this widget
+        # (setOpenLinks(False) + anchorClicked) - and only web links, since
+        # release notes are text from the network, not something that
+        # should be able to launch an arbitrary file:// or custom-scheme URL
+        self.notes_view = None
+        if update_info.notes.strip():
+            self.notes_view = QTextBrowser()
+            self.notes_view.setOpenLinks(False)
+            self.notes_view.setOpenExternalLinks(False)
+            self.notes_view.anchorClicked.connect(self._open_notes_link)
+            self.notes_view.setMarkdown(update_info.notes)
+            # links come out in a default dark blue that's close to
+            # unreadable on the dark theme. Setting QPalette.Link on the
+            # view was tried first and had no effect on Markdown anchors, so
+            # the rendered link runs themselves are recolored with the
+            # theme's own accent (readable on both of its schemes)
+            _recolor_links(
+                self.notes_view.document(), QColor(theme.current_palette()["accent"])
+            )
+            self.notes_view.setMinimumHeight(180)
+            layout.addWidget(self.notes_view, stretch=1)
+
+        button_row = QHBoxLayout()
+
+        skip_button = QPushButton("Skip This Version")
+        skip_button.clicked.connect(self._skip_version)
+        button_row.addWidget(skip_button)
+
+        later_button = QPushButton("Remind Me Later")
+        later_button.clicked.connect(self.reject)
+        button_row.addWidget(later_button)
+
+        view_button = QPushButton("View Release...")
+        view_button.setDefault(True)
+        view_button.clicked.connect(self._open_release_page)
+        button_row.addWidget(view_button)
+
+        layout.addLayout(button_row)
+        # was SetFixedSize (just a few short labels); with release notes in
+        # it the dialog needs to be resizable, and a sensible width up front
+        self.setMinimumWidth(520)
+        if self.notes_view is not None:
+            self.resize(560, 460)
+
+    def _open_notes_link(self, url):
+        if url.scheme() in ("http", "https"):
+            _open_url(url.toString())
+
+    def _open_release_page(self):
+        _open_url(self.update_info.html_url)
+        self.accept()
+
+    def _skip_version(self):
+        from jv_studio.core import app_config
+
+        app_config.save_skipped_update_version(self.update_info.version)
+        self.reject()

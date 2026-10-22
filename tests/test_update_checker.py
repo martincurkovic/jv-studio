@@ -1,0 +1,175 @@
+# tests for core/update_checker.py's version comparison and update logic.
+# The network call (urllib.request.urlopen) is monkeypatched with a fake
+# GitHub API response so these never touch the real network.
+
+import json
+
+import pytest
+
+from jv_studio.core import update_checker
+from jv_studio.core.update_checker import UpdateInfo, _parse_version, check_for_update
+
+
+class _FakeResponse:
+    def __init__(self, payload):
+        self._data = json.dumps(payload).encode()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def read(self):
+        return self._data
+
+
+def _fake_urlopen(payload):
+    def _urlopen(request, timeout=None, context=None):
+        return _FakeResponse(payload)
+
+    return _urlopen
+
+
+# --- _parse_version ----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("1.2.3", (1, 2, 3)),
+        ("v1.2.3", (1, 2, 3)),
+        ("v0.0.1", (0, 0, 1)),
+    ],
+)
+def test_parse_version_accepts_clean_semver(raw, expected):
+    assert _parse_version(raw) == expected
+
+
+@pytest.mark.parametrize(
+    "raw",
+    ["0.0.0-dev", "v1.2.3-rc1", "1.2", "not-a-version", ""],
+)
+def test_parse_version_rejects_anything_not_clean_semver(raw):
+    assert _parse_version(raw) is None
+
+
+# --- check_for_update ---------------------------------------------------------
+
+
+def test_returns_update_info_when_a_newer_release_exists(monkeypatch):
+    monkeypatch.setattr(
+        update_checker.urllib.request,
+        "urlopen",
+        _fake_urlopen(
+            {
+                "tag_name": "v1.2.0",
+                "name": "JV Studio 1.2.0",
+                "html_url": "https://github.com/martincurkovic/jv-studio/releases/tag/v1.2.0",
+                "body": "## What's new\n\n- Something",
+            }
+        ),
+    )
+
+    result = check_for_update(current_version="1.0.0")
+
+    assert result == UpdateInfo(
+        version="1.2.0",
+        tag="v1.2.0",
+        name="JV Studio 1.2.0",
+        html_url="https://github.com/martincurkovic/jv-studio/releases/tag/v1.2.0",
+        notes="## What's new\n\n- Something",
+    )
+
+
+def test_release_with_no_description_has_empty_notes(monkeypatch):
+    # GitHub sends "body": null for a release with no description - and
+    # older payloads/fakes may omit the key entirely
+    for payload in (
+        {"tag_name": "v1.2.0", "html_url": "x", "body": None},
+        {"tag_name": "v1.2.0", "html_url": "x"},
+    ):
+        monkeypatch.setattr(
+            update_checker.urllib.request, "urlopen", _fake_urlopen(payload)
+        )
+        assert check_for_update(current_version="1.0.0").notes == ""
+
+
+def test_returns_none_when_already_on_latest(monkeypatch):
+    monkeypatch.setattr(
+        update_checker.urllib.request,
+        "urlopen",
+        _fake_urlopen({"tag_name": "v1.0.0", "html_url": "x"}),
+    )
+    assert check_for_update(current_version="1.0.0") is None
+
+
+def test_returns_none_when_current_is_newer_than_latest(monkeypatch):
+    # can happen if the user is running an unpublished/local build ahead of
+    # the last tag - shouldn't ever claim a "downgrade" is an update
+    monkeypatch.setattr(
+        update_checker.urllib.request,
+        "urlopen",
+        _fake_urlopen({"tag_name": "v1.0.0", "html_url": "x"}),
+    )
+    assert check_for_update(current_version="2.0.0") is None
+
+
+def test_returns_none_for_dev_build_without_hitting_network(monkeypatch):
+    def _explode(request, timeout=None):
+        raise AssertionError("dev builds shouldn't make a network call")
+
+    monkeypatch.setattr(update_checker.urllib.request, "urlopen", _explode)
+    assert check_for_update(current_version="0.0.0-dev") is None
+
+
+def test_returns_none_when_latest_tag_is_malformed(monkeypatch):
+    monkeypatch.setattr(
+        update_checker.urllib.request,
+        "urlopen",
+        _fake_urlopen({"tag_name": "not-a-version", "html_url": "x"}),
+    )
+    assert check_for_update(current_version="1.0.0") is None
+
+
+def test_request_uses_the_certifi_ca_bundle(monkeypatch):
+    # a bundled macOS Python has no system CA store; without this the check
+    # fails with CERTIFICATE_VERIFY_FAILED (found on AKAISDS's macOS build, 2026-10-16)
+    import certifi
+
+    seen = {}
+
+    def fake_context(cafile=None):
+        seen["cafile"] = cafile
+        return "context"
+
+    def fake_urlopen(request, timeout=None, context=None):
+        seen["context"] = context
+        return _fake_urlopen({"tag_name": "v1.0.0", "html_url": "x"})(request)
+
+    monkeypatch.setattr(update_checker.ssl, "create_default_context", fake_context)
+    monkeypatch.setattr(update_checker.urllib.request, "urlopen", fake_urlopen)
+
+    update_checker.check_for_update(current_version="1.0.0")
+
+    assert seen == {"cafile": certifi.where(), "context": "context"}
+
+
+def test_falls_back_to_the_default_context_without_certifi(monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def no_certifi(name, *args, **kwargs):
+        if name == "certifi":
+            raise ImportError(name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", no_certifi)
+
+    assert update_checker._ssl_context() is not None
+
+
+def test_it_asks_this_projects_releases_page():
+    assert update_checker.REPO == "martincurkovic/jv-studio"
+    assert update_checker.RELEASES_API_URL == "https://api.github.com/repos/martincurkovic/jv-studio/releases/latest"

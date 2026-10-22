@@ -1,4 +1,5 @@
 import sys
+import time
 from pathlib import Path
 
 from PySide6.QtCore import QTimer, Qt
@@ -45,8 +46,10 @@ from jv_studio.ui.shortcuts_dialog import audition_section, dragging_section, li
 from jv_studio.ui.system_dialog import SystemDialog
 from jv_studio.ui.unit_dialogs import RenameDialog, RestoreDialog, SlotDialog, WriteUserDialog
 from jv_studio.ui.unit_worker import UnitWorker
+from jv_studio.ui.update_helper import UpdateCheckRunner
 
 
+UPDATE_CHECK_INTERVAL_SECONDS = 24 * 60 * 60  # the start-up check runs at most this often (a check you ask for always runs)
 LOGO_PIXELS = 10  # the logo's text size in the window (About shows it at full size, 13 px): smaller leaves the editor more of the height
 STATUS_BAR_MARGIN = 12  # px: the status bar's text keeps this far from the window's sides (and so from its rounded corners)
 
@@ -56,8 +59,10 @@ class MainWindow(QMainWindow):
     that write to the unit: Send to Temporary Patch and Write to USER (both read back; the second saves the slot's old patch first).
     The editor itself arrives in phase 3 (dev_docs/roadmap.md)."""
 
-    def __init__(self, session=None, worker=None, start_worker=True, demo=False, autoload=False):
+    def __init__(self, session=None, worker=None, start_worker=True, demo=False, autoload=False, update_check=False):
         super().__init__()
+        self._update_runner = UpdateCheckRunner(self)  # one in-flight update check at a time: the Help menu's, About's and the start-up one
+        self._update_check_at_startup = update_check  # the app turns it on; tests don't touch the network
         self._autoload_enabled = autoload  # read the names and the temporary patch / performance as soon as ports are open (the app turns it on; tests call what they need)
         self._autoload_ports = None  # the (input, output) the last auto-load ran for: reopening the same ports after a diagnostic does not read again
         self._autoload_steps = []  # [(job label, function that submits it)]
@@ -136,6 +141,9 @@ class MainWindow(QMainWindow):
         if start_worker:
             self.worker.start()
         self._maybe_autoload()  # (a demo session is open from the start; real ports were opened just above, before the worker existed to queue on)
+        # a quiet check for a newer release a moment after start-up (so it doesn't compete with the port restore), at most once a day
+        if update_check and not demo and time.time() - app_config.get_last_update_check() > UPDATE_CHECK_INTERVAL_SECONDS:
+            QTimer.singleShot(2000, lambda: self._update_runner.start(manual=False))
 
     # -- layout ------------------------------------------------------------------------------------------------------------
 
@@ -264,6 +272,10 @@ class MainWindow(QMainWindow):
         about_action.setMenuRole(QAction.MenuRole.AboutRole)
         about_action.triggered.connect(lambda: AboutDialog(self).exec())
         help_menu.addAction(about_action)
+        check_updates_action = QAction("Check for Updates...", self)
+        check_updates_action.setToolTip("Asks GitHub whether a newer JV Studio has been released. Nothing is downloaded or installed.")
+        check_updates_action.triggered.connect(lambda: self._update_runner.start(manual=True))
+        help_menu.addAction(check_updates_action)
 
     def _build_central(self):
         # top bar: the logo on the left, the connection on the right
@@ -1292,6 +1304,7 @@ class MainWindow(QMainWindow):
             if answer != QMessageBox.StandardButton.Yes:
                 return
         self.worker.cancel()
+        self._update_runner.wait()  # (an update check still in flight must stop before the window and its thread are collected)
 
     def _on_firmware_done(self, blocks, messages):
         self._long_job = False

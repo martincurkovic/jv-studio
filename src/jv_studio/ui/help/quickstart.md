@@ -16,6 +16,7 @@
 - [System Settings](#system-settings)
 - [Unit Mode and GM Mode](#unit-mode-and-gm-mode)
 - [Updating the Unit's Firmware](#updating-the-units-firmware)
+- [Updates](#updates)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -195,6 +196,14 @@ The unit is in **Patch mode** (one sound at a time, what the Patches tab edits) 
 ## Updating the Unit's Firmware
 
 **Hardware > Update Firmware...** plays Roland's System Update files to a unit that is in update mode, the way a sequencer would. It is the one feature that cannot check its own result: the unit sends no reply during an update, and an interrupted update can leave a unit unable to start. Back the unit up first, read Roland's own instructions in the README that comes with the update, and only use an interface that has passed **Settings > Troubleshooting > Run Loopback Test** with the long messages. JV Studio checks the files and makes you confirm a checklist before it sends anything.
+
+---
+
+## Updates
+
+JV Studio checks GitHub for a newer release a moment after it starts, at most once a day. If there is one, an **Update Available** window shows what is new in the release notes. Choose **View Release...** to open the download page, **Remind Me Later**, or **Skip This Version** to stop being told about that one. Nothing is downloaded or installed for you.
+
+**Help > Check for Updates...** (or the button in **About**) checks at once and tells you when you are up to date. The only thing sent is the request for the latest release, with no information about you or your unit.
 
 ---
 

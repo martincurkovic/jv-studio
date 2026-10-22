@@ -297,6 +297,14 @@ A performance is a common block (66 bytes: name, tempo, the performance's own ef
 - **Help > Keyboard Shortcuts...** (`ui/shortcuts_dialog.py`, from AKAISDS): menu shortcuts are READ from the menu bar when the dialog is first opened (so they can't drift); the keys that are not menu actions (audition keyboard, USER lists, knob gestures) are the `*_section()` functions in that file and must be edited by hand when `audition_bar.py` or the lists change.
 - The guide describes behaviour from this file and the code; it deliberately carries no "untested on a unit" caveats (owner's call, 2026-10-22), except the firmware section's warning. Keep it that way, but don't state anything here as proven that is `[guess]`.
 
+## Update check (written 2026-10-22, adapted from AKAISDS)
+
+`core/update_checker.py` (`REPO = "martincurkovic/jv-studio"`, polls GitHub `/releases/latest`, which ignores drafts and prereleases: a tagged build whose release is still a draft reports the previous version, not a bug), `ui/update_dialog.py` ("Update Available": the release's own notes rendered from Markdown by `QTextBrowser.setMarkdown`, links recoloured with the accent and opened in the browser only if http(s); Skip This Version / Remind Me Later / View Release...), `ui/update_helper.py` (`UpdateCheckRunner`, ONE `QThread` per window or dialog: `.wait()` it before the owner closes, as `MainWindow.closeEvent` and `AboutDialog.done` do).
+- **The notes ARE the release's description on GitHub** (`body`): the release workflow creates a DRAFT release, so write the notes there before publishing. No description = no notes box.
+- Triggers: **Help > Check for Updates...** and About's button (manual: says "up to date" / "failed"), and a quiet start-up check 2 s after launch, at most once a day (`UPDATE_CHECK_INTERVAL_SECONDS`, `config.json` `last_update_check`), silent on failure and on a version you skipped (`skipped_update_version`). `MainWindow(update_check=True)` turns the start-up check on (`main.py` does; tests don't, and demo mode never makes it). A dev build (`0.0.0-dev` or any version with a suffix) never reports an update.
+- **certifi:** a standalone Nuitka build has no system CA store, so https to GitHub failed with `CERTIFICATE_VERIFY_FAILED` in AKAISDS's macOS build (2026-10-16): certifi is a dependency, the three build scripts pass `--include-package-data=certifi`, and the smoke test checks the bundle exists. `[guess]` not yet seen working in a JV Studio package build: the first tag build is the test.
+- Nothing is downloaded or installed by the app, and nothing about the user or the unit is sent (the request carries a `JV-Studio/<version>` User-Agent).
+
 ## Packaging and CI (written 2026-10-13, NOT run yet)
 
 Adapted from akaiutil-gui (same owner, same Nuitka / pyside6-deploy approach). **None of it has been run: the first tag build is the test.** Likely trouble spots, in order: Nuitka finding `importlib.resources` data

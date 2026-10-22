@@ -12,6 +12,8 @@ dependencies = [
     # WebEngine and friends, hundreds of MB the standalone builds don't need.
     "PySide6-Essentials>=6.12,<6.13",
     "python-rtmidi>=1.5.8",
+    # the update check's CA bundle: a standalone (Nuitka) build has no system CA store, so https to GitHub fails without it
+    "certifi>=2026.7.22",
 ]
 
 [project.scripts]

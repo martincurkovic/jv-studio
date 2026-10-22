@@ -46,9 +46,9 @@ def main(argv=None):
     params.set_middle_c(app_config.get_middle_c())  # (before any widget shows or reads a note name)
     if demo:
         session, _unit = demo_mode.build_demo()
-        window = MainWindow(session=session, demo=True, autoload=True)
+        window = MainWindow(session=session, demo=True, autoload=True, update_check=True)
     else:
-        window = MainWindow(autoload=True)
+        window = MainWindow(autoload=True, update_check=True)
     window.show()
     return app.exec()
 

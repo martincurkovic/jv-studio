@@ -91,6 +91,33 @@ def save_collapsed_cards(keys):
     save_config(config)
 
 
+# -- update check -----------------------------------------------------------------------------------------------------------
+
+
+def get_last_update_check():
+    """Unix time of the last successful update check, or 0 if there has not been one."""
+    value = load_config().get("last_update_check", 0)
+    return value if isinstance(value, (int, float)) and not isinstance(value, bool) else 0
+
+
+def save_last_update_check(timestamp):
+    config = load_config()
+    config["last_update_check"] = timestamp
+    save_config(config)
+
+
+def get_skipped_update_version():
+    """The version the user chose "Skip This Version" for (the start-up check stays quiet about it), or None."""
+    value = load_config().get("skipped_update_version")
+    return value if isinstance(value, str) else None
+
+
+def save_skipped_update_version(version):
+    config = load_config()
+    config["skipped_update_version"] = version
+    save_config(config)
+
+
 # -- backups ----------------------------------------------------------------------------------------------------------------
 
 

@@ -72,6 +72,12 @@ def run(report_path=None):
                 assert not missing, f"missing {missing} in {folder}"
                 return "cabling diagrams present"
 
+            def ca_bundle():
+                import certifi
+
+                assert Path(certifi.where()).is_file(), f"no CA bundle at {certifi.where()}: the update check could not verify GitHub"
+                return "CA bundle present (update check)"
+
             def midi_backend():
                 import rtmidi
 
@@ -116,6 +122,7 @@ def run(report_path=None):
                 ("parameter table", parameter_table),
                 ("wave names", wave_names),
                 ("diagrams", diagrams),
+                ("ca bundle", ca_bundle),
                 ("midi backend", midi_backend),
                 ("demo unit", demo_unit),
                 ("windows", main_window_and_editor),

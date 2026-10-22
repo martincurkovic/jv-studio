@@ -1,9 +1,10 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout
 
 from jv_studio.ui.ascii_logo import LOGO, logo_font
 
 from jv_studio.ui._version import APP_VERSION
+from jv_studio.ui.update_helper import UpdateCheckRunner
 
 
 class AboutDialog(QDialog):
@@ -35,6 +36,15 @@ class AboutDialog(QDialog):
         credits.setTextFormat(Qt.TextFormat.RichText)
         credits.setOpenExternalLinks(True)
         credits.setObjectName("mutedLabel")
+        self._update_runner = UpdateCheckRunner(self)
+        self._check_updates_button = QPushButton("Check for Updates")
+        self._check_updates_button.clicked.connect(self._check_for_updates)
+        # indeterminate: a version check has no measurable progress, just "still waiting on the network"; hidden until a check is running
+        self._update_progress = QProgressBar()
+        self._update_progress.setRange(0, 0)
+        self._update_progress.setTextVisible(False)
+        self._update_progress.setFixedHeight(6)
+        self._update_progress.setVisible(False)
         close = QPushButton("Close")
         close.setDefault(True)
         close.clicked.connect(self.accept)
@@ -44,5 +54,26 @@ class AboutDialog(QDialog):
         layout.addWidget(title)
         layout.addWidget(body)
         layout.addWidget(credits)
-        layout.addWidget(close, alignment=Qt.AlignmentFlag.AlignCenter)
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        buttons.addWidget(self._check_updates_button)
+        buttons.addWidget(close)
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        layout.addWidget(self._update_progress)
         self.setMinimumWidth(max(420, logo.sizeHint().width() + 48))  # wide enough for the logo in whatever fixed font the machine has
+
+    def _check_for_updates(self):
+        self._check_updates_button.setEnabled(False)
+        self._update_progress.setVisible(True)
+        self._update_runner.start(manual=True, on_finished=self._on_update_check_finished)
+
+    def _on_update_check_finished(self):
+        self._update_progress.setVisible(False)
+        self._check_updates_button.setEnabled(True)
+
+    def done(self, result):
+        # a check that is still running must not outlive this dialog's Python object (UpdateCheckRunner.wait());
+        # done() is the one method every close path (Close, Escape, the title bar) goes through
+        self._update_runner.wait()
+        super().done(result)
