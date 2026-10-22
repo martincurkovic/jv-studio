@@ -41,6 +41,7 @@ from jv_studio.ui.rhythm_panel import RhythmPanel
 from jv_studio.ui.qt_helpers import item_heading, set_enabled_without_scrolling
 from jv_studio.ui.segmented import SegmentedControl
 from jv_studio.ui.settings_dialog import SettingsDialog
+from jv_studio.ui.shortcuts_dialog import audition_section, dragging_section, lists_section, show_shortcuts_dialog
 from jv_studio.ui.system_dialog import SystemDialog
 from jv_studio.ui.unit_dialogs import RenameDialog, RestoreDialog, SlotDialog, WriteUserDialog
 from jv_studio.ui.unit_worker import UnitWorker
@@ -254,6 +255,9 @@ class MainWindow(QMainWindow):
         quickstart_action = QAction("Quick Start Guide...", self)
         quickstart_action.triggered.connect(lambda: show_quickstart_dialog(self))
         help_menu.addAction(quickstart_action)
+        shortcuts_action = QAction("Keyboard Shortcuts...", self)
+        shortcuts_action.triggered.connect(lambda: show_shortcuts_dialog(self, [audition_section(), lists_section(), dragging_section()]))
+        help_menu.addAction(shortcuts_action)
         help_menu.addSeparator()
         add_open_log_folder_action(help_menu, self)
         about_action = QAction("About JV Studio...", self)

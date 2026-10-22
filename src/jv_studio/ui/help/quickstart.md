@@ -78,6 +78,8 @@ The row under the logo switches between three editors: **Patches**, **Performanc
 
 **Files.** **File > Open Patch .syx...** and **Save Patch as .syx...** read and write standard SysEx files. A file can hold one patch or a whole bank; JV Studio lists the patches it finds, hides blank "INIT PATCH" slots on request, and repairs files whose checksums are wrong where it safely can. Opening a file sends nothing to the unit.
 
+**Shortcuts.** **Help > Keyboard Shortcuts...** lists every shortcut, read from the menus themselves, plus the audition keyboard's keys and the knob and list gestures.
+
 **Raw Values.** **View > Show Raw Values** adds a tab with every value as the unit stores it, for checking numbers.
 
 ---
