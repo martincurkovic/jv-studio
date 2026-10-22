@@ -285,6 +285,7 @@ class MainWindow(QMainWindow):
         self.lbl_logo.setFont(logo_font())
         self.lbl_logo.setTextFormat(Qt.TextFormat.PlainText)
         self.lbl_logo.setWordWrap(False)
+        self.lbl_logo.setObjectName("asciiLogo")
         self.lbl_logo.setStyleSheet(f"background: transparent; font-size: {LOGO_PIXELS}px;")  # (the app stylesheet fixes every font at 13 px: only a rule on the label itself can change it)
         top_bar.addWidget(self.lbl_logo)
         top_bar.addStretch()

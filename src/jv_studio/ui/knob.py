@@ -220,7 +220,7 @@ class Knob(QDial):
         rect = self.rect().adjusted(4, 4, -4, -4)
         palette = theme.current_palette()
         enabled = self.isEnabled()
-        track = QPen(QColor(palette["border_hover"] if enabled else palette["border_disabled"]))
+        track = QPen(QColor(palette.get("knob_track", palette["border_hover"]) if enabled else palette["border_disabled"]))
         track.setWidth(_RING_WIDTH)
         track.setCapStyle(Qt.PenCapStyle.FlatCap)
         painter.setPen(track)
@@ -228,7 +228,7 @@ class Knob(QDial):
 
         fraction = self._fraction(self.value())
         origin = self._fraction(self._origin_value) if self._origin_value is not None and self.minimum() < self._origin_value < self.maximum() else 0.0
-        value_pen = QPen(QColor(VALUE_ARC_COLOR if enabled else palette["text_disabled"]))
+        value_pen = QPen(QColor(palette.get("knob_arc", VALUE_ARC_COLOR) if enabled else palette["text_disabled"]))
         value_pen.setWidth(_RING_WIDTH)
         value_pen.setCapStyle(Qt.PenCapStyle.FlatCap)
         painter.setPen(value_pen)

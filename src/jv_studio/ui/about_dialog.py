@@ -12,6 +12,7 @@ class AboutDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("About JV Studio")
         logo = QLabel(LOGO.strip("\n"))
+        logo.setObjectName("asciiLogo")
         logo.setTextFormat(Qt.TextFormat.PlainText)
         logo.setFont(logo_font())  # left-aligned inside the label: a centred QLabel centres every LINE on its own, and the art's lines differ in length
         title = QLabel(f"Version {APP_VERSION}")

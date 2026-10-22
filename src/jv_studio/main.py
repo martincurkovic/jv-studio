@@ -26,6 +26,12 @@ def _log_startup():
     diagnostics.log_session_config("startup")
 
 
+def theme_from_argv(argv):
+    """The theme named by `--theme=NAME` (e.g. `--theme=system6`) for this run only, or None to use the saved one. Nothing is saved."""
+    value = next((a.partition("=")[2] for a in argv[1:] if a.startswith("--theme=")), None)
+    return value if value in app_config.THEME_VALUES else None
+
+
 def main(argv=None):
     argv = sys.argv if argv is None else argv
     smoke = next((a for a in argv[1:] if a == "--smoke-test" or a.startswith("--smoke-test=")), None)
@@ -42,7 +48,7 @@ def main(argv=None):
     app = QApplication.instance() or QApplication(sys.argv)
     app.setApplicationName("JV Studio")
     diagnostics_ui.install_dialog_logging()
-    theme.apply_to_app(app)
+    theme.apply_to_app(app, theme_from_argv(argv))
     params.set_middle_c(app_config.get_middle_c())  # (before any widget shows or reads a note name)
     if demo:
         session, _unit = demo_mode.build_demo()

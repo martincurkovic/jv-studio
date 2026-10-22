@@ -16,7 +16,8 @@
 QWidget {
     background-color: ${bg};
     color: ${text};
-    font-size: 13px;
+    font-size: ${font_size};
+    ${font_rule};
 }
 
 QMainWindow {
@@ -58,14 +59,19 @@ QLabel#warningLabel {
     color: ${warning};
 }
 
+/* the ASCII logo: its own monospace font, whatever the theme's font is (the main window sets its size on the label itself) */
+QLabel#asciiLogo {
+    ${logo_rule}
+}
+
 /* a knob's name over it in the patch editor: small, so a two-line name fits a narrow column */
 QLabel#knobLabel {
-    font-size: 11px;
+    font-size: ${font_size_small};
 }
 
 /* the connection pill in the top bar: what the app knows about the unit, in a word and a colour */
 QLabel#statusPill {
-    font-weight: 600;
+    font-weight: ${font_weight_bold};
     padding: 0px 2px;
 }
 
@@ -114,7 +120,7 @@ QToolTip {
 QPushButton {
     background-color: ${bg_button};
     border: 1px solid ${border};
-    border-radius: 4px;
+    border-radius: ${radius_button};
     padding: 5px 12px;
     color: ${text};
 }
@@ -126,6 +132,7 @@ QPushButton:hover {
 
 QPushButton:pressed {
     background-color: ${bg_button_pressed};
+    color: ${text_pressed};
 }
 
 QPushButton:disabled {
@@ -137,7 +144,7 @@ QPushButton:disabled {
 /* a tiny button (the Loop Preview's zoom controls): the ordinary 12 px of side padding would leave no room for the symbol */
 QPushButton[compact="true"] {
     padding: 0px;
-    border-radius: 3px;
+    border-radius: ${radius_small};
 }
 
 /* the one button on a card that does the main thing (Send to Sampler, Load Edited Audio once the file was saved): filled with the
@@ -195,7 +202,7 @@ QPushButton[segment="last"] {
 QToolButton#auditionToggle {
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: ${radius_button};
     padding: 4px 8px;
     color: ${text};
 }
@@ -212,7 +219,7 @@ QToolButton#auditionToggle:pressed {
 QLineEdit {
     background-color: ${bg_input};
     border: 1px solid ${accent};
-    border-radius: 3px;
+    border-radius: ${radius_small};
     padding: 2px 4px;
     color: ${text_bright};
     selection-background-color: ${accent};
@@ -232,7 +239,7 @@ QLineEdit:disabled {
 QListWidget {
     background-color: ${bg_panel};
     border: 1px solid ${border_list};
-    border-radius: 4px;
+    border-radius: ${radius};
     outline: none;
 }
 
@@ -242,18 +249,19 @@ QListWidget::item {
 
 QListWidget::item:selected {
     background-color: ${bg_selected};
+    color: ${text_selected};
 }
 
 /* The editor's grouped sections (Common, Pitch, Filter, ...): a card with its own surface and border */
 QWidget#sectionCard {
     background-color: ${bg_panel};
     border: 1px solid ${border};
-    border-radius: 4px;
+    border-radius: ${radius};
 }
 
 QLabel#sectionHeader {
     color: ${text_bright};
-    font-weight: 600;
+    font-weight: ${font_weight_bold};
     background: transparent;
 }
 
@@ -268,7 +276,7 @@ QCheckBox::indicator {
     width: 14px;
     height: 14px;
     border: 1px solid ${border_checkbox};
-    border-radius: 3px;
+    border-radius: ${radius_small};
     background: ${bg_input};
 }
 
@@ -282,14 +290,14 @@ QCheckBox::indicator:checked {
 QProgressBar {
     background-color: ${bg_disabled};
     border: 1px solid ${border_progress};
-    border-radius: 4px;
+    border-radius: ${radius};
     text-align: center;
     color: ${text};
 }
 
 QProgressBar::chunk {
     background-color: ${accent};
-    border-radius: 3px;
+    border-radius: ${radius_small};
 }
 
 /* ---------- Status bar ---------- */
@@ -317,7 +325,7 @@ QDialog {
 QComboBox, QSpinBox, QDoubleSpinBox {
     background-color: ${bg_input};
     border: 1px solid ${border};
-    border-radius: 3px;
+    border-radius: ${radius_small};
     padding: 2px 4px;
     color: ${text_bright};
 }
@@ -417,8 +425,8 @@ QTabWidget::pane {
   border: 1px solid ${border};
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: ${radius};
+  border-bottom-right-radius: ${radius};
   top: -1px;
   background-color: ${bg_dialog};
 }
@@ -434,17 +442,17 @@ QTabBar::tab {
 
 QTabBar::tab:first {
     margin-left: 0;
-    border-top-left-radius: 4px;
+    border-top-left-radius: ${radius};
 }
 
 QTabBar::tab:last {
-    border-top-right-radius: 4px;
+    border-top-right-radius: ${radius};
 }
 
 QTabBar::tab:only-one {
     margin-left: 0;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+    border-top-left-radius: ${radius};
+    border-top-right-radius: ${radius};
 }
 
 QTabBar::tab:hover {
@@ -456,20 +464,21 @@ QTabBar::tab:hover {
 QTabBar::tab:selected {
     background-color: ${bg_selected};
     border-color: ${border_hover};
-    color: ${text_bright};
+    color: ${text_tab_selected};
 }
 
 /* ---------- Scrollbars ---------- */
 /* thin, flat, overlay-style bars - no arrow buttons, no 3D bevel */
 QScrollBar:vertical {
-    background: transparent;
+    background: ${scroll_track};
     width: 10px;
     margin: 0px;
 }
 
 QScrollBar::handle:vertical {
-    background: ${border_hover};
-    border-radius: 5px;
+    background: ${scroll_handle};
+    border: ${scroll_handle_border};
+    border-radius: ${radius_pill};
     min-height: 24px;
 }
 
@@ -488,14 +497,15 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 QScrollBar:horizontal {
-    background: transparent;
+    background: ${scroll_track};
     height: 10px;
     margin: 0px;
 }
 
 QScrollBar::handle:horizontal {
-    background: ${border_hover};
-    border-radius: 5px;
+    background: ${scroll_handle};
+    border: ${scroll_handle_border};
+    border-radius: ${radius_pill};
     min-width: 24px;
 }
 

@@ -45,3 +45,6 @@ deployment/
 /AppDir
 /appimagetool-*
 /JV-Studio-Setup.exe
+
+# the System 6 theme's font: downloaded by tools/fetch_system6_font.py, not committed until its licence is confirmed
+src/jv_studio/ui/fonts/

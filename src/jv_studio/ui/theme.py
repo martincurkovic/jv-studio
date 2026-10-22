@@ -57,6 +57,21 @@ DARK_PALETTE = {
     "key_white": "#d8d8e0",
     "key_black": "#14141a",
     "key_edge": "#0c0c10",
+    # shape, type and a few state colours the template needs as values (the monochrome System 6 skin changes them; these keep the original look)
+    "radius": "4px",
+    "radius_small": "3px",
+    "radius_button": "4px",
+    "radius_pill": "5px",
+    "font_size": "13px",
+    "font_size_small": "11px",
+    "font_weight_bold": "600",
+    "scroll_track": "transparent",
+    "scroll_handle": "#4f4f5e",
+    "scroll_handle_border": "none",
+    "text_pressed": "#e4e4ea",
+    "text_selected": "#e4e4ea",
+    "text_tab_selected": "#f0f0f4",
+    "logo_rule": "font-size: 13px;",
 }
 
 LIGHT_PALETTE = {
@@ -96,6 +111,78 @@ LIGHT_PALETTE = {
     "key_white": "#ffffff",
     "key_black": "#2a2438",
     "key_edge": "#8f86a6",
+    # shape, type and a few state colours the template needs as values (the monochrome System 6 skin changes them; these keep the original look)
+    "radius": "4px",
+    "radius_small": "3px",
+    "radius_button": "4px",
+    "radius_pill": "5px",
+    "font_size": "13px",
+    "font_size_small": "11px",
+    "font_weight_bold": "600",
+    "scroll_track": "transparent",
+    "scroll_handle": "#b9a4d9",
+    "scroll_handle_border": "none",
+    "text_pressed": "#2a2438",
+    "text_selected": "#2a2438",
+    "logo_rule": "font-size: 13px;",
+    "text_tab_selected": "#191320",
+}
+
+
+# A monochrome Macintosh System 6 look (a demo skin: black, white and the odd grey, square corners, a bitmap-style font, inverted video for
+# selection, a dithered scroll track). Colour that carries meaning in the other themes (amber "edited", red errors, green "connected") has no
+# colour here. `font_family` / `knob_*` / `graph_line` / `scroll_track_pattern` are optional keys the other palettes simply don't have.
+SYSTEM6_PALETTE = {
+    "bg": "#ffffff",
+    "bg_panel": "#ffffff",
+    "bg_dialog": "#ffffff",
+    "bg_statusbar": "#ffffff",
+    "bg_input": "#ffffff",
+    "bg_button": "#ffffff",
+    "bg_button_hover": "#ffffff",
+    "bg_button_pressed": "#000000",
+    "bg_disabled": "#ffffff",
+    "bg_selected": "#000000",
+    "text": "#000000",
+    "text_bright": "#000000",
+    "text_disabled": "#808080",
+    "text_statusbar": "#000000",
+    "border": "#000000",
+    "border_hover": "#000000",
+    "border_disabled": "#a0a0a0",
+    "border_list": "#000000",
+    "border_item": "#c8c8c8",
+    "border_checkbox": "#000000",
+    "border_progress": "#000000",
+    "accent": "#000000",
+    "text_on_accent": "#ffffff",
+    "warning": "#000000",
+    "critical": "#000000",
+    "ok": "#000000",
+    "warning_tint": "#1a000000",
+    "bg_zebra": "#f0f0f0",
+    "key_white": "#ffffff",
+    "key_black": "#000000",
+    "key_edge": "#000000",
+    "radius": "0px",
+    "radius_small": "0px",
+    "radius_button": "6px",
+    "radius_pill": "0px",
+    "font_size": "16px",
+    "font_size_small": "13px",
+    "font_weight_bold": "normal",
+    "scroll_track": "#ffffff",
+    "scroll_handle": "#ffffff",
+    "scroll_handle_border": "1px solid #000000",
+    "text_pressed": "#ffffff",
+    "text_selected": "#ffffff",
+    "text_tab_selected": "#ffffff",
+    "logo_rule": 'font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace; font-size: 13px;',  # (the ASCII art needs its monospace font, not the theme's)
+    "font_family": '"ChiKareGo2", "Chicago", "Geneva", "Monaco", monospace',
+    "scroll_track_pattern": True,  # a 50% black/white checker under the scroll bars' handles
+    "knob_track": "#b0b0b0",
+    "knob_arc": "#000000",
+    "graph_line": "#000000",
 }
 
 
@@ -139,6 +226,40 @@ def _write_colored_chevron(direction, color, filename):
     return path.replace(os.sep, "/")
 
 
+def _write_checker(filename):
+    """A 2 x 2 black/white checker (50% dither) as a PNG beside the generated icons, for the System 6 scroll track. Returns its path."""
+    from PySide6.QtGui import QColor, QImage
+
+    image = QImage(2, 2, QImage.Format.Format_RGB32)
+    for x in range(2):
+        for y in range(2):
+            image.setPixelColor(x, y, QColor("#000000" if (x + y) % 2 == 0 else "#ffffff"))
+    icons_dir = _generated_icons_dir()
+    os.makedirs(icons_dir, exist_ok=True)
+    path = os.path.join(icons_dir, filename)
+    image.save(path)
+    return path.replace(os.sep, "/")
+
+
+_FONTS_DIR = os.path.join(os.path.dirname(__file__), "fonts")
+_loaded_fonts = False
+
+
+def _load_bundled_fonts():
+    """Registers the font files in ui/fonts/ with Qt, once (the System 6 skin's bitmap-style font; `tools/fetch_system6_font.py` puts it there).
+    Missing files are fine: the stylesheet's font stack falls back to Geneva / Monaco / any monospace."""
+    global _loaded_fonts
+    if _loaded_fonts:
+        return
+    _loaded_fonts = True
+    from PySide6.QtGui import QFontDatabase
+
+    if os.path.isdir(_FONTS_DIR):
+        for name in sorted(os.listdir(_FONTS_DIR)):
+            if name.lower().endswith((".ttf", ".otf")):
+                QFontDatabase.addApplicationFont(os.path.join(_FONTS_DIR, name))
+
+
 def render_stylesheet(palette):
     """Render the QSS template with the given palette dict.
 
@@ -160,6 +281,10 @@ def render_stylesheet(palette):
         "up", palette["text"], f"up_arrow_{text_hex}.svg"
     )
 
+    values["font_rule"] = f"font-family: {palette['font_family']}" if palette.get("font_family") else ""
+    if palette.get("scroll_track_pattern"):
+        values["scroll_track"] = f"url({_write_checker('scroll_track_checker.png')})"
+
     with open(_TEMPLATE_PATH, "r") as f:
         template = Template(f.read())
     try:
@@ -167,7 +292,7 @@ def render_stylesheet(palette):
     except KeyError as e:
         raise KeyError(
             f"style.qss.template references ${{{e.args[0]}}}, which isn't in this "
-            f"palette - add it to both DARK_PALETTE and LIGHT_PALETTE in ui/theme.py"
+            f"palette - add it to DARK_PALETTE, LIGHT_PALETTE and SYSTEM6_PALETTE in ui/theme.py"
         ) from e
 
 
@@ -181,6 +306,7 @@ CHOICES = [
     ("System", app_config.THEME_SYSTEM),
     ("Light", app_config.THEME_LIGHT),
     ("Dark", app_config.THEME_DARK),
+    ("Macintosh System 6 (monochrome)", app_config.THEME_SYSTEM6),
 ]
 
 
@@ -197,6 +323,8 @@ notifier = _ThemeNotifier()
 
 
 def _palette_for_scheme(scheme):
+    if _preference == app_config.THEME_SYSTEM6:
+        return SYSTEM6_PALETTE
     return LIGHT_PALETTE if scheme == Qt.ColorScheme.Light else DARK_PALETTE
 
 
@@ -212,7 +340,7 @@ def _effective_scheme():
     """
     from PySide6.QtGui import QGuiApplication
 
-    if _preference == app_config.THEME_LIGHT:
+    if _preference in (app_config.THEME_LIGHT, app_config.THEME_SYSTEM6):  # (System 6 is a light look: Qt's own widgets and native chrome follow)
         return Qt.ColorScheme.Light
     if _preference == app_config.THEME_DARK:
         return Qt.ColorScheme.Dark
@@ -220,7 +348,7 @@ def _effective_scheme():
 
 
 def current_preference():
-    """The theme choice in effect: "system", "light" or "dark"."""
+    """The theme choice in effect: "system", "light", "dark" or "system6"."""
     return _preference
 
 
@@ -246,16 +374,49 @@ def current_palette():
     return _palette_for_scheme(_effective_scheme())
 
 
+_qt_palette_overridden = False  # True while the System 6 skin's own QPalette is set on the app
+
+
+def _apply_qt_palette(palette):
+    """Qt's own widgets that the stylesheet does not draw (a slider's filled groove, a native menu's highlight) take their colours from the application's QPalette.
+    The System 6 skin sets a black/white one; any other theme gets Qt's own back, but only if System 6 had replaced it (the other themes never touched it)."""
+    global _qt_palette_overridden
+    if _app is None:
+        return
+    from PySide6.QtGui import QColor, QPalette
+
+    if palette is SYSTEM6_PALETTE:
+        qt_palette = QPalette(_app.style().standardPalette())
+        for role, key in (
+            (QPalette.ColorRole.Highlight, "accent"),
+            (QPalette.ColorRole.HighlightedText, "text_on_accent"),
+            (QPalette.ColorRole.Window, "bg"),
+            (QPalette.ColorRole.Base, "bg_input"),
+            (QPalette.ColorRole.Button, "bg_button"),
+            (QPalette.ColorRole.WindowText, "text"),
+            (QPalette.ColorRole.Text, "text"),
+            (QPalette.ColorRole.ButtonText, "text"),
+        ):
+            qt_palette.setColor(role, QColor(palette[key]))
+        _app.setPalette(qt_palette)
+        _qt_palette_overridden = True
+    elif _qt_palette_overridden:
+        _app.setPalette(_app.style().standardPalette())
+        _qt_palette_overridden = False
+
+
 def _render_for_current_scheme():
     # re-renders the stylesheet if (and only if) the palette the app should
     # now be using differs from the one it already has - so the OS firing
     # colorSchemeChanged for a scheme we already show, or choosing "Dark"
     # while the OS is already dark, does no redundant app-wide restyle
     global _active_palette
+    _load_bundled_fonts()
     palette = _palette_for_scheme(_effective_scheme())
     if palette is _active_palette:
         return
     _active_palette = palette
+    _apply_qt_palette(palette)
     try:
         _app.setStyleSheet(render_stylesheet(palette))
     except (OSError, KeyError) as e:
@@ -298,9 +459,9 @@ def set_theme_preference(preference):
             hints.unsetColorScheme()
         else:
             hints.setColorScheme(
-                Qt.ColorScheme.Light
-                if _preference == app_config.THEME_LIGHT
-                else Qt.ColorScheme.Dark
+                Qt.ColorScheme.Dark
+                if _preference == app_config.THEME_DARK
+                else Qt.ColorScheme.Light
             )
     if _app is not None:
         _render_for_current_scheme()
