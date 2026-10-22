@@ -287,8 +287,14 @@ A performance is a common block (66 bytes: name, tempo, the performance's own ef
   full velocity and key ranges, a low-pass filter, a level envelope, reverb); 32 performances (eight parts on channels 1-8 playing preset patches, names of at most 12 characters); the temporary patch is "St.Concert" like the owner's unit.
   Built from cached neutral blocks (building 128 patches value by value took seconds). `DemoPorts` adds a few ms per request (`JV_STUDIO_DEMO_INSTANT=1` removes it) so progress bars are visible. Nothing here was read from hardware.
 - `ui/demo.py` builds the session; `MainWindow(demo=True)` skips `_restore_saved_ports` (which lists real ports) and blocks Settings (it would close the demo connection). The smoke test checks the demo unit answers.
-- `tools/make_screenshots.py` regenerates `docs/screenshots/` (offscreen at 2x, dark and light) from the demo unit; the README shows them.
+- `tools/make_screenshots.py` regenerates the README's `docs/screenshots/` AND the user guide's `src/jv_studio/ui/help/screenshots/` (offscreen at 2x) from the demo unit; recipes are `@shot` functions in `tools/screenshot_recipes.py` (`--list`, `--only NAME`, `--overwrite`, `--out DIR`; an existing picture is never replaced without `--overwrite`). See "The user guide" below.
 - Fixed on the way: the pitch envelope's neutral level is raw 63 (levels run 0-126 for -63..+63), not 64.
+
+## The user guide (Help > Quick Start Guide, written 2026-10-22)
+
+`ui/help/quickstart.md` is the guide, rendered by `ui/quickstart_dialog.py` (copied and adapted from AKAISDS's, same behaviour: `QTextBrowser.setMarkdown`, Cmd/Ctrl+F find bar, GitHub-style heading anchors so `[x](#heading)` links work, images shrunk to the window but never past their natural size at 2x, one non-modal instance reused per window). The same file is what the README links to: there is ONE copy. It ships in the bundle through the build scripts' existing `--include-data-dir=jv_studio/ui/help` (a new subfolder needs no change).
+- Pictures live in `ui/help/screenshots/` (made by `tools/make_screenshots.py`, never hand-captured) and `ui/help/diagrams/`. `tests/test_make_screenshots.py` fails if the guide names a picture with no recipe, a recipe has no file, or a file is named by nothing; `tests/test_quickstart_dialog.py` checks every `#anchor` link and picture path. **Change the UI -> re-run `uv run python tools/make_screenshots.py --overwrite` and re-read the guide.**
+- The guide describes behaviour from this file and the code; it deliberately carries no "untested on a unit" caveats (owner's call, 2026-10-22), except the firmware section's warning. Keep it that way, but don't state anything here as proven that is `[guess]`.
 
 ## Packaging and CI (written 2026-10-13, NOT run yet)
 

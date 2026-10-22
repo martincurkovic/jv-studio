@@ -36,6 +36,7 @@ from jv_studio.ui.patch_editor import PatchEditor
 from jv_studio.ui.performance_panel import PerformancePanel
 from jv_studio.ui.patch_collection_dialog import PatchCollectionDialog
 from jv_studio.ui.qt_helpers import ClickableLabel, set_primary, set_style_property
+from jv_studio.ui.quickstart_dialog import show_quickstart_dialog
 from jv_studio.ui.rhythm_panel import RhythmPanel
 from jv_studio.ui.qt_helpers import item_heading, set_enabled_without_scrolling
 from jv_studio.ui.segmented import SegmentedControl
@@ -250,6 +251,10 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self.raw_action)
 
         help_menu = self.menuBar().addMenu("&Help")
+        quickstart_action = QAction("Quick Start Guide...", self)
+        quickstart_action.triggered.connect(lambda: show_quickstart_dialog(self))
+        help_menu.addAction(quickstart_action)
+        help_menu.addSeparator()
         add_open_log_folder_action(help_menu, self)
         about_action = QAction("About JV Studio...", self)
         about_action.setMenuRole(QAction.MenuRole.AboutRole)

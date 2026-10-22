@@ -5,3 +5,7 @@ MIDI_OUTPUT = "The MIDI output your computer sends to the JV-1010 on (the interf
 THEME = "Follow the system's light/dark setting, or pick one. Applies at once."
 HARDWARE_TEST_BUTTON = "Asks the unit who it is and reads the name of its temporary patch. Nothing is written."
 LOOPBACK_TEST_BUTTON = "Sends SysEx messages of growing size out of the interface and checks they come back intact. Needs a cable from MIDI OUT to MIDI IN."
+
+FIND_PREVIOUS_MATCH = "Previous match"
+FIND_NEXT_MATCH = "Next match"
+CLOSE_SEARCH_BAR = "Close (Esc)"

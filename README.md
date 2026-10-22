@@ -52,6 +52,10 @@ Builds for each release are on the [Releases](https://github.com/martincurkovic/
 
 To build it yourself, see [`BUILDING.md`](BUILDING.md).
 
+## User guide
+
+See the [Quick Start Guide](src/jv_studio/ui/help/quickstart.md): MIDI setup, backing up, editing patches, performances and rhythm sets, the audition keyboard and System settings. The same guide is in the app under **Help > Quick Start Guide**.
+
 ## Try it without a unit
 
 `uv run jv-studio --demo` starts the app on a simulated JV-1010: the factory patch names, 32 performances, a working backup and restore, no MIDI ports and no hardware. Changes are forgotten when you quit.
