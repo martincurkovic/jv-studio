@@ -2,7 +2,7 @@ import sys
 import time
 from pathlib import Path
 
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QPoint, QTimer, Qt
 from PySide6.QtGui import QAction, QActionGroup, QBrush, QColor, QIcon, QKeySequence, QPixmap, QPainter
 from PySide6.QtWidgets import (
     QApplication,
@@ -568,7 +568,10 @@ class MainWindow(QMainWindow):
         menu = QMenu(self)
         menu.addAction(self.mode_patch_action)
         menu.addAction(self.mode_performance_action)
-        menu.popup(self.status_pill.mapToGlobal(self.status_pill.rect().bottomLeft()))
+        # the pill is a wide, right-aligned label: hang the menu from its RIGHT edge, under the text (its left edge is far from the words)
+        menu.ensurePolished()
+        corner = self.status_pill.mapToGlobal(self.status_pill.rect().bottomRight())
+        menu.popup(QPoint(corner.x() - menu.sizeHint().width() + 1, corner.y()))
         self._mode_menu = menu  # (kept alive while it shows)
 
     def set_unit_mode(self, mode):

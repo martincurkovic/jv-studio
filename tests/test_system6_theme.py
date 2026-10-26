@@ -44,7 +44,7 @@ def test_it_is_a_choice_and_a_saved_value():
 
 def test_every_palette_has_the_same_required_keys():
     # (the optional painter / font keys exist only where they change something)
-    optional = {"font_family", "scroll_track_pattern", "extra_template", "card_titlebar", "hard_edges", "knob_track", "knob_arc", "graph_line"}
+    optional = {"font_family", "scroll_track_pattern", "extra_template", "card_titlebar", "hard_edges", "key_down_white", "key_down_black", "knob_track", "knob_arc", "graph_line"}
     assert set(theme.SYSTEM6_PALETTE) - optional == set(theme.DARK_PALETTE) == set(theme.LIGHT_PALETTE)
 
 
@@ -126,3 +126,24 @@ def test_a_section_card_draws_a_title_bar_only_in_system6(qapp):
     theme.set_theme_preference(app_config.THEME_DARK)
     assert card.layout().contentsMargins().top() == 10
     card.deleteLater()
+
+
+def test_pressed_piano_keys_go_grey_in_system6_and_take_the_accent_elsewhere(qapp):
+    from jv_studio.ui.keyboard import PianoKeyboard
+
+    keyboard = PianoKeyboard()
+    keyboard.resize(1000, 74)
+    keyboard.show()
+    for note in (60, 61):  # a white key and a black one
+        keyboard._press(note)
+
+    def colour_of(note):
+        rect = keyboard._key_rect(note)
+        return keyboard.grab().toImage().pixelColor(int(rect.center().x()), int(rect.top() + 6)).name()
+
+    theme.apply_to_app(qapp, app_config.THEME_SYSTEM6)
+    assert colour_of(60) == theme.SYSTEM6_PALETTE["key_down_white"] and colour_of(61) == theme.SYSTEM6_PALETTE["key_down_black"]
+    theme.set_theme_preference(app_config.THEME_DARK)
+    assert colour_of(60) == colour_of(61) == theme.DARK_PALETTE["accent"]
+    keyboard.release_all()
+    keyboard.deleteLater()

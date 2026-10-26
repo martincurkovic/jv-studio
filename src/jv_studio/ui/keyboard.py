@@ -240,7 +240,8 @@ class PianoKeyboard(QWidget):
         tint.setAlpha(46)
         for note in self._whites:
             rect = self._key_rect(note)
-            colour = accent if self.is_down(note) else QColor(palette["key_white"])
+            down_white = palette.get("key_down_white")  # (a theme may colour a pressed key itself, like System 6's grey; the others use the accent)
+            colour = (QColor(down_white) if down_white else accent) if self.is_down(note) else QColor(palette["key_white"])
             if not enabled or (note in self._dimmed and not self.is_down(note)):
                 colour = QColor(palette["bg_disabled"])
             painter.setBrush(colour)
@@ -249,13 +250,14 @@ class PianoKeyboard(QWidget):
                 painter.setBrush(tint)
                 painter.drawRect(rect)
             if note % 12 == 0:  # the C of each octave carries its name
-                painter.setPen(QColor(palette["key_black"] if not self.is_down(note) else palette["text_on_accent"]))
+                painter.setPen(QColor(palette["key_black"] if not self.is_down(note) or down_white else palette["text_on_accent"]))
                 painter.drawText(rect.adjusted(2, 0, 0, -3), Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft, params.note_name(note))
                 painter.setPen(edge)
         for note in range(self._first, self._last + 1):
             if note % 12 in BLACK:
                 dim = not enabled or (note in self._dimmed and not self.is_down(note))
-                painter.setBrush(accent if self.is_down(note) else QColor(palette["border_disabled"] if dim else palette["key_black"]))
+                down_black = QColor(palette["key_down_black"]) if palette.get("key_down_black") else accent
+                painter.setBrush(down_black if self.is_down(note) else QColor(palette["border_disabled"] if dim else palette["key_black"]))
                 painter.drawRect(self._key_rect(note))
         if enabled and self._typing:  # the bar under the keys: which keys the computer keyboard plays (solid while the computer keyboard is routed here)
             left, right = self._typing_span()

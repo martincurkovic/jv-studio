@@ -180,6 +180,8 @@ SYSTEM6_PALETTE = {
     "logo_rule": 'font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace; font-size: 13px;',  # (the ASCII art needs its monospace font, not the theme's)
     "font_family": '"ChiKareGo2", "Chicago", "Geneva", "Monaco", monospace',
     "scroll_track_pattern": True,  # a 50% black/white checker under the scroll bars' handles
+    "key_down_white": "#a0a0a0",  # pressed piano keys go grey (the other themes use the accent): a black pressed key stays visible, a white one doesn't turn solid black
+    "key_down_black": "#808080",
     "hard_edges": True,  # knobs and envelope graphs are drawn without anti-aliasing
     "card_titlebar": True,  # section cards draw a striped title bar and a close-box-style arrow (ui/section_card.py)
     "extra_template": True,  # append ui/style_system6.qss.template (menus, scroll bar arrows, X check boxes ...): rules only this skin has

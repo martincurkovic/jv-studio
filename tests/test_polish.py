@@ -212,3 +212,18 @@ def test_a_refresh_marks_what_the_front_panel_chose(win):
     w.refresh_all()
     w.worker.process_pending()
     assert not any(w.names_list.item(i).font().bold() for i in range(128))
+
+
+def test_the_mode_menu_hangs_from_the_right_edge_of_the_pill_not_its_far_left(win, monkeypatch):
+    from PySide6.QtWidgets import QMenu
+
+    w, _fake = win
+    w.resize(1260, 700)
+    w.show()
+    QApplication.processEvents()
+    asked = []  # (the offscreen screen is narrower than the window, so Qt would clamp a real popup: look at where it was ASKED to open)
+    monkeypatch.setattr(QMenu, "popup", lambda self, pos, *a: asked.append((self.sizeHint().width(), pos)))
+    w._show_mode_menu()
+    width, pos = asked[0]
+    pill_right = w.status_pill.mapToGlobal(w.status_pill.rect().bottomRight())
+    assert abs(pos.x() + width - pill_right.x()) <= 2 and width < w.status_pill.width()
