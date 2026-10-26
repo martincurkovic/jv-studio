@@ -6,7 +6,6 @@
 
 - [MIDI Setup](#midi-setup)
 - [Using a DAW at the Same Time](#using-a-daw-at-the-same-time)
-- [Try It Without a Unit](#try-it-without-a-unit)
 - [The Main Window](#the-main-window)
 - [Backing Up and Restoring the Unit](#backing-up-and-restoring-the-unit)
 - [Editing Patches](#editing-patches)
