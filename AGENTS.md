@@ -73,7 +73,7 @@ Prefer small reviewable units, each ending in a commit suggestion, over a large 
 - **The main window is READ-ONLY for now**: Read Temporary Patch, Read USER Patch Names (double-click reads that patch), a parameter tree, Save as `.syx`. Every read is checked with
   `validate.out_of_range`: a value outside the manual's range is shown in amber and logged as a WARNING (`UnitWorker: temporary: ...`). **On the first reads from the real unit, read
   those log lines: each is either a mistake in the manual-derived table, in the extractor, or a value the manual doesn't describe. Record what you find under "Findings log".**
-- "Share on GitHub" in the loopback results is hidden while `loopback_report.ISSUES_URL` is None (there is no public repository yet).
+- "Share on GitHub" in the loopback results (same as AKAISDS: opens a new-issue page on `martincurkovic/jv-studio` with the results filled in; the user presses Submit, nothing is sent by the app) is shown while `loopback_report.ISSUES_URL` is set; set it to None to hide the button.
 
 ## The patch editor (phase 3, first cut)
 

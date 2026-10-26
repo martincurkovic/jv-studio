@@ -5,8 +5,8 @@
 import platform
 from urllib.parse import quote
 
-#: where "Share on GitHub" opens a new issue; None until the project has a public repository (the button is then left out)
-ISSUES_URL = None
+#: where "Share on GitHub" opens a new issue (the same repository the update check reads); set to None and the button is left out
+ISSUES_URL = "https://github.com/martincurkovic/jv-studio/issues/new"
 
 
 def describe_os():

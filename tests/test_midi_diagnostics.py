@@ -109,7 +109,10 @@ def test_the_report_names_the_interface_and_says_what_failed():
     assert loopback_report.verdict([(8, True, "OK")]) == "All sizes tested passed cleanly."
 
 
-def test_sharing_on_github_is_off_until_there_is_a_repository(monkeypatch):
+def test_sharing_on_github_opens_a_new_issue_with_the_results_filled_in(monkeypatch):
+    url = loopback_report.issue_url([(8, True, "OK")], "A", "A", "x", "1")
+    assert url.startswith("https://github.com/martincurkovic/jv-studio/issues/new?title=MIDI%20interface%20test%3A%20A&body=") and "MIDI%20interface%3A%20A" in url
+    monkeypatch.setattr(loopback_report, "ISSUES_URL", None)  # without a repository there is nothing to open
     assert loopback_report.issue_url([(8, True, "OK")], "A", "A", "x", "1") is None
     monkeypatch.setattr(loopback_report, "ISSUES_URL", "https://example.test/issues/new")
     assert loopback_report.issue_url([(8, True, "OK")], "A", "A", "x", "1").startswith("https://example.test/issues/new?title=")

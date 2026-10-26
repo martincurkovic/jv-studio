@@ -4,7 +4,7 @@ import pytest
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from fakes import FakeJV1010, FakePorts, corrupting_loopback, loopback, silent
-from jv_studio.core import app_config, midi, midi_diagnostics
+from jv_studio.core import app_config, loopback_report, midi, midi_diagnostics
 from jv_studio.ui import loopback_results_dialog, settings_dialog, theme
 from jv_studio.ui.midi_session import MidiSession
 
@@ -160,7 +160,17 @@ def test_a_corrupting_interface_shows_failures(rig, monkeypatch):
     assert "FAIL - corrupted" in report and "starts failing around 8 bytes" in report
 
 
-def test_the_share_button_is_hidden_without_a_repository(qapp):
+def test_the_share_button_opens_the_prefilled_issue_page(qapp, monkeypatch):
+    opened = []
+    monkeypatch.setattr(loopback_results_dialog.QDesktopServices, "openUrl", lambda url: opened.append(url.toString()))
+    dlg = loopback_results_dialog.LoopbackResultsDialog([(8, True, "OK")], "A", "A")
+    assert not dlg.share_button.isHidden() and dlg.share_button.text() == "Share on GitHub"
+    dlg.share_button.click()
+    assert len(opened) == 1 and opened[0].startswith("https://github.com/martincurkovic/jv-studio/issues/new?title=") and "MIDI+interface" not in opened[0]
+
+
+def test_the_share_button_is_hidden_without_a_repository(qapp, monkeypatch):
+    monkeypatch.setattr(loopback_report, "ISSUES_URL", None)
     dlg = loopback_results_dialog.LoopbackResultsDialog([(8, True, "OK")], "A", "A")
     assert dlg.share_button.isHidden() and not dlg.copy_button.isHidden()
     dlg.copy_button.click()
