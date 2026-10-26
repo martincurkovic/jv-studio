@@ -31,13 +31,13 @@ Connect your JV-1010 to a MIDI interface. The interface's MIDI OUT goes to the J
 
 **2. Choose the ports**
 
-Open **File > Settings...** and pick your interface as the **MIDI Input** and **MIDI Output**. JV Studio remembers them and opens them again the next time it starts. The unit's SysEx device ID is fixed at 10H, so there is nothing to set on the unit except that it must be switched on and in **Patch** or **Performance** mode (not GM mode, see [Unit Mode and GM Mode](#unit-mode-and-gm-mode)).
+Open **File > Settings...** and pick your interface as the **MIDI Input** and **MIDI Output**. There is nothing to set on the unit except that it must be switched on and in **Patch** or **Performance** mode (not GM mode, see [Unit Mode and GM Mode](#unit-mode-and-gm-mode)).
 
-The **Appearance** settings change the theme (*System* follows your computer's light/dark mode, or choose *Light*, *Dark* or *Macintosh System 6*; it applies straight away) and **Middle C is**. The unit's own display calls note 60 "C4"; Ableton and Yamaha call it "C3", which is JV Studio's default. The note *numbers* never change, only their names, and the setting applies the next time JV Studio starts.
+The **Appearance** settings change the theme (*System* follows your computer's light/dark mode, or choose *Light*, *Dark* or *Macintosh System 6* themes).
 
 **3. Check it works**
 
-Open **Settings > Troubleshooting** and press **Run Hardware Test**. It asks the unit who it is and reads the name of its temporary patch. Nothing is written. The same check is under **Hardware > Detect JV-1010** (Ctrl/Cmd+D).
+Open **Settings > Troubleshooting** and press **Run Hardware Test**. It queries the unit and reads the name of its temporary patch. Nothing is written. The same check is also under **Hardware > Detect JV-1010** (Ctrl/Cmd+D).
 
 Once the ports are open, the top right of the window shows a status pill: **Ports open** (grey), **JV-1010 · Patch mode** or **Performance mode** (green), **GM mode** (amber) or **No answer from the unit** (red). JV Studio then reads the temporary patch, the unit's current patch selection and the 128 USER patch names by itself.
 
@@ -45,15 +45,9 @@ Once the ports are open, the top right of the window shows a status pill: **Port
 
 ## Using a DAW at the Same Time
 
-You can use JV Studio and a DAW (Ableton Live, Logic, etc.) with the same MIDI interface, just **not at the same time**. Close the DAW and any MIDI monitor first, and in the DAW never route the unit's MIDI input into a track that outputs back to it.
+You can use JV Studio and a DAW (Ableton Live, Logic, etc.) with the same MIDI interface, just ensure the DAW never routes the unit's MIDI input into a track that outputs back to it.
 
 Why? If another program sends the unit's own replies back to it, the unit treats them as commands, and can end up changing or overwriting data you didn't mean to touch.
-
----
-
-## Try It Without a Unit
-
-`jv-studio --demo` starts JV Studio on a simulated JV-1010: the factory patch names, 32 performances, two rhythm sets and a working backup and restore, with no MIDI ports and no hardware. Nothing is stored, and everything is forgotten when you quit. Everything in this guide can be tried there, except that the simulated unit makes no sound.
 
 ---
 
@@ -63,25 +57,25 @@ Why? If another program sends the unit's own replies back to it, the unit treats
 
 ![Main window, light theme](screenshots/main-window-light.png "The main window in the light theme")
 
-**Settings > Appearance** chooses the theme: *System* follows your computer's light or dark mode, or pick *Light*, *Dark* or *Macintosh System 6*, a black-and-white look with a bitmap-style font, striped title bars on the cards and grey pressed piano keys. Colour appears there only for states (orange for edited or changed from the factory, green for a unit that answers, red for an error). It is a homage and is not affiliated with Apple.
+**Settings > Appearance** chooses the theme: *System* follows your computer's light or dark mode, or pick *Light*, *Dark* or *Macintosh System 6*. The System 6 theme is a homage and is not affiliated with Apple.
 
 ![Main window, Macintosh System 6 theme](screenshots/main-window-system6.png "The main window in the Macintosh System 6 theme")
 
-The row under the logo switches between three editors: **Patches**, **Performances** and **Rhythm Sets**. The list on the left shows that editor's USER memory on the unit, and the editor is on the right. The Performances and Rhythm Sets sides load the first time you open them.
+The row under the JV Studio logo switches between three editors: **Patches**, **Performances** and **Rhythm Sets**. The list on the left shows that editor's USER memory on the unit, and the editor is on the right. The Performances and Rhythm Sets load the first time you open them.
 
-- **Double-click** (or press Enter on) a row to open it in the editor. A patch whose name differs from the factory list is highlighted, and the patch the unit is playing is marked in bold with a dot.
-- The **filter box** above the list narrows it by name or number.
+- **Double-click** a preset (or press Enter) to open it in the editor. A patch whose name differs from the factory list is highlighted, and the patch the unit is playing is marked in bold with a dot.
+- The **filter box** above the list narrows it by name or number (search).
 - **Right-click** a USER patch to open it, **Play on Unit**, **Rename...** (F2), **Copy To...** or **Swap With...**.
 - The buttons above the editor read from and write to the unit: **Read Temporary Patch**, **Send to Temporary Patch**, **Write to USER...** and **Revert Edits**. The same actions are in the **Hardware** menu.
-- **Hardware > Refresh All from Unit** (Ctrl/Cmd+Shift+R) reads everything again. The unit never announces changes made on its front panel, so use it after turning a knob or storing something on the unit.
+- **Hardware > Refresh All from Unit** (Ctrl/Cmd+Shift+R) reads all data again. The unit never announces changes made on its front panel, so use it after turning a knob or storing something on the unit.
 
-**The temporary patch.** The unit plays one patch at a time from its *temporary patch*. Opening a patch in JV Studio never changes the unit. Edits are sent to the temporary patch only, so you hear them but nothing is stored. Only **Write to USER...** (or a file you save) keeps them.
+**The temporary patch.** The unit plays one patch at a time from its *temporary patch*. Edits are sent to the temporary patch only, so you hear them but nothing is stored. Only **Write to USER...** (or a file you save) keeps them.
 
-**Live edits.** With **Live edits** ticked, each change you finish (letting go of a knob, typing a value, choosing from a list) is sent to the temporary patch at once and read back. This works while the editor shows what the unit is playing: a patch read from the unit's temporary patch, a patch sent with **Send to Temporary Patch**, or one opened by double-clicking while the audition bar has the unit on it. Otherwise the editor tells you to send the patch first, because a lone parameter would otherwise make a hybrid of two patches.
+**Live edits.** With **Live edits** ticked, each change you finish is sent to the temporary patch at once and read back. This works while the editor shows what the unit is playing: a patch read from the unit's temporary patch, a patch sent with **Send to Temporary Patch**, or one opened by double-clicking while the audition bar has the unit on it. Otherwise the editor tells you to send the patch first, because a lone parameter would otherwise make a hybrid of two patches.
 
-**Undo and revert.** **Edit > Undo** and **Redo** (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z) step through your edits and go to the unit live too. **Revert Edits** goes back to the patch as it was read. A patch with unsent edits is marked "(edited)" and is never replaced without asking.
+**Undo and revert.** **Edit > Undo** and **Redo** (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z) step through your edits and go to the unit live too. **Revert Edits** goes back to the original patch. A patch with unsent edits is marked "(edited)" and is never replaced without asking.
 
-**Files.** **File > Open Patch .syx...** and **Save Patch as .syx...** read and write standard SysEx files. A file can hold one patch or a whole bank; JV Studio lists the patches it finds, hides blank "INIT PATCH" slots on request, and repairs files whose checksums are wrong where it safely can. Opening a file sends nothing to the unit.
+**Files.** **File > Open Patch .syx...** and **Save Patch as .syx...** read and write standard SysEx files. A file can hold one patch or a whole bank. JV Studio lists the patches it finds, hides blank "INIT PATCH" slots on request, and repairs files whose checksums are wrong (where it safely can).
 
 **Shortcuts.** **Help > Keyboard Shortcuts...** lists every shortcut, read from the menus themselves, plus the audition keyboard's keys and the knob and list gestures.
 
@@ -91,7 +85,7 @@ The row under the logo switches between three editors: **Patches**, **Performanc
 
 ## Backing Up and Restoring the Unit
 
-**File > Back Up Unit...** reads everything the unit holds (the 128 USER patches, 32 performances, both rhythm sets and the System settings, about 1,300 requests) into one `.syx` file. It takes a few minutes and has a Cancel button. **Back up before you write anything**, and keep the file somewhere outside JV Studio's own folders.
+**File > Back Up Unit...** reads everything the unit holds (the 128 USER patches, 32 performances, both rhythm sets and the System settings, about 1,300 requests) into one `.syx` file. It takes a few minutes and has a Cancel button. **Back up before you write anything**, and keep the file somewhere safe.
 
 **File > Restore Unit...** writes a backup file back. You choose which sections to restore (patches, performances, rhythm sets, System settings). It checks that the file holds every block of the chosen sections before it sends anything, reads each block back, and stops at the first mismatch. System settings are unticked by default so that restoring patches never changes MIDI channels or the sound mode.
 
@@ -103,15 +97,14 @@ Whenever JV Studio is about to overwrite something on the unit, it first saves w
 
 ![A tone's page](screenshots/editor-tone-page.png "A tone's page")
 
-A patch has a **Common** tab and four tone tabs (**Tone 1-4**; a tab that starts with ● has that tone switched on, ○ off).
+A patch has a **Common** tab and four tone tabs (**Tone 1-4**).
 
-**Common** holds the patch name, voice priority, category, tempo and level, the **Tone Mixer** (one knob per tone: the same control as each tone's Tone Level), Play settings, the **Structure** types that connect each pair of tones, and the Controllers, and the patch's effects (EFX, Chorus, and Reverb & Delay).
+**Common** holds the patch name, voice priority, category, tempo and level, the **Tone Mixer** (one knob per tone), Play settings, the **Structure** types that connect each pair of tones, and the Controllers, and the patch's effects (EFX, Chorus, and Reverb & Delay).
 
-**Each tone** has cards for its **Wave**, **Ranges** (key and velocity), **Controllers**, **LFO 1**, **LFO 2**, **Pitch**, **Filter**, **Level**, **Pan** and **Output**. A card collapses when you click its heading, and JV Studio remembers which are collapsed.
+**Each tone** has cards for its **Wave**, **Ranges** (key and velocity), **Controllers**, **LFO 1**, **LFO 2**, **Pitch**, **Filter**, **Level**, **Pan** and **Output**. A card collapses when you click its heading.
 
-- **Knobs.** Drag to turn, hold **Shift** for fine steps, **double-click** to reset. Or click a knob once and **type** a value (`C#5`, `L24`, `+12` are understood the way the unit shows them). The mouse wheel works once the knob has focus. A drag shows live and is sent when you let go.
-- **Envelopes.** The Pitch, Filter and Level cards open with a graph of the envelope. Drag a handle to change a stage's time (left/right) and level (up/down). The flat line is the level held until you release the key. Double-click a handle to reset it, and press Esc during a drag to cancel it. A graph only moves the knobs: the knobs and boxes below it show the exact values.
-- **Switches and choices.** Parameters with on/off values are check boxes, two-way choices are a pair of buttons and everything else is a drop-down. A tone's on/off switch is the check box in its Wave card's heading.
+- **Knobs.** Drag to turn, hold **Shift** for fine steps, **double-click** to reset. Or click a knob once and **type** a value (for example, `C#5`, `L24`, `+12`).
+- **Envelopes.** The Pitch, Filter and Level cards open with a graph of the envelope. Drag a handle to change a stage's time (left/right) and level (up/down). Double-click a handle to reset it, and press Esc during a drag to cancel it.
 - **Tooltips.** Hover over any control for a short explanation and its range.
 
 ![The Filter card](screenshots/editor-filter-card.png "The Filter card with its envelope")
@@ -134,8 +127,8 @@ A performance is the unit's *Performance mode* setup: **16 parts**, each playing
 
 The editor has four tabs:
 
-- **Parts** is a 16-row mixer: on/off, MIDI channel, the patch (by name), level, pan, output and the part's voice reserve. The number button on a row opens that part on the Part tab.
-- **Part** edits the part chosen in the Parts tab in full: its patch, receive switch and MIDI channel, level, pan and tuning, output and effect sends, and key range.
+- **Parts** is a 16-row mixer: on/off, MIDI channel, the patch name, level, pan, output and the part's voice count. Clicking the number button on a row opens that part on the Part tab.
+- **Part** edits the part chosen in the Parts tab: its patch, receive switch and MIDI channel, level, pan and tuning, output and effect sends, and key range.
 - **Effects** holds the performance's own EFX, Chorus and Reverb.
 - **Setup** holds the performance's name, tempo, clock source and keyboard range switch.
 
@@ -164,14 +157,14 @@ A rhythm set is a drum kit: each of 64 keys (35-98) has its own wave, pitch, fil
 
 ## Audition Keyboard
 
-**View > Audition Keyboard** (Ctrl/Cmd+K) shows a keyboard along the bottom of the window. It plays the unit and chooses its patches with ordinary MIDI messages; nothing is stored on the unit.
+**View > Audition Keyboard** (Ctrl/Cmd+K) shows a keyboard along the bottom of the window.
 
 ![Audition keyboard](screenshots/audition-keyboard.png "The audition keyboard")
 
-- It **always starts closed**. While it is open it uses your computer keyboard like Ableton's computer MIDI keyboard: **A W S E D F T G Y H U J K O L P ;** play notes, **Z / X** change octave, **C / V** change velocity, **, / .** choose the previous/next patch and **[ / ]** the previous/next bank. Keyboard shortcuts with Ctrl/Cmd, dialogs and other windows are left alone.
-- The **Channel** box is the MIDI channel notes go out on. **From Unit** reads the unit's Patch Receive Channel and tells you what would stop it playing (wrong mode, receive switches off).
-- The **Patch** boxes choose a bank (USER, Preset A-E, Session, or one of the unit's categories) and a patch. The unit follows by Bank Select and Program Change, and about a third of a second after you stop, the editor shows the patch the unit is now playing (unless it holds unsent edits).
-- **Master** is the unit's master volume (it sends when you let go) and **Panic** silences stuck notes.
+- It **always starts closed**. While it is open it uses your computer keyboard like a typical DAW's computer MIDI keyboard: **A W S E D F T G Y H U J K O L P ;** play notes, **Z / X** change octave, **C / V** change velocity, **, / .** choose the previous/next patch and **[ / ]** the previous/next bank.
+- The **Channel** box is the MIDI channel notes go out on. **From Unit** reads the unit's Patch Receive Channel and tells you what would stop it playing (wrong mode, receive switches off, etc).
+- The **Patch** boxes choose a bank (USER, Preset A-E, Session, or one of the unit's categories) and a patch. The editor shows the patch the unit is now playing (unless it holds unsent edits).
+- **Master** is the unit's master volume and **Panic** silences stuck notes.
 
 On the Performances tab the bar follows the part you are looking at, and on Rhythm Sets it follows Part 10.
 
@@ -199,15 +192,15 @@ The unit is in **Patch mode** (one sound at a time, what the Patches tab edits) 
 
 ## Updating the Unit's Firmware
 
-**Hardware > Update Firmware...** plays Roland's System Update files to a unit that is in update mode, the way a sequencer would. It is the one feature that cannot check its own result: the unit sends no reply during an update, and an interrupted update can leave a unit unable to start. Back the unit up first, read Roland's own instructions in the README that comes with the update, and only use an interface that has passed **Settings > Troubleshooting > Run Loopback Test** with the long messages. JV Studio checks the files and makes you confirm a checklist before it sends anything.
+**Hardware > Update Firmware...** plays Roland's System Update files to a unit that is in update mode, the way a sequencer would. It is the one feature that cannot check its own result: the unit sends no reply during an update, and an interrupted update can leave a unit unable to start. **Back the unit up first**, read Roland's own instructions in the README that comes with the update, and only use an interface that has passed **Settings > Troubleshooting > Run Loopback Test** with the long messages. JV Studio checks the files and makes you confirm a checklist before it sends anything.
 
 ---
 
 ## Updates
 
-JV Studio checks GitHub for a newer release a moment after it starts, at most once a day. If there is one, an **Update Available** window shows what is new in the release notes. Choose **View Release...** to open the download page, **Remind Me Later**, or **Skip This Version** to stop being told about that one. Nothing is downloaded or installed for you.
+JV Studio automatically checks for updates. If there is one, an **Update Available** window shows what is new in the release notes. Choose **View Release...** to open the download page, **Remind Me Later**, or **Skip This Version**.
 
-**Help > Check for Updates...** (or the button in **About**) checks at once and tells you when you are up to date. The only thing sent is the request for the latest release, with no information about you or your unit.
+**Help > Check for Updates...** (or the button in **About**) checks for updates on demand and tells you when you are up to date. The only information sent is the request for the latest release. No information about you or your unit is ever sent.
 
 ---
 
