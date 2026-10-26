@@ -24,6 +24,10 @@ Built with PySide6 (Qt) and python-rtmidi. GPL-3.0-or-later.
     <img alt="JV Studio's performance editor: the 16 parts as a mixer, each with its patch chosen by name" src="docs/screenshots/performance-light.png" width="860">
   </picture>
 </p>
+<p align="center">
+  <img alt="The same tone page in the optional Macintosh System 6 theme: black and white, a bitmap-style font, striped title bars, with a little colour only for states" src="docs/screenshots/patch-editor-system6.png" width="860"><br>
+  <sub>The optional Macintosh System 6 theme (Settings &gt; Appearance).</sub>
+</p>
 
 > **Status: early development.** You can read the unit's patches, edit any patch parameter on knobs and draggable envelope graphs (heard live on the unit's temporary patch, with undo), write to USER
 > slots, edit performances (16 parts, effects, the patch each part plays), open and save `.syx` files, and back up and restore the whole unit. It has been tried on one JV-1010 (its author's); the performance editor has not been tried on a unit yet. **Back the unit up before

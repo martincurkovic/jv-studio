@@ -17,7 +17,7 @@ class Shot:
     name: str
     description: str
     recipe: callable
-    scheme: str  # "dark" or "light": the theme the app is in while it is built and photographed
+    scheme: str  # "dark", "light" or "system6": the theme the app is in while it is built and photographed
     folder: str  # "readme" or "guide"
 
 
@@ -133,6 +133,11 @@ def _readme_performance_light(ctx):
     return _performance_parts(ctx)
 
 
+@shot("patch-editor-system6", "README: the same tone page in the Macintosh System 6 theme", "system6", "readme")
+def _readme_patch_system6(ctx):
+    return _patch_tone_filter(ctx)
+
+
 # -- the user guide's pictures (src/jv_studio/ui/help/screenshots) -------------------------------------------------------------
 
 
@@ -154,6 +159,11 @@ def _main_window_dark(ctx):
 
 @shot("main-window-light", "the same window in the light theme", "light")
 def _main_window_light(ctx):
+    return _patches_window(ctx, 0)
+
+
+@shot("main-window-system6", "the same window in the Macintosh System 6 theme", "system6")
+def _main_window_system6(ctx):
     return _patches_window(ctx, 0)
 
 

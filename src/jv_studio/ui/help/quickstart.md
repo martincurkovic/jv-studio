@@ -33,7 +33,7 @@ Connect your JV-1010 to a MIDI interface. The interface's MIDI OUT goes to the J
 
 Open **File > Settings...** and pick your interface as the **MIDI Input** and **MIDI Output**. JV Studio remembers them and opens them again the next time it starts. The unit's SysEx device ID is fixed at 10H, so there is nothing to set on the unit except that it must be switched on and in **Patch** or **Performance** mode (not GM mode, see [Unit Mode and GM Mode](#unit-mode-and-gm-mode)).
 
-The **Appearance** settings change the theme (*System* follows your computer's light/dark mode, or choose *Light* or *Dark*; it applies straight away) and **Middle C is**. The unit's own display calls note 60 "C4"; Ableton and Yamaha call it "C3", which is JV Studio's default. The note *numbers* never change, only their names, and the setting applies the next time JV Studio starts.
+The **Appearance** settings change the theme (*System* follows your computer's light/dark mode, or choose *Light*, *Dark* or *Macintosh System 6*; it applies straight away) and **Middle C is**. The unit's own display calls note 60 "C4"; Ableton and Yamaha call it "C3", which is JV Studio's default. The note *numbers* never change, only their names, and the setting applies the next time JV Studio starts.
 
 **3. Check it works**
 
@@ -62,6 +62,10 @@ Why? If another program sends the unit's own replies back to it, the unit treats
 ![Main window, dark theme](screenshots/main-window-dark.png "The main window")
 
 ![Main window, light theme](screenshots/main-window-light.png "The main window in the light theme")
+
+**Settings > Appearance** chooses the theme: *System* follows your computer's light or dark mode, or pick *Light*, *Dark* or *Macintosh System 6*, a black-and-white look with a bitmap-style font, striped title bars on the cards and grey pressed piano keys. Colour appears there only for states (orange for edited or changed from the factory, green for a unit that answers, red for an error). It is a homage and is not affiliated with Apple.
+
+![Main window, Macintosh System 6 theme](screenshots/main-window-system6.png "The main window in the Macintosh System 6 theme")
 
 The row under the logo switches between three editors: **Patches**, **Performances** and **Rhythm Sets**. The list on the left shows that editor's USER memory on the unit, and the editor is on the right. The Performances and Rhythm Sets sides load the first time you open them.
 
