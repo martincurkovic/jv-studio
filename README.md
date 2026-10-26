@@ -23,19 +23,19 @@ Built with PySide6 (Qt) and python-rtmidi. GPL-3.0-or-later.
   <tr>
     <td align="center"><img alt="JV Studio in the dark theme" src="src/jv_studio/ui/help/screenshots/main-window-dark.png" width="280"><br><sub>Dark</sub></td>
     <td align="center"><img alt="JV Studio in the light theme" src="src/jv_studio/ui/help/screenshots/main-window-light.png" width="280"><br><sub>Light</sub></td>
-    <td align="center"><img alt="JV Studio in the Macintosh System 6 theme: black and white, a bitmap-style font, striped title bars, with a little colour only for states" src="src/jv_studio/ui/help/screenshots/main-window-system6.png" width="280"><br><sub>Macintosh System 6</sub></td>
+    <td align="center"><img alt="JV Studio in the Macintosh System 6 theme: black and white, a bitmap-style font, striped title bars, with a little colour only for states" src="src/jv_studio/ui/help/screenshots/main-window-system6.png" width="280"><br><sub>System 6</sub></td>
   </tr>
 </table>
 
 <p align="center"><b>What it edits</b></p>
 <table align="center">
   <tr>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/performance-dark.png"><img alt="The performance editor: the 16 parts as a mixer, each with its patch chosen by name" src="docs/screenshots/performance-light.png" width="420"></picture><br><sub>Performances: the 16 parts as a mixer</sub></td>
-    <td align="center"><img alt="The rhythm set editor: a keyboard of drum keys and the chosen key's wave, filter and envelopes" src="src/jv_studio/ui/help/screenshots/rhythm-set.png" width="420"><br><sub>Rhythm sets: click a key, edit its drum sound</sub></td>
+    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/performance-dark.png"><img alt="The performance editor: the 16 parts as a mixer, each with its patch chosen by name" src="docs/screenshots/performance-light.png" width="420"></picture><br><sub>Performances</sub></td>
+    <td align="center"><img alt="The rhythm set editor: a keyboard of drum keys and the chosen key's wave, filter and envelopes" src="src/jv_studio/ui/help/screenshots/rhythm-set.png" width="420"><br><sub>Rhythm sets</sub></td>
   </tr>
   <tr>
-    <td align="center"><img alt="The audition keyboard along the bottom of the window, playing the unit and choosing its patches" src="src/jv_studio/ui/help/screenshots/audition-keyboard.png" width="420"><br><sub>Audition keyboard: play the unit and browse its patches</sub></td>
-    <td align="center"><img alt="System Settings: the unit's global settings, tuning and MIDI receive options" src="src/jv_studio/ui/help/screenshots/system-settings.png" width="420"><br><sub>System settings and scale tune, with a diff before anything is sent</sub></td>
+    <td align="center"><img alt="The audition keyboard along the bottom of the window, playing the unit and choosing its patches" src="src/jv_studio/ui/help/screenshots/audition-keyboard.png" width="420"><br><sub>Audition keyboard</sub></td>
+    <td align="center"><img alt="System Settings: the unit's global settings, tuning and MIDI receive options" src="src/jv_studio/ui/help/screenshots/system-settings.png" width="420"><br><sub>System settings</sub></td>
   </tr>
 </table>
 
