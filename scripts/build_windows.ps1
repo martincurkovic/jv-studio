@@ -56,7 +56,7 @@ if (-not (Test-Path "pysidedeploy.spec")) {
 
 # Data the app reads at run time, paths relative to src\ (where this runs), as SRC=DEST inside the app:
 #   the parameter and wave-name tables, the stylesheet template, icons and diagrams, and the licence
-$DataArgs = "--include-data-dir=jv_studio/data=jv_studio/data --include-data-dir=jv_studio/ui/icons=jv_studio/ui/icons --include-data-files=jv_studio/ui/style.qss.template=jv_studio/ui/style.qss.template --include-data-dir=jv_studio/ui/help=jv_studio/ui/help --include-package-data=certifi --include-data-files=../LICENSE=LICENSE"
+$DataArgs = "--include-data-dir=jv_studio/data=jv_studio/data --include-data-dir=jv_studio/ui/icons=jv_studio/ui/icons --include-data-files=jv_studio/ui/style.qss.template=jv_studio/ui/style.qss.template --include-data-files=jv_studio/ui/style_system6.qss.template=jv_studio/ui/style_system6.qss.template --include-data-dir=jv_studio/ui/help=jv_studio/ui/help --include-data-dir=jv_studio/ui/fonts=jv_studio/ui/fonts --include-package-data=certifi --include-data-files=../LICENSE=LICENSE"
 
 # extra_args is regenerated on EVERY run (not just first-time setup),
 # specifically so the version stays current even on an existing spec

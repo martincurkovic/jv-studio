@@ -215,10 +215,10 @@ class Knob(QDial):
     # -- painting --------------------------------------------------------------------------------------------------------
 
     def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        rect = self.rect().adjusted(4, 4, -4, -4)
         palette = theme.current_palette()
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, not palette.get("hard_edges"))  # (the System 6 skin draws jagged, bitmap-like lines)
+        rect = self.rect().adjusted(4, 4, -4, -4)
         enabled = self.isEnabled()
         track = QPen(QColor(palette.get("knob_track", palette["border_hover"]) if enabled else palette["border_disabled"]))
         track.setWidth(_RING_WIDTH)

@@ -44,7 +44,7 @@ def test_it_is_a_choice_and_a_saved_value():
 
 def test_every_palette_has_the_same_required_keys():
     # (the optional painter / font keys exist only where they change something)
-    optional = {"font_family", "scroll_track_pattern", "knob_track", "knob_arc", "graph_line"}
+    optional = {"font_family", "scroll_track_pattern", "extra_template", "card_titlebar", "hard_edges", "knob_track", "knob_arc", "graph_line"}
     assert set(theme.SYSTEM6_PALETTE) - optional == set(theme.DARK_PALETTE) == set(theme.LIGHT_PALETTE)
 
 
@@ -99,3 +99,30 @@ def test_the_theme_flag_names_a_theme_for_one_run_and_ignores_nonsense():
     assert theme_from_argv(["jv-studio", "--theme=chicago"]) is None
     assert theme_from_argv(["jv-studio", "--demo"]) is None
     assert app_config.get_saved_theme() == app_config.THEME_SYSTEM  # (reading the flag saves nothing)
+
+
+def test_the_extra_rules_and_the_bundled_font_belong_to_system6_only():
+    system6 = theme.render_stylesheet(theme.SYSTEM6_PALETTE)
+    assert "QMenu::item:selected" in system6 and "s6_check_x.svg" in system6 and "QScrollBar::sub-line:vertical" in system6
+    for palette in (theme.DARK_PALETTE, theme.LIGHT_PALETTE):
+        css = theme.render_stylesheet(palette)
+        assert "s6_" not in css and "QMenu" not in css
+    from pathlib import Path
+
+    icons, fonts = Path(theme._ICONS_DIR), Path(theme._FONTS_DIR)
+    assert (fonts / "ChiKareGo2.ttf").is_file() and (fonts / "README.txt").is_file()  # bundled (the build scripts' DATA_ARGS), credited
+    import re
+
+    for name in set(re.findall(r"s6_[a-z_]+\.svg", system6)):
+        assert (icons / name).is_file(), name
+
+
+def test_a_section_card_draws_a_title_bar_only_in_system6(qapp):
+    from jv_studio.ui.section_card import SectionCard
+
+    theme.apply_to_app(qapp, app_config.THEME_SYSTEM6)
+    card = SectionCard("Filter", [])
+    assert card.layout().contentsMargins().top() == 3
+    theme.set_theme_preference(app_config.THEME_DARK)
+    assert card.layout().contentsMargins().top() == 10
+    card.deleteLater()

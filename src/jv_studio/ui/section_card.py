@@ -14,7 +14,7 @@
   `qt_helpers.set_enabled_without_scrolling`).
 """
 
-from PySide6.QtCore import QEvent, QPointF, Qt, Signal
+from PySide6.QtCore import QEvent, QPointF, QRect, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import (
     QAbstractButton,
@@ -87,6 +87,21 @@ class DisclosureArrow(QAbstractButton):
     def paintEvent(self, _event):
         palette = theme.current_palette()
         painter = QPainter(self)
+        if palette.get("card_titlebar"):  # System 6: a small white box with the triangle inside, like a window's close box (hard edges: no anti-aliasing)
+            box = QRect(1, 1, self.SIZE - 3, self.SIZE - 3)
+            painter.fillRect(box, QColor(palette["bg"]))
+            painter.setPen(QPen(QColor(palette["border"]), 1))
+            painter.drawRect(box.adjusted(0, 0, -1, -1))
+            c = self.SIZE / 2 - 0.5
+            points = [QPointF(c - 1.5, c - 3), QPointF(c + 2.5, c), QPointF(c - 1.5, c + 3)] if self._collapsed else [QPointF(c - 3, c - 1.5), QPointF(c + 3, c - 1.5), QPointF(c, c + 2.5)]
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(palette["border"]))
+            painter.drawPolygon(QPolygonF(points))
+            if self.hasFocus():
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.setPen(QPen(QColor(palette["border"]), 1, Qt.PenStyle.DotLine))
+                painter.drawRect(self.rect().adjusted(0, 0, -1, -1))
+            return
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         color = QColor(palette["text_bright"] if self.underMouse() else palette["text"])
         c = self.SIZE / 2
@@ -158,11 +173,38 @@ class SectionCard(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
 
         self._apply(bool(key) and key in _keys())
+        theme.notifier.changed.connect(self._theme_changed)
+        self._theme_changed()
 
     # -- state -------------------------------------------------------------------------------------
 
     def title(self):
         return self._title
+
+    def _theme_changed(self):
+        # System 6 draws the heading as a striped title bar flush with the card's top edge: less room above it
+        titlebar = bool(theme.current_palette().get("card_titlebar"))
+        self.layout().setContentsMargins(12, 3 if titlebar else 10, 12, 12)
+        self.update()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if not theme.current_palette().get("card_titlebar"):
+            return
+        # the System 6 title bar: horizontal black lines every other pixel, with a white patch behind the title and anything else in the heading
+        palette = theme.current_palette()
+        header = self.layout().itemAt(0).geometry()
+        bar = QRect(1, 1, self.width() - 2, header.bottom() + 3)
+        painter = QPainter(self)
+        painter.setPen(QPen(QColor(palette["border"]), 1))
+        for y in range(bar.top() + 1, bar.bottom(), 2):
+            painter.drawLine(bar.left(), y, bar.right(), y)
+        painter.fillRect(QRect(bar.left(), bar.bottom(), bar.width(), 1), QColor(palette["border"]))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(palette["bg"]))
+        for widget in [self._title_label, self._attention_dot, self._arrow, *self._header_widgets]:
+            if widget.isVisibleTo(self):
+                painter.drawRect(widget.geometry().adjusted(-4 if widget is not self._arrow else -2, -1, 4 if widget is not self._arrow else 2, 1))
 
     def key(self):
         return self._key

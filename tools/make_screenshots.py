@@ -5,6 +5,7 @@
     uv run python tools/make_screenshots.py --only NAME [NAME...]  # just these (with or without .png)
     uv run python tools/make_screenshots.py --overwrite            # redo every one
     uv run python tools/make_screenshots.py --out DIR              # somewhere else (then nothing is "skipped")
+    uv run python tools/make_screenshots.py --out DIR --scheme system6   # the same pictures in another theme, to look at it
 
 Nothing real is touched: the settings and log go to a scratch folder and the app talks to the demo unit (`jv-studio --demo`, built-in
 contents, never `~/.jv-studio/demo-backup.syx`), so it needs no MIDI port and no hardware. An existing picture is only replaced with --overwrite.
@@ -39,7 +40,7 @@ debug_log.LOG_PATH = _SCRATCH / "jv-studio.log"
 import screenshot_recipes as recipes  # noqa: E402
 
 
-def run(names, folder_for, overwrite):
+def run(names, folder_for, overwrite, scheme=None):
     from PySide6.QtGui import QPixmap
     from PySide6.QtWidgets import QApplication
 
@@ -57,8 +58,8 @@ def run(names, folder_for, overwrite):
             print(f"skip  {name}.png (exists; --overwrite to replace)")
             skipped += 1
             continue
-        theme.apply_to_app(app, s.scheme)
-        ctx = recipes.Context(app, s.scheme)
+        theme.apply_to_app(app, scheme or s.scheme)
+        ctx = recipes.Context(app, scheme or s.scheme)
         try:
             result = s.recipe(ctx)
             pixmap = result if isinstance(result, QPixmap) else result.grab()
@@ -84,6 +85,7 @@ def main(argv=None):
     parser.add_argument("--only", nargs="+", metavar="NAME", help="just these pictures (names as in --list, with or without .png)")
     parser.add_argument("--overwrite", action="store_true", help="replace pictures that already exist (default: leave them)")
     parser.add_argument("--out", type=Path, help="write everything here instead of the README and guide folders")
+    parser.add_argument("--scheme", help="photograph every picture in this theme (dark, light, system6) instead of the recipe's own: for looking at a theme, use with --out")
     parser.add_argument("--list", action="store_true", help="list the pictures and whether each exists, then stop")
     args = parser.parse_args(argv)
 
@@ -104,7 +106,7 @@ def main(argv=None):
             return 2
         names = wanted
     try:
-        return run(names, folder_for, args.overwrite)
+        return run(names, folder_for, args.overwrite, args.scheme)
     finally:
         shutil.rmtree(_SCRATCH, ignore_errors=True)
 

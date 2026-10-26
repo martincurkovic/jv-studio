@@ -208,7 +208,7 @@ class _EditableGraph(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, not theme.current_palette().get("hard_edges"))  # (the System 6 skin draws jagged, bitmap-like lines)
         _draw_border(painter, self.width(), self.height())
         w, h = self._inner_size()
         painter.translate(_INSET, _INSET)

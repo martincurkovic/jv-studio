@@ -43,7 +43,7 @@ fi
 
 # Data the app reads at run time, paths relative to src/ (where this runs), as SRC=DEST inside the app:
 #   the parameter and wave-name tables, the stylesheet template, icons and diagrams, and the licence
-DATA_ARGS="--include-data-dir=jv_studio/data=jv_studio/data --include-data-dir=jv_studio/ui/icons=jv_studio/ui/icons --include-data-files=jv_studio/ui/style.qss.template=jv_studio/ui/style.qss.template --include-data-dir=jv_studio/ui/help=jv_studio/ui/help --include-package-data=certifi --include-data-files=../LICENSE=LICENSE"
+DATA_ARGS="--include-data-dir=jv_studio/data=jv_studio/data --include-data-dir=jv_studio/ui/icons=jv_studio/ui/icons --include-data-files=jv_studio/ui/style.qss.template=jv_studio/ui/style.qss.template --include-data-files=jv_studio/ui/style_system6.qss.template=jv_studio/ui/style_system6.qss.template --include-data-dir=jv_studio/ui/help=jv_studio/ui/help --include-data-dir=jv_studio/ui/fonts=jv_studio/ui/fonts --include-package-data=certifi --include-data-files=../LICENSE=LICENSE"
 
 # re-generate extra_args on EVERY run, that way version number can update correctly
 sed -i '' "s|^extra_args = .*|extra_args = --quiet --noinclude-qt-translations --assume-yes-for-downloads --macos-app-name=$APP_NAME --macos-app-version=$VERSION $DATA_ARGS|" pysidedeploy.spec

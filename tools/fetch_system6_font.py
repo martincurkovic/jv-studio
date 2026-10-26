@@ -3,8 +3,8 @@
     uv run --with fonttools python tools/fetch_system6_font.py
 
 ChiKareGo2 is Giles Booth's recreation of Chicago 12, packaged as a .woff by https://github.com/sakofchit/system.css (MIT for the CSS and icons; the font
-files carry no licence text of their own). It is NOT committed or bundled (the folder is git-ignored) until its licence is confirmed: without it the theme
-falls back to Geneva / Monaco / any monospace font.
+files carry no licence text of their own). The owner confirmed 2026-10-26 that it is Creative Commons Attribution (credit in ui/fonts/README.txt), so the
+result IS committed and bundled (the build scripts' DATA_ARGS); this script only re-creates it. Without the file the theme falls back to Geneva / Monaco / any monospace font.
 """
 
 import io

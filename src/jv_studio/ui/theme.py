@@ -180,6 +180,9 @@ SYSTEM6_PALETTE = {
     "logo_rule": 'font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace; font-size: 13px;',  # (the ASCII art needs its monospace font, not the theme's)
     "font_family": '"ChiKareGo2", "Chicago", "Geneva", "Monaco", monospace',
     "scroll_track_pattern": True,  # a 50% black/white checker under the scroll bars' handles
+    "hard_edges": True,  # knobs and envelope graphs are drawn without anti-aliasing
+    "card_titlebar": True,  # section cards draw a striped title bar and a close-box-style arrow (ui/section_card.py)
+    "extra_template": True,  # append ui/style_system6.qss.template (menus, scroll bar arrows, X check boxes ...): rules only this skin has
     "knob_track": "#b0b0b0",
     "knob_arc": "#000000",
     "graph_line": "#000000",
@@ -187,6 +190,7 @@ SYSTEM6_PALETTE = {
 
 
 _TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "style.qss.template")
+_EXTRA_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "style_system6.qss.template")
 _ICONS_DIR = os.path.join(os.path.dirname(__file__), "icons")
 
 
@@ -269,6 +273,7 @@ def render_stylesheet(palette):
     """
     values = dict(palette)
     values["checkmark_icon"] = _icon_path("checkmark.svg")
+    values["s6_icon_dir"] = _ICONS_DIR.replace(os.sep, "/")
     text_hex = palette["text"].lstrip("#")
     disabled_hex = palette["text_disabled"].lstrip("#")
     values["down_arrow_icon"] = _write_colored_chevron(
@@ -286,7 +291,11 @@ def render_stylesheet(palette):
         values["scroll_track"] = f"url({_write_checker('scroll_track_checker.png')})"
 
     with open(_TEMPLATE_PATH, "r") as f:
-        template = Template(f.read())
+        source = f.read()
+    if palette.get("extra_template"):  # (after the shared rules, so a rule here wins over one of equal specificity there)
+        with open(_EXTRA_TEMPLATE_PATH, "r") as f:
+            source += "\n" + f.read()
+    template = Template(source)
     try:
         return template.substitute(**values)
     except KeyError as e:

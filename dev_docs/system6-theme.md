@@ -8,8 +8,8 @@ Reference: <https://github.com/sakofchit/system.css> (MIT; a CSS library, System
 ## Try it
 
 - `uv run jv-studio --demo --theme=system6` (this run only, nothing saved; demo mode blocks Settings, which is why the flag exists), or Settings > Appearance > Theme > "Macintosh System 6 (monochrome)" with ports open.
-- The bitmap-style font is NOT in the repo: `uv run --with fonttools python tools/fetch_system6_font.py` (see "Font" below). Without it the theme falls back to Geneva / Monaco / monospace and still works.
-- Pictures for review: `@shot(..., scheme="system6")` recipes in `tools/screenshot_recipes.py` (the `scheme` argument is the theme name; none exist yet, and the guide's pictures are dark-theme only).
+- The bitmap-style font (ChiKareGo2, CC BY, credited in `ui/fonts/README.txt`) is committed and bundled; `tools/fetch_system6_font.py` only re-creates it.
+- Pictures for review: `uv run python tools/make_screenshots.py --out DIR --scheme system6 --overwrite [--only NAME ...]` photographs the existing recipes in the skin (nothing is written to the guide). The guide's own pictures stay dark-theme only.
 
 ## What exists (done, 2026-10-22, tests in `tests/test_system6_theme.py`)
 
@@ -20,20 +20,29 @@ Reference: <https://github.com/sakofchit/system.css> (MIT; a CSS library, System
 - The ASCII logo keeps its monospace font whatever the theme says (`QLabel#asciiLogo`, `logo_rule`): the theme's font family would otherwise garble the art.
 - `--theme=NAME` command-line flag (`main.theme_from_argv`).
 
+## Done 2026-10-26 (the second pass; the font licence was confirmed as CC BY)
+
+- **Font bundled** (`ui/fonts/ChiKareGo2.ttf` + `README.txt` credit; folder un-ignored; `ui/fonts` and the new template are in all three build scripts' `DATA_ARGS`).
+- **`ui/style_system6.qss.template`** is appended after the shared template ONLY when the palette has `extra_template` (so dark/light cannot change: checked pixel-identical against the committed guide pictures). It holds: menus and the in-window menu bar (inverted hover, ruled separators), 16 px scroll bars with an arrow box at each end and the dithered track, check boxes and radio buttons as a white box with an X, combo and spin box arrows as solid triangles in a ruled-off box, the default / primary button's heavy 3 px ring (primary is no longer a black fill here), a dithered progress chunk, a rule over the status bar. Icons `ui/icons/s6_*.svg` (black, static).
+- **Cards** (`section_card.py`, palette key `card_titlebar`): a striped title bar flush with the card's top, a white patch behind the heading, and the disclosure arrow drawn as a close-box. The layout's top margin is 3 instead of 10 in this skin (`_theme_changed`).
+- **Hard edges** (palette key `hard_edges`): knobs and envelope graphs are painted without anti-aliasing.
+- New optional palette keys, System 6 only: `extra_template`, `card_titlebar`, `hard_edges`.
+
 ## What can be done (still to do, roughly in order)
 
 ### Phase A: finish the skin inside the window (days, low risk)
 
-- [ ] **Font decision** (blocks bundling): ChiKareGo2 (Giles Booth's Chicago 12 recreation) has no licence in the file or in system.css's repo. Confirm the licence or choose another font, then add `ui/fonts` to `DATA_ARGS` in the three `scripts/build_*` and un-ignore it. Chicago itself and Monaco are Apple's: don't ship them. The skin looks best at 16 px with this font; check the editor pages still fit the 1060 px minimum window width (`AGENTS.md`: the editor pages need ~725 px).
+- [x] ~~Font decision~~ (done, see above). Still to check: the editor pages fit the 1060 px minimum window width at 16 px (`AGENTS.md`: ~725 px needed). Chicago itself and Monaco are Apple's: don't ship them.
 - [ ] **Push buttons as bitmap shapes:** QSS `border-image` with an SVG (system.css's `button.svg`, 30 px slices; `button-default.svg` for the default button's thick ring). Today they are rounded rectangles.
-- [ ] **Checkboxes and radio buttons:** System 6 uses a white box with an X (system.css `checkmark.svg` is a tick); today a black box with a white tick (`QCheckBox::indicator:checked`).
-- [ ] **Menus:** no `QMenu` rule exists in the template (Fusion draws them from the `QPalette`). Add one (black border, hard 1 px edge, inverted hover). On macOS the menu bar stays native unless `menuBar().setNativeMenuBar(False)` is used for this theme (then it is in the window, styleable).
-- [ ] **Scroll bars:** arrow buttons (`QScrollBar::add-line` / `sub-line` with system.css's `scrollbar-*.svg`); today only the dithered track and a white handle.
-- [ ] **Cards:** `SectionCard` headers as striped title bars (it is custom-painted in `section_card.py`; the chevron and heading would become the System 6 close-box / horizontal-lines pattern).
-- [ ] **Painters in 1-bit:** knob ring and pointer, envelope curve and handles and the piano keyboard still use anti-aliased lines; a hard-edged variant (`painter.setRenderHint(Antialiasing, False)`, 1 px) would look more bitmap.
+- [x] ~~**Checkboxes and radio buttons:**~~ done (X in a white box).
+- [x] (old note) **Checkboxes and radio buttons:** System 6 uses a white box with an X (system.css `checkmark.svg` is a tick); today a black box with a white tick (`QCheckBox::indicator:checked`).
+- [~] **Menus:** QMenu / QMenuBar rules exist now (untested on a real Mac: the native menu bar still stays native). Original note: no `QMenu` rule exists in the template (Fusion draws them from the `QPalette`). Add one (black border, hard 1 px edge, inverted hover). On macOS the menu bar stays native unless `menuBar().setNativeMenuBar(False)` is used for this theme (then it is in the window, styleable).
+- [x] **Scroll bars:** done (arrow boxes, white thumb). Original note: arrow buttons (`QScrollBar::add-line` / `sub-line` with system.css's `scrollbar-*.svg`); today only the dithered track and a white handle.
+- [x] **Cards:** done, title bar and close box (no click-drag; the stripes are painted by `SectionCard.paintEvent`). Original note: `SectionCard` headers as striped title bars (it is custom-painted in `section_card.py`; the chevron and heading would become the System 6 close-box / horizontal-lines pattern).
+- [~] **Painters in 1-bit:** knob and envelope graph done (`hard_edges`); the piano keyboard was already unsmoothed. Original note: knob ring and pointer, envelope curve and handles and the piano keyboard still use anti-aliased lines; a hard-edged variant (`painter.setRenderHint(Antialiasing, False)`, 1 px) would look more bitmap.
 - [ ] **Dithered desktop and disabled controls:** a 50 % checker `background-image` on the root (the central widget is opaque `${bg}`, so it must become transparent or be painted), and dithered (not grey) disabled text is impossible in QSS: keep grey.
 - [ ] **Colour-coded states:** amber "edited", red errors and green "connected" have no colour here. Decide how each reads in monochrome (an icon, a prefix such as `*`, bold, inverted).
-- [ ] **Tooltips, progress bar** (a striped chunk), tab bar and the status bar's top rule.
+- [~] **Tooltips, progress bar** (progress is a dithered chunk now, tooltips a plain box; not seen on a real screen) (a striped chunk), tab bar and the status bar's top rule.
 - [ ] **Pictures:** `@shot` recipes with `scheme="system6"`; a README/guide picture if wanted.
 - [ ] **Tests:** the palette key test already covers the required keys; add a render check for any new token and a pixel-regression of dark/light after each template change (render `tools/make_screenshots.py --out DIR` before and after and compare, as was done on 2026-10-22).
 
