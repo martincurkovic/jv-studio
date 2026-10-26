@@ -129,9 +129,8 @@ LIGHT_PALETTE = {
 }
 
 
-# A monochrome Macintosh System 6 look (a demo skin: black, white and the odd grey, square corners, a bitmap-style font, inverted video for
-# selection, a dithered scroll track). Colour that carries meaning in the other themes (amber "edited", red errors, green "connected") has no
-# colour here. `font_family` / `knob_*` / `graph_line` / `scroll_track_pattern` are optional keys the other palettes simply don't have.
+# A Macintosh System 6 look (black, white and the odd grey, square corners, a bitmap-style font, inverted video for selection, a dithered scroll
+# track). The only colour is what carries meaning in the other themes too: orange "edited", red errors, green "connected" (the owner allowed it). `font_family` / `knob_*` / `graph_line` / `scroll_track_pattern` are optional keys the other palettes simply don't have.
 SYSTEM6_PALETTE = {
     "bg": "#ffffff",
     "bg_panel": "#ffffff",
@@ -156,10 +155,10 @@ SYSTEM6_PALETTE = {
     "border_progress": "#000000",
     "accent": "#000000",
     "text_on_accent": "#ffffff",
-    "warning": "#000000",
-    "critical": "#000000",
-    "ok": "#000000",
-    "warning_tint": "#1a000000",
+    "warning": "#d65a00",  # the three state colours are the only colour in the skin: Apple's 16-colour palette's orange, red and green, a little darkened to read on white
+    "critical": "#dd0907",
+    "ok": "#12850b",
+    "warning_tint": "#26ff6403",
     "bg_zebra": "#f0f0f0",
     "key_white": "#ffffff",
     "key_black": "#000000",
@@ -317,7 +316,7 @@ CHOICES = [
     ("System", app_config.THEME_SYSTEM),
     ("Light", app_config.THEME_LIGHT),
     ("Dark", app_config.THEME_DARK),
-    ("Macintosh System 6 (monochrome)", app_config.THEME_SYSTEM6),
+    ("Macintosh System 6", app_config.THEME_SYSTEM6),
 ]
 
 

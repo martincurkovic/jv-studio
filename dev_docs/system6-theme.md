@@ -1,6 +1,6 @@
 # Macintosh System 6 theme: status and roadmap
 
-A monochrome skin that makes JV Studio look like a Macintosh System 6 application. Started 2026-10-22 as a **demo** (owner: "ideally monochrome just for this demo"); the owner would eventually like the **window frame** (close / zoom buttons, title bar) themed too.
+A skin that makes JV Studio look like a Macintosh System 6 application: black, white and greys, plus a little colour only where it carries meaning. Started 2026-10-22 as a monochrome **demo**; the owner has since kept it as a theme (2026-10-26), allowed greys and state colours, and **decided against the custom window frame** (Phase B below is kept only as the record of what it would cost).
 This file says what exists, what can and cannot be done, and what is still undecided, so the next agent doesn't re-research it. The short version of the code facts is also in `AGENTS.md` ("Macintosh System 6 skin").
 
 Reference: <https://github.com/sakofchit/system.css> (MIT; a CSS library, System 6 look, last pushed 2023-11). **Nothing of its CSS can be used directly**: Qt style sheets (QSS) are a small CSS-2-like subset (no variables, no `box-shadow`, no real `::before`/`::after`, no `calc`). It is a visual reference and a source of SVG shapes (`icon/button.svg`, `checkmark.svg`, scroll bar arrows, `select-button.svg`), not code.
@@ -41,12 +41,12 @@ Reference: <https://github.com/sakofchit/system.css> (MIT; a CSS library, System
 - [x] **Cards:** done, title bar and close box (no click-drag; the stripes are painted by `SectionCard.paintEvent`). Original note: `SectionCard` headers as striped title bars (it is custom-painted in `section_card.py`; the chevron and heading would become the System 6 close-box / horizontal-lines pattern).
 - [~] **Painters in 1-bit:** knob and envelope graph done (`hard_edges`); the piano keyboard was already unsmoothed. Original note: knob ring and pointer, envelope curve and handles and the piano keyboard still use anti-aliased lines; a hard-edged variant (`painter.setRenderHint(Antialiasing, False)`, 1 px) would look more bitmap.
 - [ ] **Dithered desktop and disabled controls:** a 50 % checker `background-image` on the root (the central widget is opaque `${bg}`, so it must become transparent or be painted), and dithered (not grey) disabled text is impossible in QSS: keep grey.
-- [ ] **Colour-coded states:** amber "edited", red errors and green "connected" have no colour here. Decide how each reads in monochrome (an icon, a prefix such as `*`, bold, inverted).
+- [x] **Colour-coded states** (2026-10-26, owner allowed a little colour): `warning` orange `#d65a00` (edited, differs from the factory), `critical` red `#dd0907`, `ok` green `#12850b` (the connection pill), `warning_tint` orange at 15 %. Apple's 16-colour palette's hues, darkened to read on white. Nothing else is coloured.
 - [~] **Tooltips, progress bar** (progress is a dithered chunk now, tooltips a plain box; not seen on a real screen) (a striped chunk), tab bar and the status bar's top rule.
 - [ ] **Pictures:** `@shot` recipes with `scheme="system6"`; a README/guide picture if wanted.
 - [ ] **Tests:** the palette key test already covers the required keys; add a render check for any new token and a pixel-regression of dark/light after each template change (render `tools/make_screenshots.py --out DIR` before and after and compare, as was done on 2026-10-22).
 
-### Phase B: the window frame (the owner's eventual goal: **possible, with real costs**)
+### Phase B: the window frame (**DROPPED by the owner, 2026-10-26: native title bars stay**; kept as a record)
 
 Only a **custom, frameless window** can look like System 6: an operating system's own title bar can't be restyled from Qt (macOS traffic lights, the Windows caption and a Linux compositor's decorations are drawn by the OS). Feasible approach, `[guess]` for everything not marked otherwise (nothing here has been tried):
 
@@ -75,9 +75,9 @@ Rough size: a few days for the frame, the base class and the main window, plus p
 - QSS caches images by path: the generated chevrons and the checker have their content (colour) in the file name for that reason.
 - `QT_QPA_PLATFORM=offscreen` shows the in-window menu bar (macOS would show the native one), so offscreen pictures always include a menu bar the real Mac window doesn't have.
 
-## Open questions for the owner
+## Open questions for the owner (answered 2026-10-26 unless noted)
 
-1. Is the monochrome look going to ship (then: font licence, the other themes' screenshots, an About line), or stay a demo?
-2. Window frame: close + zoom only (authentic), or add a minimise box? Frameless on all three platforms, or macOS first?
-3. File dialogs: native (a seam) or reimplemented?
-4. Does "edited / error / connected" stay colourless, or is a little colour allowed as an exception to "monochrome"?
+1. Ship or demo? **Ships** as a theme ("Macintosh System 6"): font licence settled (CC BY), About credits the font and says it is not affiliated with Apple. Still to decide: whether the README or guide shows it.
+2. Window frame: **no** (native).
+3. File dialogs: **native** (no frame work, so no seam to hide).
+4. State colours: **a little colour is allowed** (see Phase A).

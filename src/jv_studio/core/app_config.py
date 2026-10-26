@@ -10,7 +10,7 @@ CONFIG_PATH = Path.home() / ".jv-studio" / "config.json"
 THEME_SYSTEM = "system"
 THEME_LIGHT = "light"
 THEME_DARK = "dark"
-THEME_SYSTEM6 = "system6"  # a monochrome Macintosh System 6 look (a demo skin)
+THEME_SYSTEM6 = "system6"  # a Macintosh System 6 look (black and white, with a little colour for states)
 THEME_VALUES = (THEME_SYSTEM, THEME_LIGHT, THEME_DARK, THEME_SYSTEM6)
 
 _DEFAULTS = {"theme": THEME_SYSTEM}

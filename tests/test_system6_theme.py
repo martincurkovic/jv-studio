@@ -1,4 +1,4 @@
-# The monochrome Macintosh System 6 skin (Settings > Appearance > Theme): a third palette over the same template and painters.
+# The Macintosh System 6 skin (Settings > Appearance > Theme): a third palette over the same template and painters.
 
 import pytest
 from PySide6.QtGui import QPalette
@@ -37,7 +37,7 @@ def _back_to_the_default_theme(qapp):
 
 
 def test_it_is_a_choice_and_a_saved_value():
-    assert ("Macintosh System 6 (monochrome)", app_config.THEME_SYSTEM6) in theme.CHOICES
+    assert ("Macintosh System 6", app_config.THEME_SYSTEM6) in theme.CHOICES
     app_config.save_theme(app_config.THEME_SYSTEM6)
     assert app_config.get_saved_theme() == app_config.THEME_SYSTEM6
 

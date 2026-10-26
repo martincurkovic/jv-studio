@@ -213,7 +213,7 @@ class _EditableGraph(QWidget):
         w, h = self._inner_size()
         painter.translate(_INSET, _INSET)
         self._paint_background(painter, w, h)
-        line_color = theme.current_palette().get("graph_line", self._color)  # (the monochrome theme draws every curve in one colour)
+        line_color = theme.current_palette().get("graph_line", self._color)  # (the System 6 theme draws every curve in one colour)
         pen = QPen(QColor(line_color))
         pen.setWidth(2)
         painter.setPen(pen)

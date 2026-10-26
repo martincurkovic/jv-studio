@@ -30,7 +30,8 @@ class AboutDialog(QDialog):
             "Wave names: the waveform lists on "
             '<a href="https://gumielectronic.net/?p=2312">GumiElectronic</a>.<br>'
             'The knob and envelope widgets are adapted from <a href="https://github.com/martincurkovic/AKAISDS">AKAISDS</a>.<br>'
-            'Protocol details were cross-checked against Lars Ahlzen\'s <a href="https://github.com/Ahlzen/jv1010tool">jv1010tool</a> (MIT).'
+            'Protocol details were cross-checked against Lars Ahlzen\'s <a href="https://github.com/Ahlzen/jv1010tool">jv1010tool</a> (MIT).<br>'
+            "The Macintosh System 6 theme is an homage and is not affiliated with Apple; its font, ChiKareGo2, is by Giles Booth (CC BY)."
         )
         credits.setAlignment(Qt.AlignmentFlag.AlignCenter)
         credits.setWordWrap(True)
