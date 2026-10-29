@@ -1,5 +1,7 @@
 # The Macintosh System 6 skin (Settings > Appearance > Theme): a third palette over the same template and painters.
 
+import re
+
 import pytest
 from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QApplication
@@ -44,7 +46,7 @@ def test_it_is_a_choice_and_a_saved_value():
 
 def test_every_palette_has_the_same_required_keys():
     # (the optional painter / font keys exist only where they change something)
-    optional = {"font_family", "scroll_track_pattern", "extra_template", "card_titlebar", "hard_edges", "key_down_white", "key_down_black", "knob_track", "knob_arc", "graph_line", "fit_fixed_widths", "grow_window_for_scroll"}
+    optional = {"font_family", "scroll_track_pattern", "extra_template", "card_titlebar", "hard_edges", "key_down_white", "key_down_black", "knob_track", "knob_arc", "graph_line", "fit_fixed_widths", "grow_window_for_scroll", "logo_font_family"}
     assert set(theme.SYSTEM6_PALETTE) - optional == set(theme.DARK_PALETTE) == set(theme.LIGHT_PALETTE)
 
 
@@ -234,3 +236,55 @@ def test_markdown_code_and_links_follow_the_theme_in_system6_only(qapp):
     code, link = styled(app_config.THEME_DARK)
     assert code.fontFixedPitch()  # (the other themes keep the document's own code font)
     assert link.foreground().color().name() != "#000000"
+
+
+# -- font families: only installed ones are named (Qt prints "Replace uses of missing font family" and takes ~100 ms for each one that is not) ----------
+
+
+def test_only_installed_font_families_are_named_in_the_stylesheet(qapp):
+    from PySide6.QtGui import QFontDatabase
+
+    css = theme.render_stylesheet(theme.SYSTEM6_PALETTE)
+    have = {f.lower() for f in QFontDatabase.families()} | theme._GENERIC_FAMILIES
+    rules = re.findall(r"font-family:\s*([^;]+);", css)
+    assert rules
+    for rule in rules:
+        for name in (n.strip().strip('"') for n in rule.split(",")):
+            assert name.lower() in have, name
+    assert any("ChiKareGo2" in rule for rule in rules)  # (the bundled font is registered before the list is cut down)
+
+
+def test_installed_families_drops_the_missing_and_keeps_generic_names(qapp):
+    theme._load_bundled_fonts()
+    assert theme.installed_families(["ChiKareGo2", "No Such Font Anywhere", "monospace"]) == ["ChiKareGo2", "monospace"]
+    assert theme.installed_families(["No Such Font Anywhere"]) == []
+
+
+def test_the_logo_keeps_a_monospace_rule_of_installed_families_in_system6_only(qapp):
+    css = theme.render_stylesheet(theme.SYSTEM6_PALETTE)
+    rule = re.search(r"QLabel#asciiLogo \{[^}]*?font-family:\s*([^;]+);", css).group(1)
+    assert "monospace" in rule and "ChiKareGo2" not in rule
+    for palette in (theme.DARK_PALETTE, theme.LIGHT_PALETTE):
+        assert "font-family" not in theme.render_stylesheet(palette).split("QLabel#asciiLogo")[1].split("}")[0]
+
+
+def test_inline_code_gets_only_installed_families(qapp):
+    from PySide6.QtWidgets import QTextBrowser
+
+    from jv_studio.ui import update_dialog
+
+    theme.apply_to_app(qapp, app_config.THEME_SYSTEM6)
+    view = QTextBrowser()
+    view.setMarkdown("text `code` text")
+    update_dialog.restyle_code_runs(view.document())
+    fragments = []
+    block = view.document().begin()
+    while block.isValid():
+        it = block.begin()
+        while not it.atEnd():
+            fragments.append(it.fragment())
+            it += 1
+        block = block.next()
+    code = [f for f in fragments if f.text() == "code"][0].charFormat()
+    assert list(code.fontFamilies()) == theme.font_family_names(theme.SYSTEM6_PALETTE)
+    assert "ChiKareGo2" in code.fontFamilies()
