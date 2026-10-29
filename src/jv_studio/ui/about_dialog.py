@@ -1,7 +1,10 @@
+import os
+
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QProgressBar, QPushButton, QTextBrowser, QVBoxLayout
 
 from jv_studio.ui.ascii_logo import LOGO, logo_font
+from jv_studio.ui.update_dialog import apply_theme_to_markdown
 
 from jv_studio.ui._version import APP_VERSION
 from jv_studio.ui.update_helper import UpdateCheckRunner
@@ -79,3 +82,28 @@ class AboutDialog(QDialog):
         # done() is the one method every close path (Close, Escape, the title bar) goes through
         self._update_runner.wait()
         super().done(result)
+
+
+_NOTICES_PATH = os.path.join(os.path.dirname(__file__), "help", "THIRD_PARTY_NOTICES.md")
+
+
+class NoticesDialog(QDialog):
+    """Third-party licence notices (help/THIRD_PARTY_NOTICES.md), opened from Help > Third-Party Notices..."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Third-party notices")
+        self.resize(660, 480)
+        self.viewer = QTextBrowser()
+        self.viewer.setOpenExternalLinks(True)
+        try:
+            with open(_NOTICES_PATH, "r", encoding="utf-8") as f:
+                self.viewer.setMarkdown(f.read())
+            apply_theme_to_markdown(self.viewer.document())
+        except OSError as e:
+            self.viewer.setPlainText(f"Couldn't load the notices: {e}")
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons.rejected.connect(self.reject)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.viewer)
+        layout.addWidget(buttons)

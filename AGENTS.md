@@ -290,6 +290,10 @@ A performance is a common block (66 bytes: name, tempo, the performance's own ef
 - `tools/make_screenshots.py` regenerates the README's `docs/screenshots/` AND the user guide's `src/jv_studio/ui/help/screenshots/` (offscreen at 2x) from the demo unit; recipes are `@shot` functions in `tools/screenshot_recipes.py` (`--list`, `--only NAME`, `--overwrite`, `--out DIR`; an existing picture is never replaced without `--overwrite`). See "The user guide" below.
 - Fixed on the way: the pitch envelope's neutral level is raw 63 (levels run 0-126 for -63..+63), not 64.
 
+## Third-party notices (Help > Third-Party Notices..., added 2026-10-29)
+
+`ui/help/THIRD_PARTY_NOTICES.md` (shipped with the other `ui/help` files, which all three build scripts already bundle) is shown by `about_dialog.NoticesDialog`, opened from the Help menu (between About and Check for Updates). It lists what the app includes or owes thanks for: the ChiKareGo2 font (CC BY), system.css, the AKAISDS code it adapts, jv1010tool (cross-checked only, no code copied), the GumiElectronic wave names and Roland. **Add an entry when third-party code, data or art is added.** Tests: `tests/test_notices.py`.
+
 ## The user guide (Help > Quick Start Guide, written 2026-10-22)
 
 `ui/help/quickstart.md` is the guide, rendered by `ui/quickstart_dialog.py` (copied and adapted from AKAISDS's, same behaviour: `QTextBrowser.setMarkdown`, Cmd/Ctrl+F find bar, GitHub-style heading anchors so `[x](#heading)` links work, images shrunk to the window but never past their natural size at 2x, one non-modal instance reused per window). The same file is what the README links to: there is ONE copy. It ships in the bundle through the build scripts' existing `--include-data-dir=jv_studio/ui/help` (a new subfolder needs no change).

@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 
 from jv_studio.core import app_config, backup, debug_log, midi, midi_diagnostics, params, patch, patch_collection, performance, stock, sysex, unit, universal, validate
 from jv_studio.ui import theme
-from jv_studio.ui.about_dialog import AboutDialog
+from jv_studio.ui.about_dialog import AboutDialog, NoticesDialog
 from jv_studio.ui.audition_bar import AuditionBar
 from jv_studio.ui.ascii_logo import LOGO, logo_font
 from jv_studio.ui.diagnostics_ui import add_open_log_folder_action
@@ -272,6 +272,9 @@ class MainWindow(QMainWindow):
         about_action.setMenuRole(QAction.MenuRole.AboutRole)
         about_action.triggered.connect(lambda: AboutDialog(self).exec())
         help_menu.addAction(about_action)
+        notices_action = QAction("Third-Party Notices...", self)
+        notices_action.triggered.connect(lambda: NoticesDialog(self).exec())
+        help_menu.addAction(notices_action)
         check_updates_action = QAction("Check for Updates...", self)
         check_updates_action.setToolTip("Asks GitHub whether a newer JV Studio has been released. Nothing is downloaded or installed.")
         check_updates_action.triggered.connect(lambda: self._update_runner.start(manual=True))
