@@ -44,7 +44,7 @@ def test_it_is_a_choice_and_a_saved_value():
 
 def test_every_palette_has_the_same_required_keys():
     # (the optional painter / font keys exist only where they change something)
-    optional = {"font_family", "scroll_track_pattern", "extra_template", "card_titlebar", "hard_edges", "key_down_white", "key_down_black", "knob_track", "knob_arc", "graph_line"}
+    optional = {"font_family", "scroll_track_pattern", "extra_template", "card_titlebar", "hard_edges", "key_down_white", "key_down_black", "knob_track", "knob_arc", "graph_line", "fit_fixed_widths", "grow_window_for_scroll"}
     assert set(theme.SYSTEM6_PALETTE) - optional == set(theme.DARK_PALETTE) == set(theme.LIGHT_PALETTE)
 
 

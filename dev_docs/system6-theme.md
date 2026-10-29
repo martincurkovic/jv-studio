@@ -90,3 +90,7 @@ Rough size: a few days for the frame, the base class and the main window, plus p
 2. Window frame: **no** (native).
 3. File dialogs: **native** (no frame work, so no seam to hide).
 4. State colours: **a little colour is allowed** (see Phase A).
+
+## Live switching and widths (2026-10-29, ported from AKAISDS)
+
+`ui/theme_fit.py` (see `AGENTS.md`) fits fixed widths to the skin's wider font, grows windows and their minimum widths, and re-applies all of it when the skin is switched while windows are open. Found by opening the Settings dialog in dark and switching to System 6 (a horizontal scroll bar appeared). Not done: re-balancing the main window's splitter after a live switch; the font list still names families that may not be installed (AKAISDS now cuts it to installed ones, which avoids Qt's "missing font family" console warning).

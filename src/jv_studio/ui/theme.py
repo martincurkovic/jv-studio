@@ -182,6 +182,8 @@ SYSTEM6_PALETTE = {
     "key_down_white": "#a0a0a0",  # pressed piano keys go grey (the other themes use the accent): a black pressed key stays visible, a white one doesn't turn solid black
     "key_down_black": "#808080",
     "hard_edges": True,  # knobs and envelope graphs are drawn without anti-aliasing
+    "fit_fixed_widths": True,  # a control pinned to a width too narrow for this font grows to fit (ui/theme_fit.py)
+    "grow_window_for_scroll": True,  # a window whose page is wider than it is grows to show it, and its minimum width with it (ui/theme_fit.py)
     "card_titlebar": True,  # section cards draw a striped title bar and a close-box-style arrow (ui/section_card.py)
     "extra_template": True,  # append ui/style_system6.qss.template (menus, scroll bar arrows, X check boxes ...): rules only this skin has
     "knob_track": "#b0b0b0",
@@ -505,6 +507,10 @@ def apply_to_app(app, preference=None):
     # running - harmless under a pinned theme: Qt keeps reporting the pinned
     # scheme, so the palette comparison in _render_for_current_scheme()
     # finds nothing to do
+    if hasattr(app, "installEventFilter"):  # (a test's stand-in app has none)
+        from jv_studio.ui import theme_fit
+
+        theme_fit.install(app)
     if _connected_app is not app:
         QGuiApplication.styleHints().colorSchemeChanged.connect(
             lambda _scheme: _render_for_current_scheme()
