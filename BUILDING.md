@@ -31,7 +31,7 @@ uv run pytest          # the tests (they run on Qt's offscreen platform and neve
 
 1. Clone the repository
 2. Run the script for your platform (in `scripts/`). The first time on Windows, PowerShell will warn about running a script: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` fixes it. On Linux or macOS you may need `chmod +x scripts/build_xxx.sh`
-3. The build lands in `src/` (`JV-Studio.app` on macOS, `JV-Studio.dist` on Linux and Windows)
+3. The build lands in `src/` (`JV-Studio.app` on macOS, `JV-Studio.dist` on Linux and Windows). On macOS the script also writes `JV-Studio-macos-{arm,intel}.dmg` in the repository root: a window with the app, an Applications shortcut and a background picture (`assets/dmg/`, laid out by `scripts/dmg_settings.py`)
 
 Each script syncs the environment, writes the version from the nearest git tag into `src/jv_studio/_build_version.py` (not tracked), generates `src/pysidedeploy.spec` (not tracked) and runs `pyside6-deploy`. The built app contains the parameter and wave-name tables, the stylesheet template, the icons and cabling diagrams, and `LICENSE`.
 

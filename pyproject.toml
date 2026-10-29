@@ -21,9 +21,9 @@ jv-studio = "jv_studio.main:main"
 
 [dependency-groups]
 dev = ["pytest>=9"]
-# Only needed to make the standalone apps (scripts/build_*): Nuitka does the compiling, and imageio lets it turn the PNG icon into a Windows .ico. Same Nuitka pin as AKAISDS.
+# Only needed to make the standalone apps (scripts/build_*): Nuitka does the compiling, dmgbuild lays out the macOS DMG, and imageio lets it turn the PNG icon into a Windows .ico. Same Nuitka pin as AKAISDS.
 # PySide6-Addons: Nuitka's PySide6 plugin refuses to run without it, even though the app only uses Essentials modules (the standalone build still bundles just the Qt modules it imports).
-build = ["Nuitka==4.1.3", "imageio>=2.37.4", "PySide6-Addons>=6.12,<6.13"]
+build = ["Nuitka==4.1.3", "imageio>=2.37.4", "PySide6-Addons>=6.12,<6.13", "dmgbuild>=1.6.7"]
 
 [tool.uv]
 # plain `uv sync` (which the build scripts run) installs both groups; CI's test job passes --no-group build
