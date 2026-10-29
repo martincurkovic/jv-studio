@@ -202,9 +202,16 @@ class SectionCard(QWidget):
         painter.fillRect(QRect(bar.left(), bar.bottom(), bar.width(), 1), QColor(palette["border"]))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(palette["bg"]))
-        for widget in [self._title_label, self._attention_dot, self._arrow, *self._header_widgets]:
-            if widget.isVisibleTo(self):
-                painter.drawRect(widget.geometry().adjusted(-4 if widget is not self._arrow else -2, -1, 4 if widget is not self._arrow else 2, 1))
+        # one patch per item, but all as tall as the tallest (the title's label is taller than the 14 px arrow, and patches of different heights
+        # left a stripe showing under the arrow and a step where they met)
+        shown = [w for w in (self._title_label, self._attention_dot, self._arrow, *self._header_widgets) if w.isVisibleTo(self)]
+        if shown:
+            top = min(w.geometry().top() for w in shown) - 1
+            bottom = max(w.geometry().bottom() for w in shown) + 1
+            for widget in shown:
+                margin = 2 if widget is self._arrow else 4
+                geometry = widget.geometry()
+                painter.drawRect(QRect(geometry.left() - margin, top, geometry.width() + 2 * margin, bottom - top + 1))
 
     def key(self):
         return self._key

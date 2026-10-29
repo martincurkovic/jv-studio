@@ -128,6 +128,29 @@ def test_a_section_card_draws_a_title_bar_only_in_system6(qapp):
     card.deleteLater()
 
 
+def test_the_title_bars_white_patch_is_as_tall_behind_the_arrow_as_behind_the_title(qapp):
+    # the title's label is taller than the 14 px arrow; patches of their own heights left a stripe showing under the arrow
+    from PySide6.QtWidgets import QLabel
+
+    from jv_studio.ui.section_card import SectionCard
+
+    theme.apply_to_app(qapp, app_config.THEME_SYSTEM6)
+    card = SectionCard("Tone Mixer", [])
+    card._title_label.setMinimumHeight(26)  # (a font's line is only a pixel or two taller than the arrow here; make the difference plain)
+    card.resize(300, 120)
+    card.show()
+    qapp.processEvents()
+    image = card.grab().toImage()
+    arrow, label = card.arrow().geometry(), card._title_label.geometry()
+    assert label.height() > arrow.height()  # (the premise: they differ)
+    top, bottom = min(arrow.top(), label.top()), max(arrow.bottom(), label.bottom())
+    x = arrow.left() + 1  # (a column in the arrow's patch, left of its box's edge... and below the arrow itself, where a short patch showed stripes)
+    for y in range(arrow.bottom() + 2, bottom + 1):
+        assert image.pixelColor(x, y).name() == "#ffffff", f"a stripe shows under the arrow at y={y}"
+    card.close()
+    card.deleteLater()
+
+
 def test_pressed_piano_keys_go_grey_in_system6_and_take_the_accent_elsewhere(qapp):
     from jv_studio.ui.keyboard import PianoKeyboard
 
@@ -147,3 +170,67 @@ def test_pressed_piano_keys_go_grey_in_system6_and_take_the_accent_elsewhere(qap
     assert colour_of(60) == colour_of(61) == theme.DARK_PALETTE["accent"]
     keyboard.release_all()
     keyboard.deleteLater()
+
+
+def test_a_scroll_bars_outline_is_in_its_track_image_and_each_arrow_boxs_in_its_icon():
+    # a QSS border on either was drawn over or clipped by Qt: the bar's side lines are the first and last column of the track tile, the
+    # arrow boxes' sides are in their icons
+    import os
+    import re
+
+    from PySide6.QtGui import QImage
+
+    qss = theme.render_stylesheet(theme.SYSTEM6_PALETTE)
+    for orientation, name, size in (("vertical", "scroll_track_v.png", (16, 2)), ("horizontal", "scroll_track_h.png", (2, 16))):
+        tile = QImage(theme._write_checker(name, orientation))
+        assert (tile.width(), tile.height()) == size and name in qss
+        edge = [tile.pixelColor(x, y).name() for x in range(tile.width()) for y in range(tile.height()) if (x if orientation == "vertical" else y) in (0, 15)]
+        assert set(edge) == {"#000000"}  # (the outline)
+        inside = {tile.pixelColor(x, y).name() for x in range(tile.width()) for y in range(tile.height()) if (x if orientation == "vertical" else y) not in (0, 15)}
+        assert inside == {"#000000", "#ffffff"}  # (the dither)
+    for icon in set(re.findall(r"s6_scroll_[a-z_]+\.svg", qss)):
+        assert os.path.isfile(os.path.join(theme._ICONS_DIR, icon)), icon
+    assert "s6_scroll_up_pressed.svg" in qss
+
+
+def test_spin_buttons_sit_inside_the_boxs_outline_and_every_tab_has_a_bottom_edge():
+    qss = theme.render_stylesheet(theme.SYSTEM6_PALETTE)
+    spin = qss[qss.index("QSpinBox::up-button, QDoubleSpinBox::up-button {") :].split("}")[0]
+    assert "subcontrol-origin: padding" in spin
+    tab = qss[qss.rindex("QTabBar::tab {") :].split("}")[0]
+    assert "border-bottom: 1px solid #000000" in tab
+    assert "color: transparent" in qss[qss.rindex("QProgressBar {") :].split("}")[0]  # (no percentage on the dither)
+    other = theme.render_stylesheet(theme.DARK_PALETTE)
+    assert "s6_scroll" not in other and "subcontrol-origin: padding" not in other[other.index("QSpinBox::up-button") :].split("}")[0]
+
+
+def _fragments(document):
+    block = document.begin()
+    while block.isValid():
+        iterator = block.begin()
+        while not iterator.atEnd():
+            if iterator.fragment().isValid():
+                yield iterator.fragment()
+            iterator += 1
+        block = block.next()
+
+
+def test_markdown_code_and_links_follow_the_theme_in_system6_only(qapp):
+    from PySide6.QtWidgets import QTextBrowser
+
+    from jv_studio.ui.update_dialog import apply_theme_to_markdown
+
+    def styled(theme_name):
+        theme.apply_to_app(qapp, theme_name)
+        view = QTextBrowser()
+        view.setMarkdown("Text with `code` and a [link](https://example.com).")
+        apply_theme_to_markdown(view.document())
+        fragments = list(_fragments(view.document()))
+        return next(f.charFormat() for f in fragments if f.text() == "code"), next(f.charFormat() for f in fragments if f.charFormat().isAnchor())
+
+    code, link = styled(app_config.THEME_SYSTEM6)
+    assert code.fontFamilies()[0] == "ChiKareGo2" and code.font().pixelSize() == 16 and not code.fontFixedPitch()
+    assert link.foreground().color().name() == "#000000" and link.fontUnderline()  # (a black link is told from the text by its underline)
+    code, link = styled(app_config.THEME_DARK)
+    assert code.fontFixedPitch()  # (the other themes keep the document's own code font)
+    assert link.foreground().color().name() != "#000000"

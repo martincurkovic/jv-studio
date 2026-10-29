@@ -28,6 +28,15 @@ Reference: <https://github.com/sakofchit/system.css> (MIT; a CSS library, System
 - **Hard edges** (palette key `hard_edges`): knobs and envelope graphs are painted without anti-aliasing.
 - New optional palette keys, System 6 only: `extra_template`, `card_titlebar`, `hard_edges`.
 
+## Scroll bars, spin boxes and tabs fixed (2026-10-29, found in akaiutil-GUI's port of this skin and brought back)
+
+- **Scroll bars** now have a full outline, boxed arrows and a dithered track. A QSS `border` on the bar clipped the arrow boxes' sides, and one on the boxes was drawn over, so the outlines live in images instead: the track's in a tile (`scroll_track_v` / `scroll_track_h`, made by `theme._write_checker(name, orientation)`: 16 x 2 / 2 x 16 with the first and last column/row black), each arrow box's in its icon (`ui/icons/s6_scroll_{up,down,left,right}[_pressed].svg`, an outlined 16 px box with the arrow; the pressed one is inverted). The thumb keeps its own border.
+- **Spin boxes**: the up/down buttons are `subcontrol-origin: padding`, inside the box's outline (the shared stylesheet's `border` origin puts them over it and hides the right, top and bottom edges).
+- **Tab bars**: every tab has a bottom border (the shared rule takes it off, and the pane's own top border sits under the strip, so nothing was drawn under the unselected tabs).
+- **Progress bars** show no percentage (it can't be read on the dither; the comment above the rule always said so).
+- Seen only in offscreen pictures on macOS (`tools/make_screenshots.py --scheme system6`). - **Card title bars**: the white patch behind the close box is as tall as the one behind the title (each had its own widget's height, and the label is taller than the 14 px arrow, so a stripe showed under the box and the edge stepped). One patch per item, all spanning the tallest. The box itself is still 11 px and sits a half pixel high in its 14 px widget.
+- **Markdown** (the Quick Start guide and the update notes): inline code is set in the theme's font at the text's size (`update_dialog.restyle_code_runs`; Markdown marks a code span "monospace" at the document's own point size, which came out bigger), and links are in the text colour, underlined (`apply_theme_to_markdown`, applied once the document is loaded). Not brought over from akaiutil-GUI: equal-height buttons (the font's `…` is taller than its line, which made buttons ending in one taller) and message-box icons; neither has been looked at here.
+
 ## What can be done (still to do, roughly in order)
 
 ### Phase A: finish the skin inside the window (days, low risk)
