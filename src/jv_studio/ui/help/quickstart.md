@@ -199,7 +199,7 @@ The unit is in **Patch mode** (one sound at a time, what the Patches tab edits) 
 
 JV Studio automatically checks for updates. If there is one, an **Update Available** window shows what is new in the release notes. Choose **View Release...** to open the download page, **Remind Me Later**, or **Skip This Version**.
 
-**Help > Check for Updates...** (or the button in **About**) checks for updates on demand and tells you when you are up to date. The only information sent is the request for the latest release. No information about you or your unit is ever sent.
+**Help > Check for Updates...** (or the button in **About**) checks for updates on demand and tells you when you are up to date. The only information sent is the request for the recent releases. If you are several versions behind, the window shows the notes of every version you missed, newest first. No information about you or your unit is ever sent.
 
 ---
 
